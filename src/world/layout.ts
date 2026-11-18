@@ -15,6 +15,11 @@ export const ROADS = {
   cross: { u: 1110, w: 104 }, // street through the middle-right
 }
 
+/** Larger showcase art for the location panel, when it differs from the world sprite. */
+export const PANEL_ART: Partial<Record<LocationId, SpriteKey>> = {
+  marketing: 'buildings/marketing',
+}
+
 export interface Placement {
   sprite: SpriteKey
   u: number
@@ -28,7 +33,7 @@ export const BUILDINGS: Record<LocationId, Placement> = {
   dealer: { sprite: 'buildings/dealer', u: 300, v: 150, scale: 0.92, anchor: [0.5, 0.7] },
   hq: { sprite: 'buildings/hq', u: 780, v: 120, scale: 1.08, anchor: [0.5, 0.74] },
   repair: { sprite: 'buildings/repair', u: 1420, v: 150, scale: 0.92, anchor: [0.5, 0.7] },
-  marketing: { sprite: 'buildings/marketing', u: 110, v: 600, scale: 0.42, anchor: [0.5, 0.8] },
+  marketing: { sprite: 'buildings/marketing-office', u: 110, v: 590, scale: 1.0, anchor: [0.5, 0.72] },
   customers: { sprite: 'buildings/customers', u: 510, v: 610, scale: 1.0, anchor: [0.5, 0.72] },
   claims: { sprite: 'buildings/claims', u: 870, v: 590, scale: 0.86, anchor: [0.5, 0.7] },
   risk: { sprite: 'buildings/risk', u: 1370, v: 600, scale: 0.9, anchor: [0.5, 0.72] },

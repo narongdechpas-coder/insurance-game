@@ -9,6 +9,9 @@ export const U = { x: 0.961, y: -0.276 }
 export const V = { x: 0.94, y: 0.342 }
 
 /** World canvas (px). The camera frames a part of it. */
+/** z-index of the focus scrim; the selected building and its UI sit above it. */
+export const FOCUS_Z = 6000
+
 export const WORLD = { w: 4200, h: 2200 }
 const ORIGIN = { x: 1220, y: 1210 }
 

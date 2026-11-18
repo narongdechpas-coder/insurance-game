@@ -12,7 +12,7 @@ const NAV = [
 export function TopBar() {
   const toast = useGameStore((s) => s.toast)
   return (
-    <header className="absolute inset-x-0 top-0 h-[92px] flex items-center px-7 gap-6 pointer-events-auto" style={{ background: 'linear-gradient(180deg, rgba(8,26,66,0.78) 0%, rgba(8,26,66,0.35) 70%, transparent 100%)' }}>
+    <header className="absolute inset-x-0 top-0 h-[92px] flex items-center px-7 gap-6 pointer-events-auto">
       <div className="flex items-center gap-3 min-w-[330px]">
         <svg width="54" height="40" viewBox="0 0 54 40" fill="none" aria-hidden>
           <path d="M3 28 C14 10, 34 4, 51 8 C36 9, 24 15, 16 26 Z" fill="#fff" opacity="0.95" />

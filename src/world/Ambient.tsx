@@ -3,7 +3,7 @@ import { spriteUrl } from '../assets/registry'
 import { useGameStore } from '../store/useGameStore'
 import { EVENT_ART } from './eventArt'
 import { BUILDINGS, PEOPLE } from './layout'
-import { project, WORLD } from './projection'
+import { FOCUS_Z, project, WORLD } from './projection'
 import { SPRITES } from '../assets/registry'
 import { Sprite } from './Sprite'
 
@@ -46,6 +46,7 @@ export function EventBubbles() {
   const events = useGameStore((s) => s.game.events)
   const highlighted = useGameStore((s) => s.ui.highlightedEvent)
   const focusEvent = useGameStore((s) => s.focusEvent)
+  const selected = useGameStore((s) => s.ui.selected)
   return (
     <>
       {events.map((ev, i) => {
@@ -56,6 +57,8 @@ export function EventBubbles() {
         const art = EVENT_ART[ev.icon]
         const ring = ev.kind === 'threat' ? 'ring-alert' : ev.kind === 'competitor' ? 'ring-watch' : 'ring-chance'
         const on = highlighted === ev.id
+        const here = selected !== null && ev.locations[0] === selected
+        const dim = selected !== null && !here
         return (
           <button
             key={ev.id}
@@ -67,7 +70,9 @@ export function EventBubbles() {
             style={{
               left: p.x - m.w * place.scale * (place.anchor?.[0] ?? 0.5) + m.w * place.scale * 0.5,
               top: top + m.h * place.scale * 0.08,
-              zIndex: 5001,
+              zIndex: here ? FOCUS_Z + 4 : 5001,
+              opacity: dim ? 0.3 : 1,
+              transition: 'opacity 0.3s',
               transform: 'translate(-50%, -100%) scale(var(--inv-scale, 1)) translateY(-62px)',
               transformOrigin: '50% 100%',
             }}
