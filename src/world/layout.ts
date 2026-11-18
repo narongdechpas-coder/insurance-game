@@ -1,4 +1,4 @@
-import { SPRITES, type SpriteKey } from '../assets/registry'
+import { hasSprite, RIVAL_CITY_ART, SPRITES, type SpriteKey } from '../assets/registry'
 import type { LocationId } from '../game/types'
 
 /**
@@ -76,14 +76,27 @@ export const PANEL_ART: Partial<Record<LocationId, SpriteKey>> = {}
 const DS = 0.42 // decor buildings are smaller so the seven business units stay the heroes
 
 /** Non-interactive set dressing: fills the blocks the business units don't use. */
-export const DECOR: Placement[] = [
-  // back strip: plain white offices (quieter than the business units) form the skyline
+/**
+ * The back strip holds plain offices. When 24° art for a rival HQ exists
+ * (public/assets/rivals-city/*), it takes one of these slots, so rivals appear in the city
+ * without code changes.
+ */
+const BACK_STRIP: Placement[] = [
   { sprite: 'buildings/office-row', u: COLS[0][0] + 10, v: FILLER_ROW[1] - 16, scale: 0.5 },
   { sprite: 'buildings/office-tower', u: COLS[0][1] - 40, v: FILLER_ROW[1] - 40, scale: 0.55 },
   { sprite: 'buildings/office-low', u: COLS[1][0] + 30, v: FILLER_ROW[1] - 16, scale: 0.55 },
   { sprite: 'buildings/office-tower', u: COLS[1][0] + 290, v: FILLER_ROW[1] - 40, scale: 0.55 },
   { sprite: 'buildings/office-low', u: COLS[2][0] - 140, v: FILLER_ROW[1] - 16, scale: 0.5 },
   { sprite: 'buildings/office-row', u: COLS[2][0] + 110, v: FILLER_ROW[1] - 16, scale: 0.5 },
+]
+const RIVAL_SLOTS: Record<string, number> = { lotus: 0, naga: 2, bluewave: 4, summit: 5 }
+for (const [id, slot] of Object.entries(RIVAL_SLOTS)) {
+  const key = RIVAL_CITY_ART[id]
+  if (hasSprite(key)) BACK_STRIP[slot] = { ...BACK_STRIP[slot], sprite: key, scale: 0.42, v: FILLER_ROW[1] - 16 }
+}
+
+export const DECOR: Placement[] = [
+  ...BACK_STRIP,
   // back-centre block, behind HQ
   { sprite: 'buildings/ev-center', u: COLS[1][0] + 4, v: ROWS[0][1] - 30, scale: DS },
   { sprite: 'buildings/market-intel', u: COLS[1][1] - 262, v: ROWS[0][1] - 30, scale: DS },

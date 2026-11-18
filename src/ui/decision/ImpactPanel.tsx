@@ -1,6 +1,7 @@
 import { RotateCcw } from 'lucide-react'
 import { changedCards, previewImpact } from '../../game/decisions/plan'
 import { scenariosFor } from '../../game/decisions/scenarios'
+import { outlook } from '../../game/narrative/rivals'
 import { useGameStore } from '../../store/useGameStore'
 import { ImpactArrows } from './ImpactArrows'
 import { AXES, tone } from './visuals'
@@ -13,6 +14,7 @@ export function ImpactPanel() {
   const reset = useGameStore((s) => s.resetPlan)
   const responses = useGameStore((s) => s.responses)
   const events = useGameStore((s) => s.game.events)
+  const game = useGameStore((s) => s.game)
   const impact = previewImpact(plan, responses)
   const changed = changedCards(plan).length
   const scen = scenariosFor(events.map((e) => e.id))
@@ -21,7 +23,7 @@ export function ImpactPanel() {
     <aside className="absolute right-7 top-[172px] w-[calc(380px+max(0px,100%-1600px)*0.15)] glass rounded-[28px] p-6 pointer-events-auto anim-rise" style={{ animationDelay: '0.1s' }}>
       <div className="font-display font-bold text-[20px] text-navy-900">ภาพรวมแผนไตรมาสนี้</div>
       <div className="text-[13px] text-navy-700/70">ทิศทางที่แผนพาไป ผลจริงขึ้นกับตลาดและคู่แข่ง</div>
-      <div className="mt-5 space-y-3.5">
+      <div className="mt-4 space-y-3">
         {AXES.map((a) => {
           const v = impact[a.id]
           const t = tone(v, a.higherIsBetter)
@@ -41,12 +43,25 @@ export function ImpactPanel() {
           )
         })}
       </div>
-      <div className="mt-6 flex items-center justify-between rounded-2xl bg-white/70 px-4 py-3">
+      <div className="mt-4 rounded-2xl bg-white/70 px-4 py-2.5" data-panel="rival-outlook">
+        <div className="text-[13px] font-medium text-navy-800 mb-1">คู่แข่งน่าจะทำอะไรไตรมาสนี้</div>
+        {game.competitors.map((c) => {
+          const o = outlook(game, c.id)
+          return (
+            <div key={c.id} className="flex items-start gap-2 py-0.5 text-[12.5px] leading-snug" title={o.text}>
+              <span className={`mt-1 size-2 shrink-0 rounded-full ${o.threat === 'high' ? 'bg-alert' : o.threat === 'mid' ? 'bg-watch' : 'bg-good'}`} />
+              <span className="shrink-0 font-medium" style={{ color: c.color }}>{c.name.split(' ')[0]}</span>
+              <span className="text-navy-800 line-clamp-1">{o.text}</span>
+            </div>
+          )
+        })}
+      </div>
+      <div className="mt-2 flex items-center justify-between rounded-2xl bg-white/70 px-4 py-2.5">
         <span className="text-[14px] text-navy-800">
           ตอบเหตุการณ์ <b className={answered === scen.length ? 'text-good' : 'text-brand-600'}>{answered}/{scen.length}</b>
         </span>
       </div>
-      <div className="mt-2 flex items-center justify-between rounded-2xl bg-white/70 px-4 py-3">
+      <div className="mt-2 flex items-center justify-between rounded-2xl bg-white/70 px-4 py-2.5">
         <span className="text-[14px] text-navy-800">
           ปรับจากเดิม <b className="text-brand-600">{changed}</b> เรื่อง
         </span>

@@ -43,6 +43,7 @@ export function createSimState(config: GameConfig, competitors: Competitor[], pl
     looseStreak: 0,
     highCxStreak: 0,
     lastRaised: {},
+    shareHistory: [Object.fromEntries([['player', playerShare], ...competitors.map((c) => [c.id, c.marketShare] as [string, number])])],
     mix: { ...START_MIX },
     prevWp: playerShare * P.marketGwp0,
   }

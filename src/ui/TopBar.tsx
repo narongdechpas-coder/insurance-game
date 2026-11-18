@@ -4,9 +4,9 @@ import { useGameStore } from '../store/useGameStore'
 
 const NAV = [
   { id: 'hq', label: 'HQ', icon: Building2, phase: null },
-  { id: 'market', label: 'Market', icon: LineChart, phase: 'Phase 3' },
+  { id: 'market', label: 'Market', icon: LineChart, phase: null },
   { id: 'strategy', label: 'Strategy', icon: Target, phase: null },
-  { id: 'operation', label: 'Operation', icon: Cog, phase: 'Phase 3' },
+  { id: 'operation', label: 'Operation', icon: Cog, phase: null },
   { id: 'report', label: 'Report', icon: ClipboardList, phase: null },
 ]
 
@@ -16,6 +16,7 @@ export function TopBar() {
   const open = useGameStore((s) => s.openDecisionRoom)
   const close = useGameStore((s) => s.closeDecisionRoom)
   const openReport = useGameStore((s) => s.openReport)
+  const openPage = useGameStore((s) => s.openPage)
   const hasReport = useGameStore((s) => !!s.game.lastReport)
   return (
     <header className="absolute inset-x-0 top-0 h-[92px] flex items-center px-7 gap-6 pointer-events-auto">
@@ -24,7 +25,7 @@ export function TopBar() {
       </div>
       <nav className="flex-1 flex justify-center gap-2.5">
         {NAV.map((n) => {
-          const active = (n.id === 'hq' && screen === 'command') || (n.id === 'strategy' && screen === 'decision')
+          const active = (n.id === 'hq' && screen === 'command') || (n.id === 'strategy' && screen === 'decision') || n.id === screen
           const Icon = n.icon
           return (
             <button
@@ -34,7 +35,9 @@ export function TopBar() {
                   ? close()
                   : n.id === 'strategy'
                     ? open()
-                    : n.id === 'report'
+                    : n.id === 'market' || n.id === 'operation'
+                      ? openPage(n.id)
+                      : n.id === 'report'
                       ? hasReport
                         ? openReport()
                         : toast('ยังไม่มีรายงาน — ยืนยันแผนไตรมาสแรกก่อนนะคะ')

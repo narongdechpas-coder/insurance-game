@@ -7,7 +7,7 @@ import type { DecisionId, QuarterPlan } from '../game/decisions/types'
 import { simulateQuarter } from '../game/sim/engine'
 import type { Difficulty, GameLength, GameState, LocationId } from '../game/types'
 
-export type Screen = 'cover' | 'command' | 'decision' | 'simulating' | 'review' | 'gameover'
+export type Screen = 'cover' | 'command' | 'decision' | 'simulating' | 'review' | 'gameover' | 'market' | 'operation'
 export type DecisionStep = 'scenario' | 'strategy' | 'confirm'
 
 interface Toast {
@@ -46,6 +46,8 @@ interface Store {
   nextQuarter: () => void
   restart: () => void
   openReport: () => void
+  /** Market / Operation information pages (read-only, return to the Command Center). */
+  openPage: (page: 'market' | 'operation') => void
   /** The analysis animation finished (or was skipped): show the Quarterly Review. */
   finishSimulation: () => void
   closeReport: () => void
@@ -104,6 +106,7 @@ export const useGameStore = create<Store>((set, get) => ({
       ui: { ...s.ui, screen: s.game.outcome ? 'gameover' : 'command', step: 'scenario', activeEvent: null },
     })),
   finishSimulation: () => set((s) => (s.ui.screen === 'simulating' ? { ui: { ...s.ui, screen: 'review' } } : s)),
+  openPage: (page) => set((s) => ({ ui: { ...s.ui, screen: page, selected: null, hovered: null } })),
   openReport: () => set((s) => (s.game.lastReport ? { ui: { ...s.ui, screen: 'review', reviewOnly: true, selected: null } } : s)),
   closeReport: () => set((s) => ({ ui: { ...s.ui, screen: 'command', reviewOnly: false } })),
   restart: () => set((s) => ({ plan: defaultPlan(), responses: {}, ui: { ...s.ui, screen: 'cover', activeEvent: null } })),

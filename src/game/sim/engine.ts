@@ -68,7 +68,7 @@ function enqueue(queue: QueuedEffect[], at: number, impact: Partial<Impact>, spe
     }
 }
 
-function capacityAt(sim: SimState, q: number): Capacity {
+export function capacityAt(sim: SimState, q: number): Capacity {
   const c = { ...sim.capacity }
   for (const b of sim.boosts) if (q >= b.from && q <= b.until) c[b.ops] += b.value
   return { contact: Math.max(0.5, c.contact), claims: Math.max(0.5, c.claims), repair: Math.max(0.5, c.repair) }
@@ -576,6 +576,7 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
     pnl,
   }
 
+  sim.shareHistory = [...(sim.shareHistory ?? []), Object.fromEntries([['player', pl.share], ...sim.firms.map((f) => [f.id, f.share] as [string, number])])]
   const next: GameState = {
     ...state,
     quarter: quarterStamp(q + 1),
