@@ -1,14 +1,25 @@
 /**
- * Axonometric projection matched to the sprite art.
- * Ground axes measured from the building plinths:
- *   U (street axis)  → right & up   ~16°
- *   V (depth axis)   → right & down ~20°
+ * Axonometric projection — the ground must match the camera the sprite art was rendered with.
+ *   U (street axis)  → right & up
+ *   V (depth axis)   → right & down
  * Grid units ≈ sprite pixels at scale 1, so sprites and ground share one scale.
+ *
+ * PRESETS
+ *   interim — fitted to round-1 art (measured with tools/angle_check.py: left edges ≈25°, right ≈12–18°)
+ *   iso     — true 2:1 isometric (26.57° both sides). Switch to this once all art is regenerated
+ *             against docs/angle-guide/building-guide.png.
  */
-export const U = { x: 0.961, y: -0.276 }
-export const V = { x: 0.94, y: 0.342 }
+const PRESETS = {
+  interim: { u: 16, v: 25 },
+  iso: { u: 26.57, v: 26.57 },
+} as const
+export const PROJECTION: keyof typeof PRESETS = 'interim'
 
-/** World canvas (px). The camera frames a part of it. */
+const rad = (d: number) => (d * Math.PI) / 180
+const A = PRESETS[PROJECTION]
+export const U = { x: Math.cos(rad(A.u)), y: -Math.sin(rad(A.u)) }
+export const V = { x: Math.cos(rad(A.v)), y: Math.sin(rad(A.v)) }
+
 /** z-index of the focus scrim; the selected building and its UI sit above it. */
 export const FOCUS_Z = 6000
 
