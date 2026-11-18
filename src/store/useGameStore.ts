@@ -1,7 +1,12 @@
 import { create } from 'zustand'
 import { DEFAULT_CONFIG } from '../game/config'
 import { createInitialState } from '../game/initialState'
+import { CARDS, defaultPlan, isUnlocked } from '../game/decisions/cards'
+import type { DecisionId, QuarterPlan } from '../game/decisions/types'
 import type { GameState, LocationId } from '../game/types'
+
+export type Screen = 'command' | 'decision'
+export type DecisionStep = 'scenario' | 'strategy' | 'confirm'
 
 interface Toast {
   id: number
@@ -14,11 +19,21 @@ interface UiState {
   highlightedEvent: string | null
   introDone: boolean
   toasts: Toast[]
+  screen: Screen
+  step: DecisionStep
+  activeCard: DecisionId
 }
 
 interface Store {
   game: GameState
   ui: UiState
+  /** Draft plan for the current quarter (committed to the engine in Phase 4). */
+  plan: QuarterPlan
+  openDecisionRoom: (card?: DecisionId) => void
+  closeDecisionRoom: () => void
+  setActiveCard: (id: DecisionId) => void
+  choose: (card: DecisionId, option: string) => void
+  resetPlan: () => void
   hover: (id: LocationId | null) => void
   select: (id: LocationId | null) => void
   focusEvent: (eventId: string | null) => void
@@ -30,7 +45,20 @@ let toastId = 0
 
 export const useGameStore = create<Store>((set, get) => ({
   game: createInitialState(DEFAULT_CONFIG),
-  ui: { hovered: null, selected: null, highlightedEvent: null, introDone: false, toasts: [] },
+  ui: { hovered: null, selected: null, highlightedEvent: null, introDone: false, toasts: [], screen: 'command', step: 'strategy', activeCard: 'pricing' },
+  plan: defaultPlan(),
+
+  openDecisionRoom: (card) =>
+    set((s) => {
+      const q = s.game.quarter.index
+      const first = CARDS.find((c) => isUnlocked(c, q))!.id
+      const target = card && isUnlocked(CARDS.find((c) => c.id === card)!, q) ? card : first
+      return { ui: { ...s.ui, screen: 'decision', step: 'strategy', activeCard: target, selected: null, hovered: null } }
+    }),
+  closeDecisionRoom: () => set((s) => ({ ui: { ...s.ui, screen: 'command' } })),
+  setActiveCard: (id) => set((s) => ({ ui: { ...s.ui, activeCard: id } })),
+  choose: (card, option) => set((s) => ({ plan: { ...s.plan, [card]: option } })),
+  resetPlan: () => set({ plan: defaultPlan() }),
 
   hover: (id) => set((s) => (s.ui.hovered === id ? s : { ui: { ...s.ui, hovered: id } })),
   select: (id) => set((s) => ({ ui: { ...s.ui, selected: id, highlightedEvent: id ? s.ui.highlightedEvent : null } })),
