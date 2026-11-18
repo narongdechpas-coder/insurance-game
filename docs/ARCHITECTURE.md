@@ -1,4 +1,4 @@
-# Decision Master — Architecture
+# Insure Universe — Architecture
 
 ## Stack
 React 19 · TypeScript · Vite · Tailwind CSS v4 · Zustand · Lucide icons. No backend.
@@ -19,11 +19,15 @@ assets/    Sprite registry (sprites.json is generated)
 
 ## World rendering
 - Sprites are 2.5D art with a fixed camera, so the world is a 2D axonometric scene rather than a free 3D camera.
-- `world/projection.ts` maps ground grid (u, v) → screen px. Its axis angles were measured from the building plinths.
+- `world/projection.ts` maps ground grid (u, v) → screen px at the house camera (24° both axes). The art is checked against it with `tools/angle_check.py`.
+- Buildings are anchored at the front corner of their plinth (measured into `sprites.json`), so their footprints line up with the road grid.
 - `world/layout.ts` is pure data: where every building, tree, lamp, person and road sits. To move things, edit the numbers.
 - Depth: each sprite's `z-index` = screen y of its base.
 - Clicking uses pixel-accurate alpha hit-testing (`world/hitTest.ts`), so transparent corners never steal a click.
 - Camera: CSS transform (pan / zoom / fly-to). Labels counter-scale through `--inv-scale` so they stay readable at any zoom.
+
+## Screens
+`App.tsx` routes `ui.screen`: **cover** (title art + loading bar while `assets/preload.ts` loads every sprite and the font → Start → mode modal; world not mounted) → **command** (Command Center) ↔ **decision** (Decision Room). The world renders once and the screens are HUD layers over it.
 
 ## HUD
 A fixed 1600×900 stage (`ui/Stage.tsx`) scaled to fit the window. Layout stays consistent on any 16:9 desktop. The world fills the whole window behind it.
@@ -34,4 +38,4 @@ A fixed 1600×900 stage (`ui/Stage.tsx`) scaled to fit the window. Layout stays 
 - Font: Prompt (bundled through @fontsource, works offline).
 
 ## Adding the next screens
-`App.tsx` is the screen router. Decision Room (Phase 3) and Quarterly Review (Phase 4) plug in there. They share the store and the `ui/` primitives.
+Quarterly Review (Phase 4) plugs into the `App.tsx` router like the Decision Room. It shares the store and the `ui/` primitives.

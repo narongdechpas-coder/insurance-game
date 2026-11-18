@@ -1,4 +1,5 @@
 import { BookOpen, Building2, ClipboardList, Cog, LineChart, Settings, Target, Trophy } from 'lucide-react'
+import { brandUrl } from '../assets/registry'
 import { useGameStore } from '../store/useGameStore'
 
 const NAV = [
@@ -17,14 +18,7 @@ export function TopBar() {
   return (
     <header className="absolute inset-x-0 top-0 h-[92px] flex items-center px-7 gap-6 pointer-events-auto">
       <div className="flex items-center gap-3 min-w-[330px]">
-        <svg width="54" height="40" viewBox="0 0 54 40" fill="none" aria-hidden>
-          <path d="M3 28 C14 10, 34 4, 51 8 C36 9, 24 15, 16 26 Z" fill="#fff" opacity="0.95" />
-          <path d="M9 33 C20 20, 36 15, 50 16 C38 19, 28 24, 21 32 Z" fill="#8cc2ff" />
-        </svg>
-        <div className="leading-none">
-          <div className="text-white font-display font-bold text-[30px] tracking-tight drop-shadow">Decision Master</div>
-          <div className="text-brand-100/90 text-[13px] mt-1 tracking-wide">Insurance Business Simulation</div>
-        </div>
+        <img src={brandUrl('logo.webp')} alt="Insure Universe" draggable={false} className="h-[84px] w-auto mt-3 drop-shadow-[0_6px_10px_rgba(4,16,48,0.45)]" />
       </div>
       <nav className="flex-1 flex justify-center gap-2.5">
         {NAV.map((n) => {

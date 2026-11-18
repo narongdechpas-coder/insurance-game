@@ -7,10 +7,15 @@ import meta from './sprites.json'
  */
 export type SpriteKey = keyof typeof meta
 
-export const SPRITES = meta as Record<SpriteKey, { w: number; h: number; ax: number; ay: number }>
+export const SPRITES = meta as Record<SpriteKey, { w: number; h: number; ax: number; ay: number; ext: string }>
 
 export function spriteUrl(key: SpriteKey) {
-  return `${import.meta.env.BASE_URL}assets/${key}.png`
+  return `${import.meta.env.BASE_URL}assets/${key}.${SPRITES[key].ext}`
+}
+
+/** Brand art (logo, cover) lives outside the sprite registry. */
+export function brandUrl(file: 'logo.webp' | 'cover.jpg') {
+  return `${import.meta.env.BASE_URL}assets/brand/${file}`
 }
 
 export function hasSprite(key: string): key is SpriteKey {

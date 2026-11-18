@@ -6,7 +6,7 @@ import { Building } from './Building'
 import { Ground } from './Ground'
 import { SPRITES } from '../assets/registry'
 import { preloadMasks } from './hitTest'
-import { BUILDINGS, DECOR, GREENERY, LAMPS } from './layout'
+import { anchorOf, BUILDINGS, DECOR, GREENERY, LAMPS } from './layout'
 import { FOCUS_Z, project, WORLD } from './projection'
 import { Sprite } from './Sprite'
 import { Traffic } from './Traffic'
@@ -23,15 +23,15 @@ const HOME = (() => {
   for (const b of Object.values(BUILDINGS)) {
     const m = SPRITES[b.sprite]
     const p = project(b.u, b.v)
-    const [ax, ay] = b.anchor ?? [0.5, 0.75]
+    const [ax, ay] = anchorOf(b)
     const w = m.w * b.scale, h = m.h * b.scale
     x0 = Math.min(x0, p.x - w * ax); x1 = Math.max(x1, p.x + w * (1 - ax))
-    y0 = Math.min(y0, p.y - h * ay - 40); y1 = Math.max(y1, p.y + h * (1 - ay))
+    y0 = Math.min(y0, p.y - h * ay - 110); y1 = Math.max(y1, p.y + h * (1 - ay))
   }
   return { x0: x0 - 20, y0, x1: x1 + 20, y1: y1 + 10 }
 })()
 /** HUD keeps these bands of the 1600×900 stage covered; the home view avoids them. */
-const HUD = { top: 92, bottom: 150, right: 230, left: 0 }
+const HUD = { top: 176, bottom: 168, right: 250, left: 24 }
 const MIN_S = 0.45
 const MAX_S = 1.5
 
@@ -174,7 +174,7 @@ export function WorldView() {
           <Sprite key={`l${i}`} sprite="environments/street-lamp" u={u} v={v} scale={0.42} anchor={[0.5, 0.97]} />
         ))}
         {DECOR.map((d, i) => (
-          <Sprite key={`d${i}`} sprite={d.sprite} u={d.u} v={d.v} scale={d.scale} anchor={d.anchor ?? [0.5, 0.8]} flip={d.flip} style={{ filter: 'drop-shadow(0 8px 10px rgba(30,50,90,0.15))' }} />
+          <Sprite key={`d${i}`} sprite={d.sprite} u={d.u} v={d.v} scale={d.scale} anchor={d.sprite.startsWith('buildings/') ? anchorOf(d) : (d.anchor ?? [0.5, 0.8])} flip={d.flip} style={{ filter: 'drop-shadow(0 8px 10px rgba(30,50,90,0.15))' }} />
         ))}
         <People />
         <Traffic />

@@ -2,14 +2,6 @@
   "out": "public/assets",
   "sheets": {
     "sheet-d.webp": {
-      "0": "buildings/hq",
-      "1": "buildings/dealer",
-      "2": "buildings/repair",
-      "3": "buildings/ev-center",
-      "4": "buildings/claims",
-      "5": "buildings/risk",
-      "6": "buildings/customers",
-      "7": "buildings/capital-vault",
       "8": "events/flood",
       "9": "events/storm",
       "10": "events/landslide",
@@ -21,8 +13,6 @@
       "16": "vehicles/suv-dark"
     },
     "sheet-b.webp": {
-      "3": "buildings/marketing-office",
-      "5": "buildings/market-intel",
       "9": "vehicles/sedan-red",
       "10": "vehicles/ev-green",
       "11": "vehicles/sedan-lilac",
@@ -69,10 +59,6 @@
       "events/rival-promo",
       640
     ],
-    "singles/marketing-billboard.webp": [
-      "buildings/marketing",
-      900
-    ],
     "singles/advisor-present.webp": [
       "characters/advisor",
       820
@@ -84,6 +70,54 @@
     "singles/advisor-warning.webp": [
       "characters/advisor-warning",
       820
+    ],
+    "round2/hq.webp": [
+      "buildings/hq.webp",
+      1100
+    ],
+    "round2/dealer.webp": [
+      "buildings/dealer.webp",
+      1100
+    ],
+    "round2/repair.webp": [
+      "buildings/repair.webp",
+      1100
+    ],
+    "round2/claims.webp": [
+      "buildings/claims.webp",
+      1100
+    ],
+    "round2/customers.webp": [
+      "buildings/customers.webp",
+      1100
+    ],
+    "round2/risk.webp": [
+      "buildings/risk.webp",
+      1100
+    ],
+    "round2/marketing.webp": [
+      "buildings/marketing.webp",
+      1100
+    ],
+    "round2/ev-center.webp": [
+      "buildings/ev-center.webp",
+      1100
+    ],
+    "round2/market-intel.webp": [
+      "buildings/market-intel.webp",
+      1100
+    ],
+    "round2/capital-vault.webp": [
+      "buildings/capital-vault.webp",
+      1100
+    ],
+    "brand/logo.webp": [
+      "brand/logo.webp",
+      900
+    ],
+    "brand/cover.webp": [
+      "brand/cover.jpg",
+      1920
     ]
   }
 }

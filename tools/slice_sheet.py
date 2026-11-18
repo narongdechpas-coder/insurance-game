@@ -134,7 +134,11 @@ def cmd_export(manifest):
 
 
 def cmd_singles(manifest):
-    """Import standalone transparent images: trim, clear haze, downscale to a max side."""
+    """Import standalone images: trim, clear haze, downscale to a max side.
+
+    The output format follows the name's extension: .webp (lossy q88, alpha kept),
+    .jpg (opaque backgrounds) or .png (default).
+    """
     m = json.load(open(manifest))
     root = Path(manifest).parent
     for src, (name, max_side) in m['singles'].items():
@@ -142,29 +146,39 @@ def cmd_singles(manifest):
         arr = np.array(im)
         arr[..., 3] = np.where(arr[..., 3] < ALPHA_FLOOR, 0, arr[..., 3])
         im = Image.fromarray(arr)
-        im = im.crop(im.getchannel('A').getbbox())
+        bb = im.getchannel('A').getbbox()
+        if bb:
+            im = im.crop(bb)
         im.thumbnail((max_side, max_side), Image.LANCZOS)
-        dst = Path(m['out']) / f'{name}.png'
+        dst = Path(m['out']) / (name if Path(name).suffix else f'{name}.png')
         dst.parent.mkdir(parents=True, exist_ok=True)
-        im.save(dst, optimize=True)
+        if dst.suffix == '.webp':
+            im.save(dst, 'WEBP', quality=88, method=6)
+        elif dst.suffix == '.jpg':
+            im.convert('RGB').save(dst, 'JPEG', quality=84, optimize=True, progressive=True)
+        else:
+            im.save(dst, optimize=True)
         print(f'{src} → {dst} {im.size}')
 
 
 def build_meta(asset_root='public/assets', out='src/assets/sprites.json'):
-    """Write size + ground anchor for every sprite.
+    """Write size, ground anchor and file type for every transparent sprite (png/webp).
 
     anchor = the lowest opaque point (the plinth's front corner). The game places
     that point on the ground position, so sprites of different heights line up.
     """
     meta = {}
-    for f in sorted(Path(asset_root).rglob('*.png')):
-        im = Image.open(f)
+    root = Path(asset_root)
+    for f in sorted([*root.rglob('*.png'), *root.rglob('*.webp')]):
+        if f.parent.name == 'brand':
+            continue
+        im = Image.open(f).convert('RGBA')
         a = np.array(im.getchannel('A')) > 128
         ys, xs = np.nonzero(a)
         bottom = ys.max()
         ax = float(xs[ys >= bottom - 2].mean())
-        key = str(f.relative_to(asset_root).with_suffix(''))
-        meta[key] = {'w': im.width, 'h': im.height, 'ax': round(ax / im.width, 3), 'ay': round((bottom + 1) / im.height, 3)}
+        key = str(f.relative_to(root).with_suffix(''))
+        meta[key] = {'w': im.width, 'h': im.height, 'ax': round(ax / im.width, 3), 'ay': round((bottom + 1) / im.height, 3), 'ext': f.suffix[1:]}
     Path(out).write_text(json.dumps(meta, indent=1))
     print(f'{len(meta)} sprites → {out}')
 

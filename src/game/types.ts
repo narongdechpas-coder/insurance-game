@@ -1,5 +1,5 @@
 /**
- * Domain model for Decision Master.
+ * Domain model for Insure Universe.
  * Pure data types only — no React, no Three.js. The simulation engine (Phase 4)
  * will read and write these shapes deterministically.
  */
