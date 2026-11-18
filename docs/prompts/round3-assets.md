@@ -10,7 +10,7 @@
 
 | ลำดับ | กลุ่ม | จำนวน | ปัญหา | ผลต่อผู้เล่น |
 |---|---|---|---|---|
-| **1** | รถวิ่งบนถนน | 11 คัน | มุมราว 8° (เมืองใช้ 24°) และภาพกว้างแค่ 180–260 px | **เห็นชัดที่สุด** รถวิ่งเฉียงไม่ตรงเลน |
+| **1** | รถวิ่งบนถนน (ได้แล้ว 3 คัน: suv-blue, suv-silver, sedan-white) | เหลือ 8 คัน | มุมราว 8° (เมืองใช้ 24°) และภาพกว้างแค่ 180–260 px | **เห็นชัดที่สุด** รถวิ่งเฉียงไม่ตรงเลน |
 | **2** | Market Intel (อาคารประดับ) | 1 | ใช้ลูกโลกซ้ำกับ Claims Service | ผู้เล่นอาจคลิกผิดตึก |
 | **3** | เฟอร์นิเจอร์ริมถนน | 6 ชิ้น | มุมไม่ตรง หรือภาพเล็ก (Garden island 25°/5°) | เห็นได้ตอนซูมเข้า |
 | **4** | ภาพเหตุการณ์ | 3 ภาพ | EV ใช้ไอคอนแทนฉาก ส่วนน้ำท่วมภาพเล็ก (283 px) | การ์ดเหตุการณ์ไม่สม่ำเสมอ |
@@ -57,7 +57,8 @@ so the car drives toward the bottom-left of the frame.
 Subject: a {CAR} as a 3D miniature diorama game asset, semi-realistic stylized render, glossy paint, tinted windows,
 high detail, crisp edges, wheels touching the ground, no plinth, no road, no ground shadow,
 single isolated object, centred, fully transparent background,
-no text, no letters, no numbers, no logos, no licence plates, no watermark.
+no text, no letters, no numbers, no logos, no licence plates, no watermark,
+no brand emblems on the grille or wheels, generic unbranded car.
 Output: 1024×640.
 ```
 
@@ -65,9 +66,9 @@ Output: 1024×640.
 
 | {CAR} | ชื่อไฟล์ |
 |---|---|
-| white compact sedan | `sedan-white` |
-| silver mid-size SUV | `suv-silver` |
-| royal-blue mid-size SUV | `suv-blue` |
+| white compact sedan ✅ | `sedan-white` |
+| silver mid-size SUV ✅ | `suv-silver` |
+| royal-blue mid-size SUV ✅ | `suv-blue` |
 | red electric hatchback with blue-accent headlights | `ev-red` |
 | sky-blue compact electric car | `ev-skyblue` |
 | dark-grey luxury SUV | `suv-dark` |
@@ -207,6 +208,8 @@ Output: 1024×1024.
 | calm clear river water seen from above, bright sky-blue to deep blue gradient-free uniform tone, soft small ripples and gentle highlights | `textures/water` |
 
 **วิธีเช็คหลัง gen:** Claude จะวางภาพเรียงต่อกัน 2×2 ดูว่ามีรอยต่อไหม ถ้ามีรอยต่อจะซ่อมด้วยโค้ดได้ (ทำ offset + blend) ไม่ต้อง gen ใหม่
+
+**สถานะ:** ได้ครบ 4 ภาพแล้วและใส่ในเกมแล้ว (`public/assets/textures/`) รอยต่อซ่อมด้วย `tools/make_tileable.py` ส่วนทางเท้าตัดตามแนวร่องปูน
 
 ### 6.2 ฉากไกลหลังแม่น้ำ (1 ภาพ)
 

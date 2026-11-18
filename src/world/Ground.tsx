@@ -1,9 +1,39 @@
 import { memo } from 'react'
 import { world as C } from '../design/tokens'
 import { DISTRICT, RIVER, ROADS } from './layout'
-import { project, quad, WORLD } from './projection'
+import { GROUND_MATRIX, project, quad, WORLD } from './projection'
 
 const FAR = { u0: -2600, u1: 4600 }
+
+const tex = (name: string) => `${import.meta.env.BASE_URL}assets/textures/${name}.jpg`
+
+/** A seamless texture laid flat on the ground. `size` = one tile in grid units. */
+function GroundTexture({ id, name, size, drift }: { id: string; name: string; size: number; drift?: number }) {
+  return (
+    <pattern id={id} width={size} height={size} patternUnits="userSpaceOnUse" patternTransform={GROUND_MATRIX}>
+      <image href={tex(name)} width={size} height={size} preserveAspectRatio="none">
+        {drift ? <animateTransform attributeName="transform" type="translate" from="0 0" to={`${size} 0`} dur={`${drift}s`} repeatCount="indefinite" /> : null}
+      </image>
+      {/* second copy keeps the tile filled while the first one drifts */}
+      {drift ? (
+        <image href={tex(name)} width={size} height={size} x={-size} preserveAspectRatio="none">
+          <animateTransform attributeName="transform" type="translate" from="0 0" to={`${size} 0`} dur={`${drift}s`} repeatCount="indefinite" />
+        </image>
+      ) : null}
+    </pattern>
+  )
+}
+
+/** Raised slab: a darker copy nudged down reads as the slab's front edge. */
+function Slab({ q, fill, edge, lift = 5, stroke, strokeWidth, tint }: { q: string; fill: string; edge: string; lift?: number; stroke?: string; strokeWidth?: number; tint?: string }) {
+  return (
+    <g>
+      <polygon points={q} fill={edge} transform={`translate(0 ${lift})`} />
+      <polygon points={q} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeLinejoin="round" />
+      {tint && <polygon points={q} fill={tint} opacity={0.22} />}
+    </g>
+  )
+}
 
 function Road({ along, at, w, from, to }: { along: 'u' | 'v'; at: number; w: number; from: number; to: number }) {
   const r = (a0: number, b0: number, a1: number, b1: number) => (along === 'u' ? quad(a0, b0, a1, b1) : quad(b0, a0, b1, a1))
@@ -11,8 +41,10 @@ function Road({ along, at, w, from, to }: { along: 'u' | 'v'; at: number; w: num
   for (let t = from + 20; t < to - 40; t += 74) dashes.push(t)
   return (
     <g>
-      <polygon points={r(from, at - w / 2 - 10, to, at + w / 2 + 10)} fill={C.roadEdge} />
-      <polygon points={r(from, at - w / 2, to, at + w / 2)} fill="url(#road)" />
+      {/* curb: light kerb stone with a shadow line where it meets the asphalt */}
+      <polygon points={r(from, at - w / 2 - 12, to, at + w / 2 + 12)} fill={C.roadEdge} />
+      <polygon points={r(from, at - w / 2, to, at + w / 2)} fill="url(#asphalt)" />
+      <polygon points={r(from, at - w / 2, to, at - w / 2 + 5)} fill="#000" opacity={0.18} />
       {dashes.map((t) => (
         <polygon key={t} points={r(t, at - 2.5, t + 38, at + 2.5)} fill={C.roadLine} opacity={0.9} />
       ))}
@@ -51,6 +83,10 @@ export const Ground = memo(function Ground() {
   return (
     <svg className="absolute inset-0" width={WORLD.w} height={WORLD.h} style={{ zIndex: 0 }}>
       <defs>
+        <linearGradient id="riverShade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0.45" stopColor="#0b3d6e" stopOpacity="0" />
+          <stop offset="1" stopColor="#0b3d6e" stopOpacity="0.28" />
+        </linearGradient>
         <linearGradient id="land" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#b7d79c" />
           <stop offset="1" stopColor="#9cc982" />
@@ -59,18 +95,10 @@ export const Ground = memo(function Ground() {
           <stop offset="0" stopColor={C.river[0]} />
           <stop offset="1" stopColor={C.river[1]} />
         </linearGradient>
-        <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#687183" />
-          <stop offset="1" stopColor={C.road} />
-        </linearGradient>
-        <linearGradient id="paving" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#f7f8fa" />
-          <stop offset="1" stopColor="#e6e9ee" />
-        </linearGradient>
-        <linearGradient id="lawn" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#a9d97a" />
-          <stop offset="1" stopColor="#8cc463" />
-        </linearGradient>
+        <GroundTexture id="asphalt" name="asphalt" size={240} />
+        <GroundTexture id="grass" name="grass" size={300} />
+        <GroundTexture id="paving" name="paving" size={180} />
+        <GroundTexture id="water" name="water" size={460} drift={40} />
         <pattern id="ripples" width="140" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(-16)">
           <path d="M0 20 Q35 12 70 20 T140 20" stroke="#ffffff" strokeOpacity="0.22" strokeWidth="3" fill="none">
             <animateTransform attributeName="transform" type="translate" from="0 0" to="140 0" dur="9s" repeatCount="indefinite" />
@@ -78,12 +106,18 @@ export const Ground = memo(function Ground() {
         </pattern>
       </defs>
       <rect width={WORLD.w} height={WORLD.h} fill="url(#land)" />
+      <rect width={WORLD.w} height={WORLD.h} fill="url(#grass)" opacity={0.4} />
       {/* river + far bank */}
-      <polygon points={quad(FAR.u0, RIVER.v0 - 900, FAR.u1, RIVER.v0)} fill="#b3d2a0" />
-      <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1)} fill="url(#river)" />
+      <polygon points={quad(FAR.u0, RIVER.v0 - 900, FAR.u1, RIVER.v0)} fill="url(#grass)" />
+      <polygon points={quad(FAR.u0, RIVER.v0 - 900, FAR.u1, RIVER.v0)} fill="#dfeede" opacity={0.35} />
+      <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1)} fill="url(#water)" />
+      {/* depth: water darkens toward our bank, where the embankment shades it */}
+      <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1)} fill="url(#riverShade)" />
       <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1)} fill="url(#ripples)" />
-      <polygon points={quad(FAR.u0, RIVER.v1, FAR.u1, RIVER.v1 + 26)} fill="#f3f4f6" />
-      <polygon points={quad(FAR.u0, RIVER.v1 + 26, FAR.u1, RIVER.v1 + 34)} fill="#cfd5de" />
+      {/* embankment: walkway on top, wall face below it */}
+      <polygon points={quad(FAR.u0, RIVER.v1 - 6, FAR.u1, RIVER.v1)} fill="#8a93a3" />
+      <polygon points={quad(FAR.u0, RIVER.v1, FAR.u1, RIVER.v1 + 30)} fill="url(#paving)" />
+      <polygon points={quad(FAR.u0, RIVER.v1 + 30, FAR.u1, RIVER.v1 + 38)} fill="#cfd5de" />
       {/* district plinth: front edge thickness gives the diorama feel */}
       <polygon
         points={`${bl.x},${bl.y} ${br.x},${br.y} ${br.x},${br.y + edgeDrop} ${bl.x},${bl.y + edgeDrop}`}
@@ -91,14 +125,14 @@ export const Ground = memo(function Ground() {
       />
       <polygon points={quad(u0, v0, u1, v1)} fill="url(#paving)" stroke="#ffffff" strokeWidth={6} strokeLinejoin="round" />
       {lots.map((l, i) => (
-        <polygon key={i} points={quad(...l)} fill="url(#lawn)" stroke="#f1f3f5" strokeWidth={10} strokeLinejoin="round" />
+        <Slab key={i} q={quad(...l)} fill="url(#grass)" edge="#5c8f36" lift={6} stroke="#eef0f3" strokeWidth={9} tint="#e8f5c8" />
       ))}
       <Road along="u" at={back.v} w={back.w} from={u0} to={u1} />
       <Road along="u" at={front.v} w={front.w} from={FAR.u0} to={FAR.u1} />
       <Road along="v" at={cross.u} w={cross.w} from={v0} to={v1} />
       {/* intersections: clear the dashes */}
-      <polygon points={quad(cross.u - cross.w / 2, back.v - back.w / 2, cross.u + cross.w / 2, back.v + back.w / 2)} fill={C.road} />
-      <polygon points={quad(cross.u - cross.w / 2, front.v - front.w / 2, cross.u + cross.w / 2, front.v + front.w / 2)} fill={C.road} />
+      <polygon points={quad(cross.u - cross.w / 2, back.v - back.w / 2, cross.u + cross.w / 2, back.v + back.w / 2)} fill="url(#asphalt)" />
+      <polygon points={quad(cross.u - cross.w / 2, front.v - front.w / 2, cross.u + cross.w / 2, front.v + front.w / 2)} fill="url(#asphalt)" />
       <Crosswalk u={cross.u - cross.w / 2 - 24} v={front.v} along="u" />
       <Crosswalk u={cross.u + cross.w / 2 + 24} v={back.v} along="u" />
       <Crosswalk u={cross.u} v={back.v + back.w / 2 + 26} along="v" />

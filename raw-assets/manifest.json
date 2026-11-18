@@ -5,9 +5,6 @@
       "8": "events/flood",
       "9": "events/storm",
       "10": "events/landslide",
-      "11": "vehicles/sedan-white",
-      "12": "vehicles/suv-silver",
-      "13": "vehicles/suv-blue",
       "14": "vehicles/ev-red",
       "15": "vehicles/ev-skyblue",
       "16": "vehicles/suv-dark"
@@ -118,6 +115,18 @@
     "brand/cover.webp": [
       "brand/cover.jpg",
       1920
+    ],
+    "round3/vehicles/suv-blue.webp": [
+      "vehicles/suv-blue.webp",
+      560
+    ],
+    "round3/vehicles/suv-silver.webp": [
+      "vehicles/suv-silver.webp",
+      560
+    ],
+    "round3/vehicles/sedan-white.webp": [
+      "vehicles/sedan-white.webp",
+      560
     ]
   }
 }
