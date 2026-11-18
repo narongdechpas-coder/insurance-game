@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { world as C } from '../design/tokens'
 import { BLOCKS, FOUNTAIN, ISLAND, PLAZA, RIVER, ROADS } from './layout'
+import { SurroundingsGround } from './Surroundings'
 import { GROUND_MATRIX, project, quad, U, WORLD } from './projection'
 
 const tex = (name: string) => `${import.meta.env.BASE_URL}assets/textures/${name}.jpg`
@@ -142,6 +143,8 @@ export const Ground = memo(function Ground() {
         )
       })}
       {/* water fades into the haze in front of the island so it reads as floating */}
+
+      <SurroundingsGround />
 
       {/* island: soft shadow, plinth faces, top */}
       <ellipse cx={(a.x + c.x) / 2} cy={b.y + drop + 10} rx={(c.x - a.x) / 2} ry={70} fill="url(#islandShadow)" />

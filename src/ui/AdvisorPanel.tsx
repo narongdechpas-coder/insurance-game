@@ -1,5 +1,6 @@
 import { ChevronRight, Sparkles } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { moodOfStatus, portraitKey } from '../assets/portraits'
 import { spriteUrl } from '../assets/registry'
 import { ADVISOR_NAME, locationComment, quarterBriefing } from '../game/narrative/advisor'
 import { locationStatus } from '../game/selectors'
@@ -31,16 +32,29 @@ export function AdvisorPanel() {
   // pose follows the mood of what she is talking about
   const mood = selected ? locationStatus(game, selected) : 'good'
   const pose = mood === 'alert' || mood === 'watch' ? 'characters/advisor-warning' : mood === 'chance' ? 'characters/advisor-happy' : 'characters/advisor'
+  // a half portrait replaces the full body once that art exists
+  const bust = portraitKey('advisor', mood === 'watch' ? 'shocked' : moodOfStatus(mood))
 
   return (
     <div className="absolute left-4 bottom-3 flex items-end pointer-events-auto">
-      <img
-        key={pose}
-        src={spriteUrl(pose)}
-        alt={ADVISOR_NAME}
-        draggable={false}
-        className="relative z-10 h-[300px] w-[150px] object-contain object-bottom drop-shadow-[0_14px_20px_rgba(8,26,66,0.45)] anim-rise"
-      />
+      {bust ? (
+        <img
+          key={bust}
+          src={spriteUrl(bust)}
+          alt={ADVISOR_NAME}
+          draggable={false}
+          data-portrait={bust}
+          className="relative z-10 -mb-3 h-[230px] w-[200px] object-contain object-bottom drop-shadow-[0_14px_20px_rgba(8,26,66,0.45)] anim-rise"
+        />
+      ) : (
+        <img
+          key={pose}
+          src={spriteUrl(pose)}
+          alt={ADVISOR_NAME}
+          draggable={false}
+          className="relative z-10 h-[300px] w-[150px] object-contain object-bottom drop-shadow-[0_14px_20px_rgba(8,26,66,0.45)] anim-rise"
+        />
+      )}
       <button
         onClick={() => (done ? !selected && setI((v) => v + 1) : skip())}
         className="relative -ml-6 mb-6 w-[372px] min-h-[132px] text-left glass rounded-[26px] pl-8 pr-5 pt-3 pb-4 anim-rise"

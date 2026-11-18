@@ -136,6 +136,12 @@ body,
 .ink-in { animation: ink-in 0.55s var(--ease-game) both; }
 @keyframes paper-in { from { opacity: 0; transform: translateY(30px) rotate(-1.2deg) scale(0.96); } to { opacity: 1; transform: none; } }
 .paper-in { animation: paper-in 0.7s var(--ease-game) both; }
+@keyframes chip-up { 0% { opacity: 0; transform: translate(-50%, 6px) scale(0.85); } 15% { opacity: 1; transform: translate(-50%, -6px) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -46px) scale(1); } }
+.chip-up { animation: chip-up 1.7s var(--ease-game) both; }
+@keyframes rain-fall { from { background-position: 0 0; } to { background-position: 0 240px; } }
+/* vertical streaks tile seamlessly; the layer is rotated and oversized to slant the rain */
+.rain { position: fixed; inset: -25%; transform: rotate(14deg); background-image: repeating-linear-gradient(90deg, transparent 0 34px, rgb(225 238 255 / 0.4) 34px 35.5px), repeating-linear-gradient(0deg, transparent 0 60px, rgb(0 0 0 / 0) 60px 240px); background-size: 120px 240px; -webkit-mask-image: repeating-linear-gradient(0deg, #000 0 70px, transparent 70px 120px); mask-image: repeating-linear-gradient(0deg, #000 0 70px, transparent 70px 120px); animation: rain-fall 0.5s linear infinite; }
+@keyframes stress-pulse { 0%, 100% { opacity: 0.0; } 50% { opacity: 0.85; } }
 .anim-bob { animation: bob 2.4s ease-in-out infinite; }
 .pulse-alert { animation: pulse-ring 1.4s ease-out infinite; }
 

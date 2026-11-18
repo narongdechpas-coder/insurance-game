@@ -1,4 +1,5 @@
 import { ArrowRight, X } from 'lucide-react'
+import { moodOfStatus, portraitKey } from '../assets/portraits'
 import { spriteUrl } from '../assets/registry'
 import { LOCATION_BY_ID } from '../game/data/locations'
 import { MODULES } from '../game/data/modules'
@@ -27,11 +28,25 @@ export function LocationPanel() {
   const status = locationStatus(game, id)
   const evs = eventsAt(game, id)
   const Icon = LOCATION_ICONS[loc.icon]
+  const head = portraitKey(id, moodOfStatus(status))
 
   return (
     <aside key={id} className="absolute right-7 top-[104px] w-[400px] glass rounded-[28px] overflow-hidden pointer-events-auto anim-slide-right">
       <div className="relative h-[170px] bg-gradient-to-b from-brand-100 to-white grid place-items-center">
-        <img src={spriteUrl(PANEL_ART[id] ?? BUILDINGS[id].sprite)} alt="" className="max-h-[160px] max-w-[330px] object-contain drop-shadow-[0_12px_16px_rgba(20,50,110,0.25)]" />
+        <img
+          src={spriteUrl(PANEL_ART[id] ?? BUILDINGS[id].sprite)}
+          alt=""
+          className={`object-contain drop-shadow-[0_12px_16px_rgba(20,50,110,0.25)] ${head ? 'max-h-[140px] max-w-[240px] -translate-x-16' : 'max-h-[160px] max-w-[330px]'}`}
+        />
+        {head && (
+          <img
+            key={head}
+            src={spriteUrl(head)}
+            alt=""
+            data-portrait={head}
+            className="absolute right-3 bottom-0 h-[150px] w-[140px] object-contain object-bottom drop-shadow-[0_10px_14px_rgba(20,50,110,0.3)] anim-rise"
+          />
+        )}
         <span className={`absolute top-4 left-4 text-[12.5px] font-medium rounded-full px-3 py-1 bg-white/90 shadow-sm ${STATUS_STYLE[status]}`}>{STATUS_LABEL[status]}</span>
         <button onClick={() => select(null)} className="absolute top-3 right-3 grid place-items-center size-9 rounded-full bg-white/90 text-navy-800 hover:bg-white shadow" aria-label="ปิด">
           <X size={18} />

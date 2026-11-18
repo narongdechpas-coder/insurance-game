@@ -1,4 +1,5 @@
 import { AlertTriangle, Lightbulb, Sparkles } from 'lucide-react'
+import { portraitKey } from '../../assets/portraits'
 import { spriteUrl } from '../../assets/registry'
 import { ADVISOR_NAME } from '../../game/narrative/advisor'
 import { CARD_BY_ID } from '../../game/decisions/cards'
@@ -24,6 +25,7 @@ export function DecisionAdvisor() {
   const lead = warnings.find(about) ?? tips.find(about) ?? warnings[0] ?? tips[0]
   const pending = unansweredEvents(game, responses).length
   const pose = warnings.length ? 'characters/advisor-warning' : tips.length ? 'characters/advisor' : 'characters/advisor-happy'
+  const bust = portraitKey('advisor', warnings.length ? 'shocked' : tips.length ? 'normal' : 'happy')
   const sc = activeEvent ? SCENARIO_BY_EVENT[activeEvent] : undefined
   const text =
     step === 'scenario' && sc && !responses[sc.eventId]
@@ -35,7 +37,11 @@ export function DecisionAdvisor() {
         : (lead?.text ?? `${CARD_BY_ID[activeCard].question} — เลือกได้เลยค่ะ ถ้าแผนขัดกันเองหนูจะเตือน`)
   return (
     <div className="absolute left-4 bottom-3 flex items-end pointer-events-auto">
-      <img key={pose} src={spriteUrl(pose)} alt={ADVISOR_NAME} className="relative z-10 h-[200px] w-[110px] object-contain object-bottom drop-shadow-[0_14px_20px_rgba(8,26,66,0.45)] anim-rise" />
+      {bust ? (
+        <img key={bust} src={spriteUrl(bust)} alt={ADVISOR_NAME} data-portrait={bust} className="relative z-10 -mb-3 h-[160px] w-[140px] object-contain object-bottom drop-shadow-[0_14px_20px_rgba(8,26,66,0.45)] anim-rise" />
+      ) : (
+        <img key={pose} src={spriteUrl(pose)} alt={ADVISOR_NAME} className="relative z-10 h-[200px] w-[110px] object-contain object-bottom drop-shadow-[0_14px_20px_rgba(8,26,66,0.45)] anim-rise" />
+      )}
       <div className="relative -ml-4 mb-4 w-[800px] glass rounded-[24px] pl-7 pr-5 py-3 anim-rise">
         <span className="absolute -left-2 bottom-8 size-5 rotate-45 bg-white" />
         <div className="flex items-center gap-2 font-display font-semibold text-brand-600 text-[15px]">
