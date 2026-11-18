@@ -27,6 +27,7 @@ export type Status = 'good' | 'watch' | 'alert' | 'chance'
 
 export interface GameConfig {
   companyName: string
+  playerName: string
   quarters: GameLength
   difficulty: Difficulty
   startingCapitalMB: number // million THB

@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { world as C } from '../design/tokens'
 import { BLOCKS, FOUNTAIN, ISLAND, PLAZA, RIVER, ROADS } from './layout'
-import { GROUND_MATRIX, project, quad, WORLD } from './projection'
+import { GROUND_MATRIX, project, quad, U, WORLD } from './projection'
 
 const tex = (name: string) => `${import.meta.env.BASE_URL}assets/textures/${name}.jpg`
 
@@ -71,7 +71,7 @@ function Crosswalk({ u, v, along }: { u: number; v: number; along: 'u' | 'v' }) 
  */
 export const Ground = memo(function Ground() {
   const { u0, v0, u1, v1 } = ISLAND
-  const FAR = { u0: u0 - 2400, u1: u1 + 2400 }
+  const FAR = { u0: u0 - 3600, u1: u1 + 3600 }
   const drop = 46 // island plinth thickness (px)
   const a = project(u0, v0)
   const b = project(u0, v1) // front corner
@@ -81,8 +81,9 @@ export const Ground = memo(function Ground() {
     <svg className="absolute inset-0" width={WORLD.w} height={WORLD.h} style={{ zIndex: 0 }}>
       <defs>
         <linearGradient id="haze" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#dce9f5" />
-          <stop offset="1" stopColor="#c3d4e6" />
+          <stop offset="0" stopColor="#a9cdee" />
+          <stop offset="0.35" stopColor="#d6e7f6" />
+          <stop offset="1" stopColor="#eef4fa" />
         </linearGradient>
         <linearGradient id="riverShade" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0.45" stopColor="#0b3d6e" stopOpacity="0" />
@@ -112,13 +113,35 @@ export const Ground = memo(function Ground() {
       </defs>
       {/* backdrop: soft haze, far bank and river behind the island */}
       <rect width={WORLD.w} height={WORLD.h} fill="url(#haze)" />
-      <polygon points={quad(FAR.u0, RIVER.v0 - 1200, FAR.u1, RIVER.v0)} fill="url(#grass)" />
-      <polygon points={quad(FAR.u0, RIVER.v0 - 1200, FAR.u1, RIVER.v0)} fill="#e3eef6" opacity={0.45} />
-      <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1 + 200)} fill="url(#water)" />
-      <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1 + 200)} fill="url(#riverShade)" />
-      <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1 + 200)} fill="url(#ripples)" />
+      {/* river behind the island; lawn everywhere in front of it */}
+      <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1)} fill="url(#water)" />
+      <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1)} fill="url(#riverShade)" />
+      <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1)} fill="url(#ripples)" />
+      <polygon points={quad(FAR.u0, RIVER.v1, FAR.u1, v1 + 2400)} fill="url(#grass)" />
+      <polygon points={quad(FAR.u0, RIVER.v1, FAR.u1, v1 + 2400)} fill="#eef6d8" opacity={0.32} />
+      {/* riverbank: paved edge between water and lawn */}
+      <polygon points={quad(FAR.u0, RIVER.v1 - 6, FAR.u1, RIVER.v1)} fill="#8a93a3" />
+      <polygon points={quad(FAR.u0, RIVER.v1, FAR.u1, RIVER.v1 + 24)} fill="url(#paving)" />
+      {/* far bank skyline: a flat panorama sheared onto the river's far edge (bottom follows the U axis, buildings stay upright) */}
+      {[0, 1, 2].map((i) => {
+        const W = 3600
+        const H = W * (312 / 2000)
+        const p = project(FAR.u0 + 600 + i * W, RIVER.v0 + 70)
+        return (
+          <image
+            key={i}
+            href={`${import.meta.env.BASE_URL}assets/brand/far-bank.webp`}
+            x={0}
+            y={-H}
+            width={W}
+            height={H}
+            preserveAspectRatio="none"
+            transform={`matrix(${U.x} ${U.y} 0 1 ${p.x} ${p.y})`}
+            opacity={0.95}
+          />
+        )
+      })}
       {/* water fades into the haze in front of the island so it reads as floating */}
-      <polygon points={quad(FAR.u0, RIVER.v1 + 120, FAR.u1, v1 + 900)} fill="url(#haze)" opacity={0.92} />
 
       {/* island: soft shadow, plinth faces, top */}
       <ellipse cx={(a.x + c.x) / 2} cy={b.y + drop + 10} rx={(c.x - a.x) / 2} ry={70} fill="url(#islandShadow)" />

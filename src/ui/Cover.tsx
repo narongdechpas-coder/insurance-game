@@ -1,8 +1,8 @@
-import { CalendarRange, Coins, Gauge, Play, Swords, X } from 'lucide-react'
+import { Building2, CalendarRange, Coins, Gauge, Play, Swords, UserRound, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { preloadAssets } from '../assets/preload'
 import { brandUrl } from '../assets/registry'
-import { DIFFICULTIES, GAME_LENGTHS, STARTING_CAPITAL_MB } from '../game/config'
+import { DEFAULT_CONFIG, DIFFICULTIES, GAME_LENGTHS, STARTING_CAPITAL_MB } from '../game/config'
 import type { Difficulty, GameLength } from '../game/types'
 import { useGameStore } from '../store/useGameStore'
 import { Stage } from './Stage'
@@ -34,6 +34,10 @@ function ModeModal({ onClose }: { onClose: () => void }) {
   const start = useGameStore((s) => s.startGame)
   const [quarters, setQuarters] = useState<GameLength>(12)
   const [difficulty, setDifficulty] = useState<Difficulty>('normal')
+  const [companyName, setCompanyName] = useState('')
+  const [playerName, setPlayerName] = useState('')
+  const go = () =>
+    start({ quarters, difficulty, companyName: companyName.trim() || DEFAULT_CONFIG.companyName, playerName: playerName.trim() || DEFAULT_CONFIG.playerName })
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
@@ -47,7 +51,36 @@ function ModeModal({ onClose }: { onClose: () => void }) {
         </button>
         <h2 className="font-display font-bold text-[26px] text-navy-900">เลือกโหมดเกม</h2>
         <p className="text-[14px] text-navy-700/70">คุณคือ CEO บริษัทประกันวินาศภัย แข่งกับคู่แข่ง AI อีก 4 บริษัท</p>
-        <div className="flex items-center gap-2 text-[14px] text-navy-700/80 mt-5 mb-2">
+        <div className="grid grid-cols-2 gap-3 mt-5">
+          <label className="block">
+            <span className="flex items-center gap-2 text-[14px] text-navy-700/80 mb-2">
+              <Building2 size={17} className="text-brand-600" /> ชื่อบริษัท
+            </span>
+            <input
+              data-field="company"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              maxLength={28}
+              placeholder={DEFAULT_CONFIG.companyName}
+              className="w-full h-12 rounded-2xl bg-white/90 px-4 text-[16px] text-navy-900 placeholder:text-navy-700/40 outline-none ring-1 ring-brand-100 focus:ring-2 focus:ring-brand-500"
+            />
+          </label>
+          <label className="block">
+            <span className="flex items-center gap-2 text-[14px] text-navy-700/80 mb-2">
+              <UserRound size={17} className="text-brand-600" /> ชื่อผู้เล่น (CEO)
+            </span>
+            <input
+              data-field="player"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              maxLength={20}
+              placeholder="เช่น แจ็ค"
+              onKeyDown={(e) => e.key === 'Enter' && go()}
+              className="w-full h-12 rounded-2xl bg-white/90 px-4 text-[16px] text-navy-900 placeholder:text-navy-700/40 outline-none ring-1 ring-brand-100 focus:ring-2 focus:ring-brand-500"
+            />
+          </label>
+        </div>
+        <div className="flex items-center gap-2 text-[14px] text-navy-700/80 mt-4 mb-2">
           <CalendarRange size={17} className="text-brand-600" /> ระยะเวลาเกม
         </div>
         <div className="flex gap-2.5">
@@ -74,7 +107,7 @@ function ModeModal({ onClose }: { onClose: () => void }) {
             <div className="flex items-center gap-2"><Swords size={16} className="text-brand-600" /> ตลาดประกันวินาศภัยไทย</div>
           </div>
           <button
-            onClick={() => start({ quarters, difficulty })}
+            onClick={go}
             className="ml-auto h-[66px] w-[260px] rounded-[22px] btn-gold shine flex items-center justify-center gap-3 font-display font-bold text-[24px] hover:brightness-105 hover:-translate-y-0.5 transition-all"
           >
             เริ่มเลย <Play size={24} fill="currentColor" />

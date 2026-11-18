@@ -18,8 +18,8 @@ interface Lane {
  */
 const LANES: Lane[] = [
   // cars enter and leave at the island edge (they fade in/out there)
-  { axis: 'u', at: ROADS.u[1].v + 26, from: ISLAND.u1, to: ISLAND.u0, speed: 110, cars: 4 },
-  { axis: 'u', at: ROADS.u[0].v + 26, from: ISLAND.u1, to: ISLAND.u0, speed: 90, cars: 3 },
+  { axis: 'u', at: ROADS.u[2].v + 26, from: ISLAND.u1, to: ISLAND.u0, speed: 110, cars: 4 },
+  { axis: 'u', at: ROADS.u[1].v + 26, from: ISLAND.u1, to: ISLAND.u0, speed: 90, cars: 3 },
   { axis: 'v', at: ROADS.v[0].u - 24, from: ISLAND.v0, to: ISLAND.v1, speed: 80, cars: 2 },
   { axis: 'v', at: ROADS.v[1].u - 24, from: ISLAND.v0, to: ISLAND.v1, speed: 70, cars: 2 },
 ]

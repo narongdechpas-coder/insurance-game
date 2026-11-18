@@ -24,8 +24,8 @@ export const V = { x: Math.cos(rad(A.v)), y: Math.sin(rad(A.v)) }
 /** z-index of the focus scrim; the selected building and its UI sit above it. */
 export const FOCUS_Z = 6000
 
-export const WORLD = { w: 4200, h: 2200 }
-export const ORIGIN = { x: 760, y: 1300 }
+export const WORLD = { w: 8400, h: 4000 }
+export const ORIGIN = { x: 3000, y: 2200 }
 
 export function project(u: number, v: number) {
   return { x: ORIGIN.x + u * U.x + v * V.x, y: ORIGIN.y + u * U.y + v * V.y }

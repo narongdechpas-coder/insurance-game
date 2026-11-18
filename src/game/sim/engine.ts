@@ -319,10 +319,14 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   // 6. losses and money — player
   const gwp = pl.share * sim.marketGwp
   const spend = planCost(plan, responses)
-  const rateLR = P.baseLossRatio / earnedRate(pl.rateHist)
-  const attritional = rateLR - P.profitAxisLR * flow.profit + overloadLR + r.normal() * (P.attritionalNoise + P.riskAxisVolatility * riskUp)
+  const trend = (1 + P.claimsTrend) ** q
+  const rateLR = (P.baseLossRatio * trend) / Math.min(P.rateCap, earnedRate(pl.rateHist))
+  const marketPrice = sim.firms.reduce((a, f) => a + f.price * f.share, 0) / sim.firms.reduce((a, f) => a + f.share, 0)
+  const priceGap = pl.price / marketPrice - 1
+  const adverseLR = Math.max(0, priceGap - P.adverseSelection.freeGap) * P.adverseSelection.lrPerGap
+  const attritional = rateLR - P.profitAxisLR * flow.profit + overloadLR + adverseLR + r.normal() * (P.attritionalNoise + P.riskAxisVolatility * riskUp)
   const catMult = floodActive ? (responseOf(responses, 'flood-central')?.sim?.catLossMult ?? 1) : 1
-  const catGross = floodHit ? P.floodLossOfGwp * gwp * pl.catExposure * r.range(P.floodSeverity[0], P.floodSeverity[1]) * (1 + 0.08 * riskUp) * catMult : 0
+  const catGross = floodHit ? diff.floodSeverity * P.floodLossOfGwp * gwp * pl.catExposure * r.range(P.floodSeverity[0], P.floodSeverity[1]) * (1 + 0.08 * riskUp) * catMult : 0
   const expense = P.adminRatio + P.commissionRatio + (spend - P.baselineSpend) / gwp
   const uw = underwrite(gwp, attritional, expense, catGross, qs, xl)
   const investment = pl.capital * P.investmentYield
@@ -334,14 +338,14 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   // 7. losses and money — competitors (same model, standard treaty)
   sim.firms.forEach((f) => {
     const g = f.share * sim.marketGwp
-    const lr = P.baseLossRatio / earnedRate(f.rateHist) + r.normal() * P.attritionalNoise
-    const cat = floodHit || (floodActive && r.next() < diff.floodChance) ? P.floodLossOfGwp * g * f.catExposure * r.range(P.floodSeverity[0], P.floodSeverity[1]) : 0
+    const lr = (P.baseLossRatio * trend) / Math.min(P.rateCap, earnedRate(f.rateHist)) + r.normal() * P.attritionalNoise
+    const cat = floodHit || (floodActive && r.next() < diff.floodChance) ? diff.floodSeverity * P.floodLossOfGwp * g * f.catExposure * r.range(P.floodSeverity[0], P.floodSeverity[1]) : 0
     const res = underwrite(g, lr, P.adminRatio + P.commissionRatio, cat, P.quotaShare.keep, { retention: P.xl.retention * (g / 2000), cost: P.xl.cost })
     f.capital += res.netResult + f.capital * P.investmentYield
     f.combinedRatio = res.lossRatio + res.expenseRatio
     f.crSum += f.combinedRatio
     f.quarters += 1
-    f.satisfaction = clamp(f.satisfaction + P.satisfactionReversion * 0.5 * (P.satisfactionAnchor - f.satisfaction) - (cat ? 0.25 : 0), 1, 5)
+    f.satisfaction = clamp(f.satisfaction + diff.rivalService + P.satisfactionReversion * 0.5 * (P.satisfactionAnchor + 0.3 * diff.rivalService / 0.05 - f.satisfaction) - (cat ? 0.25 : 0), 1, 5)
   })
 
   // 8. satisfaction
@@ -366,13 +370,20 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
       weight: Math.abs(shareFromPrice) * sim.marketGwp * 0.6,
     })
   }
-  const rateDrag = (rateLR - P.baseLossRatio) * gwp
+  const rateDrag = (rateLR - P.baseLossRatio * trend) * gwp
   if (Math.abs(rateDrag) > 8)
     drivers.push({
       id: 'rate',
-      text: rateDrag > 0 ? `ราคาที่ลดไปก่อนหน้าทยอยกดกำไร Loss Ratio ${fmtPct(rateLR - P.baseLossRatio)} จุด` : `ราคาที่ปรับขึ้นทยอยช่วยกำไร Loss Ratio ${fmtPct(rateLR - P.baseLossRatio)} จุด`,
+      text: rateDrag > 0 ? `ราคาที่ลดไปก่อนหน้าทยอยกดกำไร Loss Ratio ${fmtPct(rateLR - P.baseLossRatio * trend)} จุด` : `ราคาที่ปรับขึ้นทยอยช่วยกำไร Loss Ratio ${fmtPct(rateLR - P.baseLossRatio * trend)} จุด`,
       tone: rateDrag > 0 ? 'bad' : 'good',
       weight: Math.abs(rateDrag),
+    })
+  if (adverseLR > 0.005)
+    drivers.push({
+      id: 'adverse',
+      text: `ราคาแพงกว่าตลาด ${Math.round(priceGap * 100)}% ลูกค้าดีย้ายออกก่อน พอร์ตที่เหลือเคลมมากขึ้น Loss Ratio ${fmtPct(adverseLR)} จุด`,
+      tone: 'bad',
+      weight: adverseLR * gwp,
     })
   if (floodHit)
     drivers.push({

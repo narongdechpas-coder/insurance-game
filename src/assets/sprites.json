@@ -43,15 +43,36 @@
  },
  "buildings/market-intel": {
   "w": 1100,
-  "h": 741,
-  "ax": 0.492,
-  "ay": 0.999,
+  "h": 773,
+  "ax": 0.5,
+  "ay": 1.0,
   "ext": "webp"
  },
  "buildings/marketing": {
   "w": 1100,
   "h": 753,
   "ax": 0.498,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "buildings/office-low": {
+  "w": 675,
+  "h": 800,
+  "ax": 0.498,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "buildings/office-row": {
+  "w": 800,
+  "h": 617,
+  "ax": 0.38,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "buildings/office-tower": {
+  "w": 458,
+  "h": 800,
+  "ax": 0.499,
   "ay": 1.0,
   "ext": "webp"
  },
@@ -140,24 +161,24 @@
   "ext": "png"
  },
  "environments/bench": {
-  "w": 104,
-  "h": 93,
-  "ax": 0.692,
-  "ay": 0.946,
-  "ext": "png"
+  "w": 400,
+  "h": 287,
+  "ax": 0.606,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "environments/bus-stop": {
-  "w": 156,
-  "h": 159,
-  "ax": 0.366,
-  "ay": 0.962,
-  "ext": "png"
+  "w": 400,
+  "h": 327,
+  "ax": 0.654,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "environments/cafe-terrace": {
-  "w": 640,
-  "h": 583,
-  "ax": 0.59,
-  "ay": 1.0,
+  "w": 700,
+  "h": 449,
+  "ax": 0.33,
+  "ay": 0.996,
   "ext": "webp"
  },
  "environments/carport": {
@@ -203,11 +224,11 @@
   "ext": "png"
  },
  "environments/garden-island": {
-  "w": 236,
-  "h": 163,
-  "ax": 0.48,
-  "ay": 0.957,
-  "ext": "png"
+  "w": 480,
+  "h": 417,
+  "ax": 0.498,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "environments/guard-gate": {
   "w": 135,
@@ -217,11 +238,11 @@
   "ext": "png"
  },
  "environments/planter": {
-  "w": 124,
-  "h": 121,
-  "ax": 0.66,
-  "ay": 0.942,
-  "ext": "png"
+  "w": 400,
+  "h": 338,
+  "ax": 0.353,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "environments/street-lamp": {
   "w": 61,
@@ -265,6 +286,20 @@
   "ay": 0.915,
   "ext": "png"
  },
+ "events/claims-surge": {
+  "w": 640,
+  "h": 640,
+  "ax": 0.497,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "events/economy": {
+  "w": 638,
+  "h": 640,
+  "ax": 0.511,
+  "ay": 1.0,
+  "ext": "webp"
+ },
  "events/ev-growth": {
   "w": 640,
   "h": 603,
@@ -292,6 +327,13 @@
   "ax": 0.419,
   "ay": 0.978,
   "ext": "png"
+ },
+ "events/regulation": {
+  "w": 640,
+  "h": 637,
+  "ax": 0.496,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "events/rival-promo": {
   "w": 640,
@@ -350,11 +392,11 @@
   "ext": "webp"
  },
  "vehicles/pickup": {
-  "w": 181,
-  "h": 122,
-  "ax": 0.352,
-  "ay": 0.951,
-  "ext": "png"
+  "w": 560,
+  "h": 357,
+  "ax": 0.393,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "vehicles/sedan-green": {
   "w": 560,
@@ -364,11 +406,11 @@
   "ext": "webp"
  },
  "vehicles/sedan-lilac": {
-  "w": 179,
-  "h": 109,
-  "ax": 0.324,
-  "ay": 0.954,
-  "ext": "png"
+  "w": 560,
+  "h": 357,
+  "ax": 0.408,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "vehicles/sedan-red": {
   "w": 560,
@@ -406,17 +448,17 @@
   "ext": "webp"
  },
  "vehicles/tow-truck": {
-  "w": 202,
-  "h": 90,
-  "ax": 0.212,
-  "ay": 0.956,
-  "ext": "png"
+  "w": 560,
+  "h": 317,
+  "ax": 0.374,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "vehicles/van": {
-  "w": 178,
-  "h": 125,
-  "ax": 0.315,
-  "ay": 0.96,
-  "ext": "png"
+  "w": 560,
+  "h": 387,
+  "ax": 0.364,
+  "ay": 1.0,
+  "ext": "webp"
  }
 }

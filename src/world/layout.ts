@@ -17,6 +17,8 @@ const COLS: [number, number][] = [
   [520, 1040],
   [1180, 1560],
 ]
+/** Back strip: background offices that give the city a skyline behind the business units. */
+const FILLER_ROW: [number, number] = [-480, -250]
 const ROWS: [number, number][] = [
   [-120, 280],
   [420, 900],
@@ -24,17 +26,17 @@ const ROWS: [number, number][] = [
 ]
 const SIDEWALK = 70 // paved margin around the grid, inside the island edge
 
-export const ISLAND = { u0: COLS[0][0] - SIDEWALK, v0: ROWS[0][0] - SIDEWALK, u1: COLS[2][1] + SIDEWALK, v1: ROWS[2][1] + SIDEWALK }
+export const ISLAND = { u0: COLS[0][0] - SIDEWALK, v0: FILLER_ROW[0] - SIDEWALK, u1: COLS[2][1] + SIDEWALK, v1: ROWS[2][1] + SIDEWALK }
 export const RIVER = { v0: ISLAND.v0 - 420, v1: ISLAND.v0 - 40 }
 
 /** Roads run in the gaps between the blocks: two along U (rows), two along V (columns). */
 export const ROADS = {
-  u: [(ROWS[0][1] + ROWS[1][0]) / 2, (ROWS[1][1] + ROWS[2][0]) / 2].map((v) => ({ v, w: 112 })),
+  u: [(FILLER_ROW[1] + ROWS[0][0]) / 2, (ROWS[0][1] + ROWS[1][0]) / 2, (ROWS[1][1] + ROWS[2][0]) / 2].map((v, i) => ({ v, w: i === 0 ? 100 : 112 })),
   v: [(COLS[0][1] + COLS[1][0]) / 2, (COLS[1][1] + COLS[2][0]) / 2].map((u) => ({ u, w: 112 })),
 }
 
 /** Every block as [u0, v0, u1, v1]; index = row * 3 + col. */
-export const BLOCKS: [number, number, number, number][] = ROWS.flatMap(([v0, v1]) => COLS.map(([u0, u1]) => [u0, v0, u1, v1] as [number, number, number, number]))
+export const BLOCKS: [number, number, number, number][] = [FILLER_ROW, ...ROWS].flatMap(([v0, v1]) => COLS.map(([u0, u1]) => [u0, v0, u1, v1] as [number, number, number, number]))
 
 /** The centre block's front strip is HQ's plaza; the fountain sits in its middle. */
 export const PLAZA = { u0: COLS[1][0] + 20, v0: 790, u1: COLS[1][1] - 20, v1: ROWS[1][1] - 6 }
@@ -75,23 +77,37 @@ const DS = 0.42 // decor buildings are smaller so the seven business units stay 
 
 /** Non-interactive set dressing: fills the blocks the business units don't use. */
 export const DECOR: Placement[] = [
+  // back strip: plain white offices (quieter than the business units) form the skyline
+  { sprite: 'buildings/office-row', u: COLS[0][0] + 10, v: FILLER_ROW[1] - 16, scale: 0.5 },
+  { sprite: 'buildings/office-tower', u: COLS[0][1] - 40, v: FILLER_ROW[1] - 40, scale: 0.55 },
+  { sprite: 'buildings/office-low', u: COLS[1][0] + 30, v: FILLER_ROW[1] - 16, scale: 0.55 },
+  { sprite: 'buildings/office-tower', u: COLS[1][0] + 290, v: FILLER_ROW[1] - 40, scale: 0.55 },
+  { sprite: 'buildings/office-low', u: COLS[2][0] - 140, v: FILLER_ROW[1] - 16, scale: 0.5 },
+  { sprite: 'buildings/office-row', u: COLS[2][0] + 110, v: FILLER_ROW[1] - 16, scale: 0.5 },
   // back-centre block, behind HQ
   { sprite: 'buildings/ev-center', u: COLS[1][0] + 4, v: ROWS[0][1] - 30, scale: DS },
   { sprite: 'buildings/market-intel', u: COLS[1][1] - 262, v: ROWS[0][1] - 30, scale: DS },
   // front-centre block: a small park with the capital vault
   { sprite: 'buildings/capital-vault', u: COLS[1][0] + 120, v: ROWS[2][1] - 40, scale: DS },
-  { sprite: 'environments/carport', u: COLS[1][1] - 150, v: ROWS[2][0] + 180, scale: 0.24 },
+  { sprite: 'environments/cafe-terrace', u: COLS[1][1] - 230, v: ROWS[2][0] + 190, scale: 0.26 },
   // street furniture on the outer sidewalk
-  { sprite: 'environments/bus-stop', u: COLS[0][1] - 90, v: ISLAND.v1 - 20, scale: 0.5 },
+  { sprite: 'environments/bus-stop', u: COLS[0][1] - 130, v: ISLAND.v1 - 6, scale: 0.24 },
+  { sprite: 'environments/bench', u: COLS[1][0] + 340, v: ISLAND.v1 - 6, scale: 0.16 },
+  { sprite: 'environments/garden-island', u: COLS[2][1] - 170, v: ISLAND.v1 - 8, scale: 0.36 },
   { sprite: 'environments/carport', u: COLS[2][0] + 60, v: ISLAND.v1 - 10, scale: 0.22 },
   { sprite: 'environments/tyres', u: COLS[2][0] + 18, v: ROWS[0][1] - 4, scale: 0.45 },
   { sprite: 'environments/cone', u: COLS[2][0] + 6, v: ROWS[0][1] + 26, scale: 0.4 },
 ]
 
 /** Footprints (grid units) of everything big, so trees and props never grow through them. */
+const COS = Math.cos((24 * Math.PI) / 180)
 const FOOTPRINTS: [number, number, number, number][] = [...Object.values(BUILDINGS), ...DECOR.filter((d) => d.sprite.startsWith('buildings/'))].map((b) => {
-  const k = b.scale / 0.5
-  return [b.u - 10, b.v - 300 * k - 10, b.u + 310 * k + 10, b.v + 10]
+  // plinth extents measured from the sprite: right of the front corner = +U, left of it = −V
+  const m = SPRITES[b.sprite]
+  const [ax] = anchorOf(b)
+  const du = ((1 - ax) * m.w * b.scale) / COS
+  const dv = (ax * m.w * b.scale) / COS
+  return [b.u - 10, b.v - dv - 10, b.u + du + 10, b.v + 10]
 })
 const inFootprint = (u: number, v: number) =>
   FOOTPRINTS.some(([u0, v0, u1, v1]) => u > u0 && u < u1 && v > v0 && v < v1) ||
@@ -122,12 +138,13 @@ export const GREENERY: [number, number, SpriteKey, number][] = [
   ...avenue(),
   // plaza: blossom tree in the round bed, planters on both sides
   [FOUNTAIN.u, FOUNTAIN.v, 'environments/tree-blossom', 0.42],
-  [PLAZA.u0 + 30, PLAZA.v1 - 18, 'environments/planter', 0.36],
-  [PLAZA.u1 - 60, PLAZA.v1 - 18, 'environments/planter', 0.36],
+  [PLAZA.u0 + 14, PLAZA.v1 - 8, 'environments/planter', 0.16],
+  [PLAZA.u1 - 96, PLAZA.v1 - 8, 'environments/planter', 0.16],
   // front-centre park
   [COLS[1][0] + 60, ROWS[2][0] + 60, 'environments/tree-blossom', 0.5],
   [COLS[1][0] + 200, ROWS[2][0] + 50, 'environments/tree', 0.5],
-  [COLS[1][1] - 60, ROWS[2][1] - 30, 'environments/planter', 0.4],
+  [COLS[1][1] - 110, ROWS[2][1] - 14, 'environments/planter', 0.16],
+  [COLS[1][1] - 150, ROWS[2][0] + 120, 'environments/bench', 0.16],
 ]
 
 /** Street lamps at every intersection corner and along the island rim. */
