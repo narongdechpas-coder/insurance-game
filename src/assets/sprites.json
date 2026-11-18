@@ -328,6 +328,13 @@
   "ay": 0.978,
   "ext": "png"
  },
+ "events/market-normal": {
+  "w": 640,
+  "h": 629,
+  "ax": 0.501,
+  "ay": 0.998,
+  "ext": "webp"
+ },
  "events/regulation": {
   "w": 640,
   "h": 637,
@@ -369,6 +376,34 @@
   "ax": 0.405,
   "ay": 0.944,
   "ext": "png"
+ },
+ "rivals/bluewave-direct": {
+  "w": 640,
+  "h": 450,
+  "ax": 0.494,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "rivals/golden-naga": {
+  "w": 640,
+  "h": 448,
+  "ax": 0.516,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "rivals/lotus-guard": {
+  "w": 640,
+  "h": 448,
+  "ax": 0.556,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "rivals/summit-general": {
+  "w": 640,
+  "h": 453,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "vehicles/ev-green": {
   "w": 191,

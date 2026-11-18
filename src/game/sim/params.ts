@@ -57,6 +57,10 @@ export const P = {
   },
   consequenceThreshold: 1.12, // load above this raises a consequence event
 
+  // market events
+  economy: { marketShock: -0.025, investmentFactor: 0.6 },
+  regulation: { fineAtShare20: 45, satisfactionBar: 3.6, complianceAtShare20: 22 },
+
   // end of game
   bankruptcyFraction: 0.5, // capital below 50% of start = game over (game rule, not a solvency regulation)
 } as const

@@ -32,6 +32,26 @@ export const EVENT_DECK: GameEvent[] = [
     locations: ['marketing', 'dealer'],
     modules: ['market', 'brand', 'pricing'],
   },
+  {
+    id: 'economy-slowdown',
+    kind: 'threat',
+    title: 'เศรษฐกิจชะลอตัว',
+    detail:
+      'ยอดขายรถใหม่ลดลง ลูกค้าเริ่มเปรียบเทียบราคาประกันมากขึ้น บางรายลดชั้นความคุ้มครองหรือไม่ต่ออายุ ตลาดรวมโตช้าลง และผลตอบแทนจากการลงทุนลดลงทั้งอุตสาหกรรม',
+    icon: 'economy',
+    locations: ['hq', 'customers'],
+    modules: ['market', 'pricing', 'finance'],
+  },
+  {
+    id: 'regulation-review',
+    kind: 'threat',
+    title: 'หน่วยงานกำกับตรวจการบริการสินไหม',
+    detail:
+      'หน่วยงานกำกับประกาศตรวจคุณภาพการจ่ายสินไหมและการปฏิบัติต่อลูกค้าทั้งอุตสาหกรรม (สถานการณ์สมมติในเกม) บริษัทที่ความพึงพอใจของลูกค้าต่ำมีโอกาสถูกปรับและต้องทำแผนแก้ไข',
+    icon: 'regulation',
+    locations: ['claims', 'customers'],
+    modules: ['claims', 'cx'],
+  },
 ]
 
 /**

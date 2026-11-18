@@ -76,6 +76,16 @@ export interface CompetitorMove {
   text: string
 }
 
+/** What one rival decided this quarter and how the quarter treated it. */
+export interface RivalReport {
+  id: string
+  move: string // pricing / service decision
+  eventActions: string[] // how it answered this quarter's market events
+  impacts: { label: string; amount: number }[] // money effects of events (negative = cost), million THB
+  before: { share: number; capital: number; combinedRatio: number; satisfaction: number }
+  after: { share: number; capital: number; combinedRatio: number; satisfaction: number }
+}
+
 export interface QuarterReport {
   quarter: QuarterStamp
   plan: QuarterPlan
@@ -95,6 +105,9 @@ export interface QuarterReport {
   loads: Capacity // demand ÷ capacity (>1 = overloaded)
   drivers: Driver[]
   competitorMoves: CompetitorMove[]
+  rivals: RivalReport[]
+  /** player's own event money effects (fine, …), million THB, negative = cost */
+  eventImpacts: { label: string; amount: number }[]
   consequences: string[] // event ids raised for next quarter
   earnedPremium: number
   pnl: Pnl

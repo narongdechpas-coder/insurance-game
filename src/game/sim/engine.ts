@@ -9,7 +9,7 @@ import { attractiveness } from './init'
 import { acquisitionRate, buildPnl, commissionRate, distributionChannel, nextMix, START_MIX } from './channels'
 import { DIFFICULTY, DURATION_WEIGHTS, P } from './params'
 import { rng } from './rng'
-import type { Boost, Capacity, CompetitorMove, Driver, Firm, GameOutcome, Ops, QuarterReport, QueuedEffect, SimState, Standing } from './types'
+import type { Boost, Capacity, CompetitorMove, Driver, Firm, GameOutcome, Ops, QuarterReport, QueuedEffect, RivalReport, SimState, Standing } from './types'
 
 /**
  * The quarterly simulation. Pure and deterministic: same state + plan + responses → same result.
@@ -212,7 +212,32 @@ function externalEvents(nextQ: number, lotusCut: boolean, r: ReturnType<typeof r
   if (r.next() < (season ? 0.65 : 0.22)) out.push('flood-central')
   if (lotusCut || r.next() < 0.3) out.push('rival-promo')
   if (r.next() < 0.45) out.push('ev-growth')
+  if (r.next() < 0.2) out.push('economy-slowdown')
+  if (r.next() < 0.18) out.push('regulation-review')
   return out
+}
+
+type Personality = 'aggressive' | 'premium' | 'digital' | 'conservative'
+/** How each rival personality answers a market event (text + effect kind). */
+const RIVAL_EVENT_PLAY: Record<string, Record<Personality, { text: string; prepared: boolean }>> = {
+  'flood-central': {
+    aggressive: { text: 'ไม่เตรียมรับมือน้ำท่วมเป็นพิเศษ', prepared: false },
+    premium: { text: 'เตรียมทีมสำรวจภัยและรถลากล่วงหน้า', prepared: true },
+    digital: { text: 'ส่งแจ้งเตือนลูกค้าผ่านแอปให้ย้ายรถ', prepared: true },
+    conservative: { text: 'ซื้อประกันภัยต่อเพิ่ม และเฝ้าดูสถานการณ์', prepared: true },
+  },
+  'economy-slowdown': {
+    aggressive: { text: 'ลดราคาแรงเพื่อแย่งลูกค้าที่หาของถูก', prepared: false },
+    premium: { text: 'ให้ส่วนลดต่ออายุลูกค้าเดิม', prepared: true },
+    digital: { text: 'ออกแพ็กเกจราคาประหยัดบนแอป', prepared: false },
+    conservative: { text: 'รัดเข็มขัดค่าใช้จ่ายภายใน', prepared: true },
+  },
+  'regulation-review': {
+    aggressive: { text: 'รอผลตรวจก่อนค่อยแก้', prepared: false },
+    premium: { text: 'ปรับกระบวนการสินไหมทั้งระบบ', prepared: true },
+    digital: { text: 'แก้เฉพาะเรื่องที่ถูกร้องเรียนบ่อย', prepared: false },
+    conservative: { text: 'ปรับกระบวนการสินไหมทั้งระบบ', prepared: true },
+  },
 }
 
 export interface SimulateOptions {
@@ -283,7 +308,9 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   sim.looseStreak = looseUW ? sim.looseStreak + 1 : 0
 
   // 4. market and shares
-  sim.marketGwp *= 1 + P.marketGrowth + r.normal() * diff.marketNoise
+  const slowdown = active.has('economy-slowdown')
+  sim.marketGwp *= 1 + P.marketGrowth + r.normal() * diff.marketNoise + (slowdown ? P.economy.marketShock : 0)
+  const yieldNow = P.investmentYield * (slowdown ? P.economy.investmentFactor : 1)
   const all = [pl, ...sim.firms]
   const attr = (f: Firm, price = f.price) => attractiveness(price, f.satisfaction, f === pl ? flow.growth : 0, f.bonus)
   const targetShares = (priceOverride?: number) => {
@@ -338,24 +365,76 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   const adminAmount = P.adminRatio * ep - P.baselineSpend
   const expense = (commission + adminAmount + spend) / ep
   const uw = underwrite(ep, attritional, expense, catGross * (ep / gwp), qs, xl)
-  const investment = pl.capital * P.investmentYield
+  const investment = pl.capital * yieldNow
+  // regulation review: low satisfaction is fined unless the company fixed its claims process
+  const eventImpacts: { label: string; amount: number }[] = []
+  if (uw.catGross > 0) eventImpacts.push({ label: 'ความเสียหายน้ำท่วม (สุทธิหลังประกันภัยต่อ)', amount: -uw.catNet })
+  const regulation = active.has('regulation-review')
+  const fineFor = (share: number, sat: number, fix: number) =>
+    regulation && sat < P.regulation.satisfactionBar ? P.regulation.fineAtShare20 * (share / 0.2) * (1 - fix) : 0
+  const regResp = responses['regulation-review']
+  const playerFine = fineFor(pl.share, pl.satisfaction, regResp === 'fullCompliance' ? 1 : regResp === 'quickFix' ? 0.5 : 0)
+  if (playerFine > 0) {
+    eventImpacts.push({ label: 'ค่าปรับจากการตรวจของหน่วยงานกำกับ', amount: -playerFine })
+    pl.capital -= playerFine
+  }
   pl.capital += uw.netResult + investment
   pl.combinedRatio = uw.lossRatio + uw.expenseRatio
   pl.crSum += pl.combinedRatio
   pl.quarters += 1
 
   // 7. losses and money — competitors (same model, standard treaty)
-  sim.firms.forEach((f) => {
+  const rivals: RivalReport[] = []
+  sim.firms.forEach((f, i) => {
+    const prev = state.sim.firms[i]
+    const pers = comps[i].personality as Personality
+    const play = (id: string) => (active.has(id) ? RIVAL_EVENT_PLAY[id][pers] : null)
+    const eventActions: string[] = []
+    const impacts: { label: string; amount: number }[] = []
     const g = f.share * sim.marketGwp
     const lr = (P.baseLossRatio * trend) / Math.min(P.rateCap, earnedRate(f.rateHist)) + r.normal() * P.attritionalNoise
     const cat = floodHit || (floodActive && r.next() < diff.floodChance) ? diff.floodSeverity * P.floodLossOfGwp * g * f.catExposure * r.range(P.floodSeverity[0], P.floodSeverity[1]) : 0
     // rivals carry the same cost structure as the player at the starting channel mix (incl. routine spend)
     const res = underwrite(g, lr, P.adminRatio + commissionRate(START_MIX) + acquisitionRate(START_MIX), cat, P.quotaShare.keep, { retention: P.xl.retention * (g / 2000), cost: P.xl.cost })
-    f.capital += res.netResult + f.capital * P.investmentYield
+    f.capital += res.netResult + f.capital * yieldNow
     f.combinedRatio = res.lossRatio + res.expenseRatio
     f.crSum += f.combinedRatio
     f.quarters += 1
-    f.satisfaction = clamp(f.satisfaction + diff.rivalService + P.satisfactionReversion * 0.5 * (P.satisfactionAnchor + 0.3 * diff.rivalService / 0.05 - f.satisfaction) - (cat ? 0.25 : 0), 1, 5)
+    const floodPlay = play('flood-central')
+    if (floodPlay) eventActions.push(floodPlay.text)
+    if (cat) impacts.push({ label: 'ความเสียหายน้ำท่วม (สุทธิหลังประกันภัยต่อ)', amount: -res.catNet })
+    const ecoPlay = play('economy-slowdown')
+    if (ecoPlay) {
+      eventActions.push(ecoPlay.text)
+      if (pers === 'aggressive') f.price *= 0.98
+      if (pers === 'premium') f.satisfaction += 0.04
+    }
+    const regPlay = play('regulation-review')
+    let fine = 0
+    if (regPlay) {
+      eventActions.push(regPlay.text)
+      const fix = regPlay.prepared ? 1 : pers === 'digital' ? 0.5 : 0
+      if (regPlay.prepared) {
+        const c = P.regulation.complianceAtShare20 * (f.share / 0.2)
+        f.capital -= c
+        impacts.push({ label: 'ค่าปรับปรุงกระบวนการสินไหม', amount: -c })
+      }
+      fine = fineFor(f.share, f.satisfaction, fix)
+      if (fine) {
+        f.capital -= fine
+        impacts.push({ label: 'ค่าปรับจากการตรวจของหน่วยงานกำกับ', amount: -fine })
+      }
+    }
+    const floodHurt = cat ? (floodPlay?.prepared ? 0.1 : 0.3) : 0
+    f.satisfaction = clamp(f.satisfaction + diff.rivalService + P.satisfactionReversion * 0.5 * (P.satisfactionAnchor + 0.3 * diff.rivalService / 0.05 - f.satisfaction) - floodHurt - (fine ? 0.1 : 0), 1, 5)
+    rivals.push({
+      id: f.id,
+      move: moves[i].text,
+      eventActions,
+      impacts,
+      before: { share: prev.share, capital: prev.capital, combinedRatio: prev.combinedRatio, satisfaction: prev.satisfaction },
+      after: { share: f.share, capital: f.capital, combinedRatio: f.combinedRatio, satisfaction: f.satisfaction },
+    })
   })
 
   // 8. satisfaction
@@ -388,6 +467,11 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
       tone: rateDrag > 0 ? 'bad' : 'good',
       weight: Math.abs(rateDrag),
     })
+  if (playerFine > 0)
+    drivers.push({ id: 'fine', text: `ถูกปรับจากการตรวจของหน่วยงานกำกับ ${Math.round(playerFine)} ล้านบาท เพราะความพอใจลูกค้าต่ำกว่าเกณฑ์`, tone: 'bad', weight: playerFine })
+  else if (regulation) drivers.push({ id: 'reg-pass', text: 'ผ่านการตรวจของหน่วยงานกำกับโดยไม่ถูกปรับ', tone: 'good', weight: 20 })
+  if (slowdown)
+    drivers.push({ id: 'economy', text: 'เศรษฐกิจชะลอตัว ตลาดรวมหดและผลตอบแทนการลงทุนลดลงทั้งอุตสาหกรรม', tone: 'bad', weight: sim.marketGwp * 0.025 * pl.share * 0.3 + pl.capital * P.investmentYield * 0.4 })
   if (adverseLR > 0.005)
     drivers.push({
       id: 'adverse',
@@ -484,6 +568,8 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
     loads,
     drivers,
     competitorMoves: moves,
+    rivals,
+    eventImpacts,
     consequences,
     rank,
     earnedPremium: ep,

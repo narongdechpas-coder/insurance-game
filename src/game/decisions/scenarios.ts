@@ -68,6 +68,24 @@ export const SCENARIOS: Scenario[] = [
       { id: 'holdLine', label: 'ไม่ตอบโต้ เน้นลูกค้าคุณภาพ', blurb: 'ยอมเสียลูกค้าที่ตามหาแต่ราคาถูก พอร์ตที่เหลือเคลมน้อยกว่า', cost: 0, speed: 'slow', icon: 'shield', impact: { growth: -1, profit: 0, risk: -1, cx: 0 }, related: ['pricing'] },
     ],
   },
+  {
+    eventId: 'economy-slowdown',
+    question: 'เศรษฐกิจชะลอ ลูกค้าเริ่มเปรียบเทียบราคา จะรักษาฐานลูกค้าอย่างไร',
+    responses: [
+      { id: 'retentionOffer', label: 'มอบส่วนลดต่ออายุให้ลูกค้าเดิม', blurb: 'รักษาลูกค้าดีไว้ได้ แต่กำไรต่อกรมธรรม์ลดลงช่วงนี้', cost: 15, speed: 'fast', icon: 'users', impact: { growth: 1, profit: -1, risk: 0, cx: 1 } },
+      { id: 'budgetProduct', label: 'ออกแพ็กเกจความคุ้มครองราคาประหยัด', blurb: 'ดึงลูกค้าที่กำลังลดงบได้ แต่ได้ลูกค้าที่เสี่ยงกว่าปนมาด้วย', cost: 10, speed: 'normal', icon: 'down', impact: { growth: 2, profit: -1, risk: 1, cx: 0 } },
+      { id: 'costDiscipline', label: 'รัดเข็มขัดค่าใช้จ่ายภายใน', blurb: 'ประคองกำไรไว้ได้ แต่บริการช้าลงเล็กน้อย', cost: 0, speed: 'fast', icon: 'piggy', impact: { growth: 0, profit: 1, risk: 0, cx: -1 } },
+    ],
+  },
+  {
+    eventId: 'regulation-review',
+    question: 'หน่วยงานกำกับจะตรวจการบริการสินไหม จะเตรียมตัวอย่างไร',
+    responses: [
+      { id: 'fullCompliance', label: 'ตรวจและปรับกระบวนการสินไหมทั้งระบบ', blurb: 'ใช้งบและเวลา แต่ไม่ถูกปรับ และลูกค้าได้บริการดีขึ้นจริง', cost: 25, speed: 'normal', icon: 'shield', impact: { growth: 0, profit: 0, risk: -1, cx: 1 } },
+      { id: 'quickFix', label: 'แก้เฉพาะเรื่องที่ถูกร้องเรียนบ่อย', blurb: 'งบน้อย ลดโอกาสถูกปรับได้ครึ่งหนึ่ง', cost: 10, speed: 'fast', icon: 'wrench', impact: { growth: 0, profit: 0, risk: 0, cx: 0 } },
+      { id: 'waitAndSee', label: 'รอผลตรวจก่อนค่อยแก้', blurb: 'ไม่ใช้งบตอนนี้ ถ้าความพอใจลูกค้าต่ำจะถูกปรับเต็มจำนวน', cost: 0, speed: 'slow', icon: 'hold', impact: { growth: 0, profit: 0, risk: 1, cx: 0 } },
+    ],
+  },
   // ---- consequence events (raised by the engine) ----
   {
     eventId: 'callcenter-overload',

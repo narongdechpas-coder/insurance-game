@@ -18,6 +18,14 @@ export function brandUrl(file: 'logo.webp' | 'cover.jpg') {
   return `${import.meta.env.BASE_URL}assets/brand/${file}`
 }
 
+/** Headquarters art for each rival company (newspaper columns, rivals tab). */
+export const RIVAL_ART: Record<string, SpriteKey> = {
+  lotus: 'rivals/lotus-guard',
+  naga: 'rivals/golden-naga',
+  bluewave: 'rivals/bluewave-direct',
+  summit: 'rivals/summit-general',
+}
+
 export function hasSprite(key: string): key is SpriteKey {
   return key in SPRITES
 }
