@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-TARGET = 26.57  # true 2:1 isometric
+TARGET = 24.0  # house camera (round-2 art); true 2:1 isometric would be 26.57
 TOL = 3.0
 
 
@@ -54,7 +54,7 @@ def measure(path):
 
 
 if __name__ == '__main__':
-    files = sys.argv[1:] or sorted(str(p) for p in Path('public/assets/buildings').glob('*.png'))
+    files = sys.argv[1:] or sorted(str(p) for p in Path('public/assets/buildings').glob('*.*'))
     print(f'{"sprite":38s} {"left°":>7s} {"right°":>7s} {"front@":>7s}  verdict (target {TARGET}° ±{TOL})')
     for f in files:
         l, r, fx = measure(f)

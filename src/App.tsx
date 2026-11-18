@@ -1,5 +1,6 @@
 import { useGameStore } from './store/useGameStore'
 import { CommandCenter } from './ui/CommandCenter'
+import { Cover } from './ui/Cover'
 import { DecisionRoom } from './ui/decision/DecisionRoom'
 import { Intro } from './ui/Intro'
 import { WorldView } from './world/WorldView'
@@ -7,6 +8,7 @@ import { WorldView } from './world/WorldView'
 /** Screen router. The city is always alive underneath; screens are HUD layers over it. */
 export default function App() {
   const screen = useGameStore((s) => s.ui.screen)
+  if (screen === 'cover') return <Cover />
   return (
     <>
       <WorldView />

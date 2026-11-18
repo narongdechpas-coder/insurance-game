@@ -1,4 +1,4 @@
-# Decision Master
+# Insure Universe
 
 AI-powered insurance business simulation. You are the CEO of a Thai non-life insurer competing against 4 AI companies.
 

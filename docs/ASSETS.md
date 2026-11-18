@@ -28,15 +28,18 @@ To replace one sprite, overwrite its PNG with the same name and run step 3. No c
 | events | flood, rival-promo, storm, landslide, flood-warning |
 | icons | shield, clipboard, ev-charger |
 
-## Still needed (priority order)
-Done in round 1: AI Advisor high-res (3 poses), competitor event art, Marketing building with billboard (art only; wrong angle).
+## Status
+**Round 2 buildings are in the game.** All 10 buildings were rendered with the locked camera and pass `tools/angle_check.py` at the house angle **24° ± 3°** (the city's roads use 24°, see `PROJECTION = 'house'` in `src/world/projection.ts`). They are stored as WebP (1100 px wide, ~200 KB each).
 
+Brand: `public/assets/brand/logo.webp` (Insure Universe logo) and `cover.jpg` (title-screen background with characters; the logo is overlaid in code). Note: the cover has tiny unreadable sign lettering baked in (dealer fascia, banners); regenerate with "no text on signs" if it bothers anyone.
+
+## Still needed (priority order)
 | # | Asset | Why |
 |---|---|---|
-| 1 | **All 10 buildings, round 2** (copy-ready prompts: `docs/prompts/round2-buildings.md`) | Round-1 camera angles differ per building, so roads can't run parallel to all of them; most are only 450–550 px wide |
-| 2 | Street furniture, vehicles, event vignettes at the same camera | Same reason; see the round-2 section below |
-| 3 | Economy / regulation event art | Planned event types |
-| 4 | Far skyline + Thai temple strip (optional) | City horizon behind the river |
+| 1 | Vehicles at the 24° camera (`vehicle-guide.png`) | Traffic cars are round-1 art at a different angle; noticeable when zoomed in |
+| 2 | Street furniture at 24° (bus stop, bench, carport, planters, garden island) | Same reason; round-1 pieces are small, so lower priority |
+| 3 | Market Intel with a different emblem | Uses the same globe as Claims Service; players may confuse decor with a clickable place |
+| 4 | Economy / regulation event art | Planned event types |
 
 Rules for new art: no text or numbers baked in, transparent background, same light direction (top-left) and same isometric camera.
 
@@ -104,6 +107,6 @@ nose toward the bottom-left exactly like the yellow end of the reference block, 
 ```bash
 python3 tools/angle_check.py path/to/new-sprite.png
 ```
-Both angles must be **26.57° ± 3°** (PASS). Re-roll anything that FAILs; don't try to fix angles in an editor.
+Both angles must be **24° ± 3°** (PASS) — the house camera. Re-roll anything that FAILs; don't try to fix angles in an editor.
 
 When every building passes, set `PROJECTION = 'iso'` in `src/world/projection.ts`, re-slice / import, and re-check `layout.ts` spacing.

@@ -6,7 +6,7 @@ import type { LocationId } from '../game/types'
 import { useGameStore } from '../store/useGameStore'
 import { isOpaque } from './hitTest'
 import { LOCATION_ICONS } from './icons'
-import { BUILDINGS } from './layout'
+import { anchorOf, BUILDINGS } from './layout'
 import { FOCUS_Z, project } from './projection'
 
 
@@ -17,7 +17,7 @@ export const Building = memo(function Building({ id }: { id: LocationId }) {
   const place = BUILDINGS[id]
   const loc = LOCATION_BY_ID[id]
   const m = SPRITES[place.sprite]
-  const [ax, ay] = place.anchor ?? [0.5, 0.75]
+  const [ax, ay] = anchorOf(place)
   const p = project(place.u, place.v)
   const w = m.w * place.scale
   const h = m.h * place.scale

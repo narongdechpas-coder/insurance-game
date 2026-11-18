@@ -6,7 +6,7 @@
 @import 'tailwindcss';
 
 /* ------------------------------------------------------------------
- * Decision Master — Design Tokens
+ * Insure Universe — Design Tokens
  * One source of truth for UI colour, type, radius, depth and motion.
  * 3D scene colours live in src/design/tokens.ts (same palette).
  * ------------------------------------------------------------------ */
@@ -117,10 +117,19 @@ body,
 
 .anim-rise { animation: rise-in 0.6s var(--ease-game) both; }
 .anim-slide-right { animation: slide-in-right 0.5s var(--ease-game) both; }
+.cover-drift { animation: cover-drift 40s ease-in-out infinite alternate; transform-origin: 50% 60%; }
+@keyframes cover-drift {
+  from { transform: scale(1.04) translate3d(0, 0, 0); }
+  to { transform: scale(1.12) translate3d(-1.5%, -1%, 0); }
+}
+.logo-float { animation: rise-in 0.6s var(--ease-game) both, bob 4s ease-in-out 0.6s infinite; }
+@media (prefers-reduced-motion: reduce) { .cover-drift, .logo-float { animation: none; } }
 .anim-bob { animation: bob 2.4s ease-in-out infinite; }
 .pulse-alert { animation: pulse-ring 1.4s ease-out infinite; }
 
 .shine { overflow: hidden; isolation: isolate; }
+/* In the base layer so utilities like `absolute` still win; anything else becomes the shine's containing block. */
+@layer base { .shine { position: relative; } }
 .shine::after {
   content: '';
   position: absolute;

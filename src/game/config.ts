@@ -13,7 +13,7 @@ export const DIFFICULTIES: { id: Difficulty; label: string }[] = [
 ]
 
 export const DEFAULT_CONFIG: GameConfig = {
-  companyName: 'Decision Master Insurance',
+  companyName: 'Player Insurance',
   quarters: 12,
   difficulty: 'normal',
   startingCapitalMB: STARTING_CAPITAL_MB,

@@ -2,7 +2,7 @@ import { Users } from 'lucide-react'
 import { spriteUrl } from '../assets/registry'
 import { useGameStore } from '../store/useGameStore'
 import { EVENT_ART } from './eventArt'
-import { BUILDINGS, PEOPLE } from './layout'
+import { anchorOf, BUILDINGS, PEOPLE } from './layout'
 import { FOCUS_Z, project, WORLD } from './projection'
 import { SPRITES } from '../assets/registry'
 import { Sprite } from './Sprite'
@@ -53,7 +53,8 @@ export function EventBubbles() {
         const place = BUILDINGS[ev.locations[0]]
         const m = SPRITES[place.sprite]
         const p = project(place.u, place.v)
-        const top = p.y - m.h * place.scale * (place.anchor?.[1] ?? 0.75)
+        const [ax, ay] = anchorOf(place)
+        const top = p.y - m.h * place.scale * ay
         const art = EVENT_ART[ev.icon]
         const ring = ev.kind === 'threat' ? 'ring-alert' : ev.kind === 'competitor' ? 'ring-watch' : 'ring-chance'
         const on = highlighted === ev.id
@@ -68,7 +69,7 @@ export function EventBubbles() {
             }}
             className="absolute"
             style={{
-              left: p.x - m.w * place.scale * (place.anchor?.[0] ?? 0.5) + m.w * place.scale * 0.5,
+              left: p.x - m.w * place.scale * ax + m.w * place.scale * 0.5,
               top: top + m.h * place.scale * 0.08,
               zIndex: here ? FOCUS_Z + 4 : 5001,
               opacity: dim ? 0.3 : 1,

@@ -3,9 +3,9 @@ import { DEFAULT_CONFIG } from '../game/config'
 import { createInitialState } from '../game/initialState'
 import { CARDS, defaultPlan, isUnlocked } from '../game/decisions/cards'
 import type { DecisionId, QuarterPlan } from '../game/decisions/types'
-import type { GameState, LocationId } from '../game/types'
+import type { Difficulty, GameLength, GameState, LocationId } from '../game/types'
 
-export type Screen = 'command' | 'decision'
+export type Screen = 'cover' | 'command' | 'decision'
 export type DecisionStep = 'scenario' | 'strategy' | 'confirm'
 
 interface Toast {
@@ -29,6 +29,7 @@ interface Store {
   ui: UiState
   /** Draft plan for the current quarter (committed to the engine in Phase 4). */
   plan: QuarterPlan
+  startGame: (opts: { quarters: GameLength; difficulty: Difficulty }) => void
   openDecisionRoom: (card?: DecisionId) => void
   closeDecisionRoom: () => void
   setActiveCard: (id: DecisionId) => void
@@ -45,8 +46,15 @@ let toastId = 0
 
 export const useGameStore = create<Store>((set, get) => ({
   game: createInitialState(DEFAULT_CONFIG),
-  ui: { hovered: null, selected: null, highlightedEvent: null, introDone: false, toasts: [], screen: 'command', step: 'strategy', activeCard: 'pricing' },
+  ui: { hovered: null, selected: null, highlightedEvent: null, introDone: false, toasts: [], screen: 'cover', step: 'strategy', activeCard: 'pricing' },
   plan: defaultPlan(),
+
+  startGame: ({ quarters, difficulty }) =>
+    set((s) => ({
+      game: createInitialState({ ...DEFAULT_CONFIG, quarters, difficulty }),
+      plan: defaultPlan(),
+      ui: { ...s.ui, screen: 'command', introDone: false, selected: null, hovered: null, highlightedEvent: null },
+    })),
 
   openDecisionRoom: (card) =>
     set((s) => {
