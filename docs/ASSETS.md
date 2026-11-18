@@ -29,82 +29,81 @@ To replace one sprite, overwrite its PNG with the same name and run step 3. No c
 | icons | shield, clipboard, ev-charger |
 
 ## Still needed (priority order)
-Done in round 1: AI Advisor high-res (3 poses), competitor event art, Marketing building with billboard.
+Done in round 1: AI Advisor high-res (3 poses), competitor event art, Marketing building with billboard (art only; wrong angle).
 
-| # | Asset | Why | Spec |
-|---|---|---|---|
-| 0 | **Marketing & Brand at the city camera angle** | The billboard building is shot too frontally, so it is used only in the panel for now; the city shows the older office sprite | Prompt 3 + pass `public/assets/buildings/dealer.png` as the reference image for camera angle |
-| 1 | **Buildings re-rendered at one camera angle, 2× size** | HQ and the new Marketing building use different angles from the others; sprites are 450–550 px wide and soften when zoomed in | All buildings same camera, ≥ 1000 px wide each |
-| 2 | Economy / regulation event art | Planned event types | 1:1 iso vignette, ~600 px |
-| 3 | Far skyline + Thai temple strip (optional) | The reference has a city horizon behind the river | Wide transparent strip, low detail, hazy |
+| # | Asset | Why |
+|---|---|---|
+| 1 | **All 10 buildings, round 2** (copy-ready prompts: `docs/prompts/round2-buildings.md`) | Round-1 camera angles differ per building, so roads can't run parallel to all of them; most are only 450–550 px wide |
+| 2 | Street furniture, vehicles, event vignettes at the same camera | Same reason; see the round-2 section below |
+| 3 | Economy / regulation event art | Planned event types |
+| 4 | Far skyline + Thai temple strip (optional) | City horizon behind the river |
 
 Rules for new art: no text or numbers baked in, transparent background, same light direction (top-left) and same isometric camera.
 
-## Image-gen prompts (for the "Still needed" list)
+## Image-gen prompts — Round 2 (locked isometric camera)
 
-Paste the **Style block** in front of every prompt, so new art matches the sheets already in use.
-After generating: remove the background (if the tool can't output transparency) → add to `raw-assets/` → run the pipeline above.
+### Why round 2
+`python3 tools/angle_check.py` showed every round-1 building at a different camera angle: left plinth edge 23–28°, right edge 7–18°. Roads can only be parallel to one angle, so the art itself has to be regenerated at **one fixed camera: true 2:1 isometric, 26.57° on both sides**.
 
-### Style block (always prepend)
+### The angle guide (attach to every prompt)
+| File | Use for |
+|---|---|
+| `docs/angle-guide/building-guide.png` | buildings, plazas, street furniture, event vignettes |
+| `docs/angle-guide/vehicle-guide.png` | cars and trucks (nose = yellow end, driving toward bottom-left) |
+
+In the image tool, attach the guide as a **reference / structure / composition image** (ChatGPT: attach the image together with the prompt; Midjourney: `--cref` doesn't lock camera, use it as the image prompt with `--iw 1.5`; SD/Flux: ControlNet *depth* or *canny* on the guide).
+Guide colours: **blue edge = main facade + entrance side**, **orange edge = short side**. The front corner points straight down.
+
+### Style block (prepend to every prompt)
 ```
+Use the attached image as an exact camera and composition reference: keep the identical true isometric 2:1 camera
+(orthographic, no perspective, both ground edges of the plinth at 26.6° from horizontal, all vertical edges perfectly vertical),
+the same plinth shape and size, and the front corner of the plinth pointing straight down at the viewer.
+Replace the white block with the building described below; the main glass facade and entrance face the blue edge.
+
 3D isometric miniature diorama game asset, semi-realistic stylized render, glossy white and royal-blue modern architecture,
-soft cinematic studio lighting from top-left, soft ambient occlusion, warm interior lights, small lush green shrubs and trees,
-clean light-grey plinth base with rounded edges, high detail, crisp edges, premium mobile strategy game art style,
-isometric camera ~30° elevation viewing the front-right corner, isolated single object, centered,
-transparent background, no shadow outside the plinth, no text, no letters, no numbers, no logos, no watermark
+soft cinematic studio lighting from the top-left, soft ambient occlusion, warm interior lights, small lush green shrubs and trees,
+light-grey rounded plinth base, high detail, crisp edges, premium strategy game art,
+isolated single object, centered, transparent background, no ground shadow outside the plinth,
+no text, no letters, no numbers, no logos, no watermark
 ```
 
-### 1. AI Advisor — high-res portrait (3 poses)
-```
-[Style block — replace "isometric miniature diorama" with "3D stylized character render"]
-Full-body cute 3D cartoon character, young Thai woman business advisor, mid-20s, friendly smile, big expressive brown eyes,
-shoulder-length wavy dark-brown hair, navy blue blazer and pencil skirt with white blouse, small blue shield pin on lapel,
-holding a tablet in her left hand, pose: {A: open right palm gesturing to the side as if presenting | B: index finger raised, slightly concerned expression, warning | C: both hands clasped, happy and celebrating},
-front three-quarter view, standing, full body visible, 1024×1536, transparent background, no text
-```
-Generate A, B and C with the same seed or reference image so her face and outfit stay identical.
+### Buildings (1600×1100, building fills ~85% of the frame) — regenerate all
+| # | File name | Subject (put after the style block) |
+|---|---|---|
+| 1 | `hq` | 4-storey curved-glass insurance headquarters, terraced roof gardens with small trees, grand entrance canopy on the blue side, a small round fountain with a blue shield emblem in front of the entrance **inside the plinth** |
+| 2 | `dealer` | car showroom with full-height glass walls, three new cars on display inside, two cars parked on the forecourt, two blue blank flags |
+| 3 | `repair` | open-front auto repair workshop, three service bays with blue car lifts (one car raised), mechanics in blue overalls, tool cabinets, tyre stack |
+| 4 | `claims` | open-plan claims service office shown as a cutaway, rows of desks with glowing monitors, staff with headsets, a globe emblem above the entrance |
+| 5 | `customers` | customer service lounge with counters and sofas, outdoor café terrace with white umbrellas and seated customers on the plinth |
+| 6 | `risk` | risk and reinsurance data centre, large satellite dish on the roof, server racks and a big blank world-map screen visible inside |
+| 7 | `marketing` | two-storey creative agency, curved white facade with blue fins, rooftop LED billboard with an abstract blue gradient and white car silhouette (blank, no text), megaphone sculpture by the entrance, meeting room and video-editing desks visible through the glass |
+| 8 | `ev-center` | EV service centre with charging bays, a white EV on a lift, blue lightning-bolt sign shape (no text), solar panels on the roof |
+| 9 | `market-intel` | small classical-modern office with a large blue globe emblem above the door |
+| 10 | `capital-vault` | compact white bank-vault building with a giant round steel vault door on the side and a shield emblem |
 
-### 2. Competitor event — rival promotion
-```
-[Style block]
-A small rival car-insurance showroom pavilion in red and orange accents (contrasting our blue brand),
-large blank promotional banners and balloons, sale-day mood, a few miniature customers queueing at the counter,
-two shiny cars on display with blank price boards, confetti on the floor, square plinth vignette, 1024×1024
-```
+**Tip:** do #1 HQ first. When it passes the check below, attach **both** the guide and the HQ result to every later prompt ("match the camera, lighting and material of the second image").
 
-### 3. Marketing & Brand building with billboard
-```
-[Style block]
-Camera: exactly match the reference image's isometric angle — we see the long front facade rising to the right at a shallow ~16° and the short left side receding down-right at ~25°; the plinth's lowest corner is at the front-left, not centred.
-Two-storey modern creative-agency office, white curved facade with royal-blue trim, open cutaway glass front showing
-miniature staff at a mood board and video-editing desks, a large rooftop LED billboard showing an abstract blue gradient
-with a white car silhouette (blank, no text), a small megaphone sculpture by the entrance, landscaped plinth, 1600×1100
-```
+### Street furniture with a direction (800×800) — regenerate
+`bus-stop`, `carport`, `guard-gate`, `bench`, `cafe-terrace`, `fountain-plaza`, `ev-chargers`, `flag-pair`, `flag-planter`, `planter`, `garden-island`
+Subject line example: `a covered bus stop with a blue curved glass roof and a wooden bench, on a small square plinth`
 
-### 4. Re-render the 7 core buildings at one camera angle (≥1000 px)
-Use the same style block and camera line for every building. Change only the subject:
-```
-[Style block] + "rendered at 1600×1100, building fills 85% of the frame"
-- HQ:        4-storey curved glass headquarters with terraced roof gardens, grand entrance canopy, shield-emblem fountain plaza in front
-- Dealer:    car showroom with full-height glass walls, 3 new cars inside, forecourt parking with 2 cars, two blue brand flags (blank)
-- Repair:    open-front auto repair workshop, 3 bays with blue car lifts, mechanics in blue overalls, tool cabinets, tyre stacks
-- Claims:    open-plan claims service office in cutaway, rows of desks with monitors, staff on headsets, a globe emblem above the door
-- Customers: customer service lounge with counters and sofas, outdoor café terrace with white umbrellas and seated customers
-- Risk:      data and risk control building, satellite dish on the roof, server racks and a large world-map screen inside (blank)
-- Marketing: see prompt 3
-```
-Tip: generate HQ first, then pass it as the reference image for the others, so the camera and lighting stay locked.
+Round items (trees, lamps, cones, tyres) and characters **do not** need regenerating.
 
-### 5. Economy / regulation event vignettes
+### Vehicles (800×500) — regenerate
+Attach `vehicle-guide.png`. Subject line:
 ```
-[Style block]
-Economy:    square plinth vignette, a miniature city block with a large stylised downward-trending 3D arrow sculpture (no numbers), worried miniature people, grey overcast sky tint, 1024×1024
-Regulation: square plinth vignette, a classical white government building with columns, a giant clipboard and stamp sculpture beside it (blank paper), miniature officials, 1024×1024
+a {white sedan | silver SUV | blue SUV | red EV hatchback | sky-blue compact EV | dark-grey luxury SUV | red sedan | green EV crossover | lilac sedan | silver pickup | white minivan | white flatbed tow truck carrying a sedan},
+nose toward the bottom-left exactly like the yellow end of the reference block, no plinth, no ground shadow
 ```
 
-### 6. Far skyline strip (optional)
+### Event vignettes (1024×1024, square plinth) — regenerate
+`flood`, `storm`, `landslide`, `rival-promo` (+ new `economy`, `regulation`). Use the subjects from round 1 with the new style block.
+
+### Quality gate (before the art goes into the game)
+```bash
+python3 tools/angle_check.py path/to/new-sprite.png
 ```
-Hazy distant Bangkok-style skyline panorama for a game background: modern towers in soft blue-grey,
-a Thai temple with golden spires and orange tiered roofs in the centre, an arched white bridge over the river at right,
-atmospheric perspective, low detail, pale sky fading to transparent at the top, no text, 3000×600, transparent background
-```
+Both angles must be **26.57° ± 3°** (PASS). Re-roll anything that FAILs; don't try to fix angles in an editor.
+
+When every building passes, set `PROJECTION = 'iso'` in `src/world/projection.ts`, re-slice / import, and re-check `layout.ts` spacing.
