@@ -96,3 +96,37 @@ Output: 1024×1024.
 
 
 **Status (18 Nov 2026):** all 5 received and in the game (newspaper rival columns, rivals tab, quiet-quarter lead). The rival buildings are front-facing rather than 24° isometric. That is fine for the newspaper and the cards. Regenerate them at 24° only if they should also stand in the city.
+
+---
+
+# City versions of the rival HQs (24° isometric) → `rivals-city/*`
+
+The newspaper pictures above are front-facing, so they can't stand in the city. These 4 are the same buildings re-rendered at the city camera. **The game is ready for them:** drop the files in, and each one replaces a plain office in the back strip of the island. No code change needed.
+
+**How to gen:** attach **3** references:
+1. `docs/angle-guide/building-guide.png` (camera)
+2. `raw-assets/round2/hq.webp` (lighting and materials)
+3. the rival's newspaper picture, `raw-assets/round8/<name>.png`, so it stays the same building
+
+Then paste the block, changing only `{NAME}` and `{FILE}`.
+
+```
+Re-render the building from the THIRD reference image as the same building (same design, colours, details),
+but with the camera of the SECOND reference image exactly: orthographic isometric view, no perspective,
+ground edges at 24° from horizontal on both sides, all vertical edges perfectly vertical,
+front corner of the plinth pointing straight down at the viewer. The main entrance faces the BLUE edge of the FIRST reference.
+Match the second reference's lighting (soft studio light from the top-left) and materials.
+3D miniature diorama game asset, semi-realistic stylized render, high detail, crisp edges, light-grey rounded plinth,
+single isolated object, centred, fully transparent background, no glow or halo around the object,
+no ground shadow outside the plinth, no text, no letters, no numbers, no logos, no watermark.
+Output: 1536×1024, building fills about 80% of the frame width.
+```
+
+| {NAME} (third reference) | Save as |
+|---|---|
+| Lotus Guard (`lotus-guard.png`) | `raw-assets/round9/lotus-guard.png` → `rivals-city/lotus-guard` |
+| Golden Naga (`golden-naga.png`) | `raw-assets/round9/golden-naga.png` → `rivals-city/golden-naga` |
+| BlueWave Direct (`bluewave-direct.png`) | `raw-assets/round9/bluewave-direct.png` → `rivals-city/bluewave-direct` |
+| Summit General (`summit-general.png`) | `raw-assets/round9/summit-general.png` → `rivals-city/summit-general` |
+
+Claude checks each one at 24° ± 3° before it goes in.

@@ -6,6 +6,8 @@ import { Intro } from './ui/Intro'
 import { GameOver } from './ui/review/GameOver'
 import { QuarterlyReview } from './ui/review/QuarterlyReview'
 import { Simulating } from './ui/review/Simulating'
+import { MarketPage } from './ui/pages/MarketPage'
+import { OperationPage } from './ui/pages/OperationPage'
 import { WorldView } from './world/WorldView'
 
 /** Screen router. The city is always alive underneath; screens are HUD layers over it. */
@@ -22,6 +24,8 @@ export default function App() {
       {screen === 'simulating' && <Simulating />}
       {screen === 'review' && <QuarterlyReview />}
       {screen === 'gameover' && <GameOver />}
+      {screen === 'market' && <MarketPage />}
+      {screen === 'operation' && <OperationPage />}
       <Intro />
     </>
   )

@@ -60,6 +60,8 @@ export interface SimState {
   prevWp: number
   /** quarter index each consequence event was last raised (cooldowns) */
   lastRaised: Record<string, number>
+  /** market share of every company after each quarter (index 0 = game start); keys: 'player' + competitor ids */
+  shareHistory: Record<string, number>[]
 }
 
 export type FloodOutcome = 'none' | 'hit' | 'missed'

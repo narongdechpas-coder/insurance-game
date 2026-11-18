@@ -26,6 +26,14 @@ export const RIVAL_ART: Record<string, SpriteKey> = {
   summit: 'rivals/summit-general',
 }
 
+/** City versions (24° camera) of the rival headquarters; used only once the art exists. */
+export const RIVAL_CITY_ART: Record<string, string> = {
+  lotus: 'rivals-city/lotus-guard',
+  naga: 'rivals-city/golden-naga',
+  bluewave: 'rivals-city/bluewave-direct',
+  summit: 'rivals-city/summit-general',
+}
+
 export function hasSprite(key: string): key is SpriteKey {
   return key in SPRITES
 }
