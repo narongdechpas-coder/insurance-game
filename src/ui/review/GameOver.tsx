@@ -22,7 +22,7 @@ export function GameOver() {
             <img
               src={spriteUrl(portraitKey('advisor', won ? 'happy' : 'shocked') ?? (won ? 'characters/advisor-happy' : 'characters/advisor-warning'))}
               alt=""
-              className={`object-contain object-bottom ${portraitKey('advisor') ? 'h-[140px] w-[130px]' : 'h-[150px] w-[90px]'}`}
+              className={`object-contain object-bottom ${portraitKey('advisor') ? 'portrait-fade h-[140px] w-[130px]' : 'h-[150px] w-[90px]'}`}
             />
             <div>
               <div className="text-[14px] text-brand-600 font-medium">{o.reason === 'bankrupt' ? 'เงินทุนต่ำกว่าครึ่งของทุนเริ่มต้น เกมจบก่อนกำหนด' : `จบเกม ${game.config.quarters} ไตรมาส`}</div>

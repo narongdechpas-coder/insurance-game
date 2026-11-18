@@ -377,6 +377,174 @@
   "ay": 0.944,
   "ext": "png"
  },
+ "portraits/advisor-happy": {
+  "w": 379,
+  "h": 480,
+  "ax": 0.542,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/advisor-normal": {
+  "w": 335,
+  "h": 480,
+  "ax": 0.497,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/advisor-shocked": {
+  "w": 360,
+  "h": 480,
+  "ax": 0.568,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/claims-happy": {
+  "w": 427,
+  "h": 480,
+  "ax": 0.518,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "portraits/claims-normal": {
+  "w": 357,
+  "h": 480,
+  "ax": 0.452,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/claims-shocked": {
+  "w": 360,
+  "h": 480,
+  "ax": 0.499,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/customers-happy": {
+  "w": 384,
+  "h": 480,
+  "ax": 0.482,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/customers-normal": {
+  "w": 345,
+  "h": 480,
+  "ax": 0.475,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/customers-shocked": {
+  "w": 343,
+  "h": 480,
+  "ax": 0.491,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/dealer-happy": {
+  "w": 382,
+  "h": 480,
+  "ax": 0.439,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/dealer-normal": {
+  "w": 370,
+  "h": 480,
+  "ax": 0.437,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "portraits/dealer-shocked": {
+  "w": 362,
+  "h": 480,
+  "ax": 0.427,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/hq-happy": {
+  "w": 368,
+  "h": 480,
+  "ax": 0.433,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/hq-normal": {
+  "w": 370,
+  "h": 480,
+  "ax": 0.446,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/hq-shocked": {
+  "w": 374,
+  "h": 480,
+  "ax": 0.417,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/marketing-happy": {
+  "w": 381,
+  "h": 480,
+  "ax": 0.494,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "portraits/marketing-normal": {
+  "w": 339,
+  "h": 480,
+  "ax": 0.468,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "portraits/marketing-shocked": {
+  "w": 362,
+  "h": 480,
+  "ax": 0.528,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "portraits/repair-happy": {
+  "w": 415,
+  "h": 480,
+  "ax": 0.486,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/repair-normal": {
+  "w": 390,
+  "h": 480,
+  "ax": 0.486,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/repair-shocked": {
+  "w": 391,
+  "h": 480,
+  "ax": 0.507,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/risk-happy": {
+  "w": 385,
+  "h": 480,
+  "ax": 0.493,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "portraits/risk-normal": {
+  "w": 357,
+  "h": 480,
+  "ax": 0.466,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "portraits/risk-shocked": {
+  "w": 342,
+  "h": 480,
+  "ax": 0.495,
+  "ay": 0.998,
+  "ext": "webp"
+ },
  "rivals/bluewave-direct": {
   "w": 640,
   "h": 450,
