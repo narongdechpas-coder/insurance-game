@@ -7,9 +7,10 @@ import { useGameStore } from '../../store/useGameStore'
 import { Stage } from '../Stage'
 import { mb, pct, signed } from './format'
 import { PnlTable } from './PnlTable'
+import { RivalsPanel } from './RivalsPanel'
 import { Sparkline } from './Sparkline'
 
-type Tab = 'story' | 'pnl'
+type Tab = 'story' | 'rivals' | 'pnl'
 
 /** Screen C — what happened this quarter, why, and what to do next. */
 export function QuarterlyReview() {
@@ -54,6 +55,7 @@ export function QuarterlyReview() {
               {(
                 [
                   ['story', 'สรุปไตรมาส'],
+                  ['rivals', 'คู่แข่ง'],
                   ['pnl', 'งบการรับประกัน (U/W)'],
                 ] as [Tab, string][]
               ).map(([id, label]) => (
@@ -123,6 +125,9 @@ export function QuarterlyReview() {
                         <li key={m.id}>• {m.text}</li>
                       ))}
                     </ul>
+                    <button onClick={() => setTab('rivals')} className="mt-2 text-[13px] text-brand-600 hover:underline">
+                      ดูการตัดสินใจและผลของคู่แข่งแต่ละราย →
+                    </button>
                   </div>
                   <div className="rounded-2xl bg-white border border-navy-900/5 px-5 py-4">
                     <div className="flex items-center gap-2 font-display font-semibold text-[16px] text-navy-900 mb-2">
@@ -130,13 +135,16 @@ export function QuarterlyReview() {
                     </div>
                     <ul className="space-y-1.5 text-[13.5px] text-navy-800">
                       {flood && <li>• {flood}</li>}
+                      {r.drivers.filter((d) => d.id === 'economy' || d.id === 'fine' || d.id === 'reg-pass').map((d) => (
+                        <li key={d.id} className={d.tone === 'bad' ? 'text-alert' : ''}>• {d.text}</li>
+                      ))}
                       {cons.map((c) => (
                         <li key={c} className="text-alert">
                           <TriangleAlert size={13} className="inline -mt-0.5 mr-1" />
                           ผลจากการตัดสินใจ: “{c}” จะเป็นโจทย์ไตรมาสหน้า
                         </li>
                       ))}
-                      {!flood && cons.length === 0 && <li className="text-navy-700/60">ไม่มีเหตุการณ์ใหญ่ ไตรมาสนี้ผ่านไปอย่างราบรื่น</li>}
+                      {!flood && cons.length === 0 && !r.drivers.some((d) => ['economy', 'fine', 'reg-pass'].includes(d.id)) && <li className="text-navy-700/60">ไม่มีเหตุการณ์ใหญ่ ไตรมาสนี้ผ่านไปอย่างราบรื่น</li>}
                     </ul>
                   </div>
                 </div>
@@ -171,6 +179,10 @@ export function QuarterlyReview() {
                   ))}
                 </div>
               </div>
+            </div>
+          ) : tab === 'rivals' ? (
+            <div className="flex-1 min-h-0 px-8 pb-4">
+              <RivalsPanel game={game} />
             </div>
           ) : (
             <div className="flex-1 min-h-0 px-8 pb-4 overflow-auto">

@@ -101,6 +101,32 @@ describe('simulateQuarter', () => {
     expect(d.commission / d.writtenPremium).toBeLessThan(a.commission / a.writtenPremium)
   })
 
+  it('reports what every rival decided and how events hit them', () => {
+    const n = simulateQuarter(withEvents(start('normal', 3), ['flood-central', 'economy-slowdown', 'regulation-review']), defaultPlan(), {}, { seed: 2 })
+    const rv = n.lastReport!.rivals
+    expect(rv.length).toBe(4)
+    for (const x of rv) {
+      expect(x.move.length).toBeGreaterThan(0)
+      expect(x.eventActions.length).toBe(3) // one answer per market event
+    }
+  })
+
+  it('a slowdown shrinks the market and investment income for everyone', () => {
+    const base = simulateQuarter(withEvents(start(), ['ev-growth']), defaultPlan(), {}, { seed: 4 })
+    const slow = simulateQuarter(withEvents(start(), ['economy-slowdown']), defaultPlan(), { 'economy-slowdown': 'costDiscipline' }, { seed: 4 })
+    expect(slow.lastReport!.investmentIncome).toBeLessThan(base.lastReport!.investmentIncome)
+    expect(slow.sim.marketGwp).toBeLessThan(base.sim.marketGwp)
+  })
+
+  it('regulation fines low satisfaction unless the process was fixed', () => {
+    const s0 = withEvents(start(), ['regulation-review'])
+    const low = { ...s0, sim: { ...s0.sim, player: { ...s0.sim.player, satisfaction: 3.0 } } }
+    const fined = simulateQuarter(low, defaultPlan(), { 'regulation-review': 'waitAndSee' }, { seed: 6 })
+    const fixed = simulateQuarter(low, defaultPlan(), { 'regulation-review': 'fullCompliance' }, { seed: 6 })
+    expect(fined.lastReport!.eventImpacts.some((x) => x.amount < 0)).toBe(true)
+    expect(fixed.lastReport!.eventImpacts.length).toBe(0)
+  })
+
   it('ends the game after the last quarter with standings', () => {
     let s: GameState = { ...start(), config: { ...start().config, quarters: 12 } }
     for (let i = 0; i < 12 && !s.outcome; i++) {

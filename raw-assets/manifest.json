@@ -208,6 +208,26 @@
     "round7/cafe-terrace.webp": [
       "environments/cafe-terrace.webp",
       700
+    ],
+    "round8/summit-general.png": [
+      "rivals/summit-general.webp",
+      640
+    ],
+    "round8/bluewave-direct.png": [
+      "rivals/bluewave-direct.webp",
+      640
+    ],
+    "round8/golden-naga.png": [
+      "rivals/golden-naga.webp",
+      640
+    ],
+    "round8/lotus-guard.png": [
+      "rivals/lotus-guard.webp",
+      640
+    ],
+    "round8/market-normal.png": [
+      "events/market-normal.webp",
+      640
     ]
   }
 }
