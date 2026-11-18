@@ -18,7 +18,7 @@ export function ImpactPanel() {
   const scen = scenariosFor(events.map((e) => e.id))
   const answered = scen.filter((sc) => responses[sc.eventId]).length
   return (
-    <aside className="absolute right-7 top-[172px] w-[392px] glass rounded-[28px] p-6 pointer-events-auto anim-rise" style={{ animationDelay: '0.1s' }}>
+    <aside className="absolute right-7 top-[172px] w-[calc(380px+max(0px,100%-1600px)*0.15)] glass rounded-[28px] p-6 pointer-events-auto anim-rise" style={{ animationDelay: '0.1s' }}>
       <div className="font-display font-bold text-[20px] text-navy-900">ภาพรวมแผนไตรมาสนี้</div>
       <div className="text-[13px] text-navy-700/70">ทิศทางที่แผนพาไป ผลจริงขึ้นกับตลาดและคู่แข่ง</div>
       <div className="mt-5 space-y-3.5">

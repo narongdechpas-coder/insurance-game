@@ -1,9 +1,7 @@
 import { memo } from 'react'
 import { world as C } from '../design/tokens'
-import { DISTRICT, RIVER, ROADS } from './layout'
+import { BLOCKS, FOUNTAIN, ISLAND, PLAZA, RIVER, ROADS } from './layout'
 import { GROUND_MATRIX, project, quad, WORLD } from './projection'
-
-const FAR = { u0: -2600, u1: 4600 }
 
 const tex = (name: string) => `${import.meta.env.BASE_URL}assets/textures/${name}.jpg`
 
@@ -66,38 +64,45 @@ function Crosswalk({ u, v, along }: { u: number; v: number; along: 'u' | 'v' }) 
   return <g>{stripes}</g>
 }
 
-/** Flat ground: river, far bank, paved district, lawns, roads. Drawn once (memo). */
+/**
+ * Ground of the island diorama: river + far bank behind, a floating paved island with a
+ * thick plinth edge, raised paved blocks with hedge verges, roads with kerbs and crossings,
+ * HQ's plaza and fountain. Drawn once (memo).
+ */
 export const Ground = memo(function Ground() {
-  const { u0, v0, u1, v1 } = DISTRICT
-  const { back, front, cross } = ROADS
-  const edgeDrop = 22
-  const lots: [number, number, number, number][] = [
-    [u0 + 20, v0 + 30, cross.u - cross.w / 2 - 16, back.v - back.w / 2 - 16],
-    [cross.u + cross.w / 2 + 16, v0 + 30, u1 - 20, back.v - back.w / 2 - 16],
-    [u0 + 20, back.v + back.w / 2 + 16, cross.u - cross.w / 2 - 16, front.v - front.w / 2 - 16],
-    [cross.u + cross.w / 2 + 16, back.v + back.w / 2 + 16, u1 - 20, front.v - front.w / 2 - 16],
-    [u0 + 20, front.v + front.w / 2 + 16, u1 - 20, v1 - 24],
-  ]
-  const bl = project(u0, v1)
-  const br = project(u1, v1)
+  const { u0, v0, u1, v1 } = ISLAND
+  const FAR = { u0: u0 - 2400, u1: u1 + 2400 }
+  const drop = 46 // island plinth thickness (px)
+  const a = project(u0, v0)
+  const b = project(u0, v1) // front corner
+  const c = project(u1, v1)
+  const face = (p: { x: number; y: number }, q: { x: number; y: number }) => `${p.x},${p.y} ${q.x},${q.y} ${q.x},${q.y + drop} ${p.x},${p.y + drop}`
   return (
     <svg className="absolute inset-0" width={WORLD.w} height={WORLD.h} style={{ zIndex: 0 }}>
       <defs>
+        <linearGradient id="haze" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#dce9f5" />
+          <stop offset="1" stopColor="#c3d4e6" />
+        </linearGradient>
         <linearGradient id="riverShade" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0.45" stopColor="#0b3d6e" stopOpacity="0" />
           <stop offset="1" stopColor="#0b3d6e" stopOpacity="0.28" />
         </linearGradient>
-        <linearGradient id="land" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#b7d79c" />
-          <stop offset="1" stopColor="#9cc982" />
+        <linearGradient id="plinthL" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#d6dbe4" />
+          <stop offset="1" stopColor="#a9b2c2" />
         </linearGradient>
-        <linearGradient id="river" x1="0" y1="0" x2="0.3" y2="1">
-          <stop offset="0" stopColor={C.river[0]} />
-          <stop offset="1" stopColor={C.river[1]} />
+        <linearGradient id="plinthR" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#bcc4d1" />
+          <stop offset="1" stopColor="#8e98aa" />
         </linearGradient>
+        <radialGradient id="islandShadow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0.6" stopColor="#2a3d5c" stopOpacity="0.28" />
+          <stop offset="1" stopColor="#2a3d5c" stopOpacity="0" />
+        </radialGradient>
         <GroundTexture id="asphalt" name="asphalt" size={240} />
         <GroundTexture id="grass" name="grass" size={300} />
-        <GroundTexture id="paving" name="paving" size={180} />
+        <GroundTexture id="paving" name="paving" size={150} />
         <GroundTexture id="water" name="water" size={460} drift={40} />
         <pattern id="ripples" width="140" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(-16)">
           <path d="M0 20 Q35 12 70 20 T140 20" stroke="#ffffff" strokeOpacity="0.22" strokeWidth="3" fill="none">
@@ -105,37 +110,59 @@ export const Ground = memo(function Ground() {
           </path>
         </pattern>
       </defs>
-      <rect width={WORLD.w} height={WORLD.h} fill="url(#land)" />
-      <rect width={WORLD.w} height={WORLD.h} fill="url(#grass)" opacity={0.4} />
-      {/* river + far bank */}
-      <polygon points={quad(FAR.u0, RIVER.v0 - 900, FAR.u1, RIVER.v0)} fill="url(#grass)" />
-      <polygon points={quad(FAR.u0, RIVER.v0 - 900, FAR.u1, RIVER.v0)} fill="#dfeede" opacity={0.35} />
-      <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1)} fill="url(#water)" />
-      {/* depth: water darkens toward our bank, where the embankment shades it */}
-      <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1)} fill="url(#riverShade)" />
-      <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1)} fill="url(#ripples)" />
-      {/* embankment: walkway on top, wall face below it */}
-      <polygon points={quad(FAR.u0, RIVER.v1 - 6, FAR.u1, RIVER.v1)} fill="#8a93a3" />
-      <polygon points={quad(FAR.u0, RIVER.v1, FAR.u1, RIVER.v1 + 30)} fill="url(#paving)" />
-      <polygon points={quad(FAR.u0, RIVER.v1 + 30, FAR.u1, RIVER.v1 + 38)} fill="#cfd5de" />
-      {/* district plinth: front edge thickness gives the diorama feel */}
-      <polygon
-        points={`${bl.x},${bl.y} ${br.x},${br.y} ${br.x},${br.y + edgeDrop} ${bl.x},${bl.y + edgeDrop}`}
-        fill={C.boardEdgeDark}
-      />
-      <polygon points={quad(u0, v0, u1, v1)} fill="url(#paving)" stroke="#ffffff" strokeWidth={6} strokeLinejoin="round" />
-      {lots.map((l, i) => (
-        <Slab key={i} q={quad(...l)} fill="url(#grass)" edge="#5c8f36" lift={6} stroke="#eef0f3" strokeWidth={9} tint="#e8f5c8" />
+      {/* backdrop: soft haze, far bank and river behind the island */}
+      <rect width={WORLD.w} height={WORLD.h} fill="url(#haze)" />
+      <polygon points={quad(FAR.u0, RIVER.v0 - 1200, FAR.u1, RIVER.v0)} fill="url(#grass)" />
+      <polygon points={quad(FAR.u0, RIVER.v0 - 1200, FAR.u1, RIVER.v0)} fill="#e3eef6" opacity={0.45} />
+      <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1 + 200)} fill="url(#water)" />
+      <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1 + 200)} fill="url(#riverShade)" />
+      <polygon points={quad(FAR.u0, RIVER.v0, FAR.u1, RIVER.v1 + 200)} fill="url(#ripples)" />
+      {/* water fades into the haze in front of the island so it reads as floating */}
+      <polygon points={quad(FAR.u0, RIVER.v1 + 120, FAR.u1, v1 + 900)} fill="url(#haze)" opacity={0.92} />
+
+      {/* island: soft shadow, plinth faces, top */}
+      <ellipse cx={(a.x + c.x) / 2} cy={b.y + drop + 10} rx={(c.x - a.x) / 2} ry={70} fill="url(#islandShadow)" />
+      <polygon points={face(a, b)} fill="url(#plinthL)" />
+      <polygon points={face(b, c)} fill="url(#plinthR)" />
+      <polyline points={`${a.x},${a.y} ${b.x},${b.y} ${c.x},${c.y}`} fill="none" stroke="#ffffff" strokeWidth={4} />
+      <polygon points={quad(u0, v0, u1, v1)} fill="url(#paving)" />
+      <polygon points={quad(u0, v0, u1, v1)} fill="#ffffff" opacity={0.12} />
+
+      {/* blocks: raised paved slabs with a hedge verge on the road-facing edges */}
+      {BLOCKS.map(([bu0, bv0, bu1, bv1], i) => (
+        <g key={i}>
+          <Slab q={quad(bu0, bv0, bu1, bv1)} fill="url(#paving)" edge="#b8c0cc" lift={6} stroke="#f3f5f8" strokeWidth={6} />
+          <polygon points={quad(bu0 + 6, bv1 - 22, bu1 - 6, bv1 - 6)} fill="url(#grass)" />
+          <polygon points={quad(bu0 + 6, bv0 + 6, bu0 + 22, bv1 - 22)} fill="url(#grass)" />
+          <polygon points={quad(bu0 + 6, bv1 - 22, bu1 - 6, bv1 - 6)} fill="#e8f5c8" opacity={0.2} />
+        </g>
       ))}
-      <Road along="u" at={back.v} w={back.w} from={u0} to={u1} />
-      <Road along="u" at={front.v} w={front.w} from={FAR.u0} to={FAR.u1} />
-      <Road along="v" at={cross.u} w={cross.w} from={v0} to={v1} />
-      {/* intersections: clear the dashes */}
-      <polygon points={quad(cross.u - cross.w / 2, back.v - back.w / 2, cross.u + cross.w / 2, back.v + back.w / 2)} fill="url(#asphalt)" />
-      <polygon points={quad(cross.u - cross.w / 2, front.v - front.w / 2, cross.u + cross.w / 2, front.v + front.w / 2)} fill="url(#asphalt)" />
-      <Crosswalk u={cross.u - cross.w / 2 - 24} v={front.v} along="u" />
-      <Crosswalk u={cross.u + cross.w / 2 + 24} v={back.v} along="u" />
-      <Crosswalk u={cross.u} v={back.v + back.w / 2 + 26} along="v" />
+
+      {/* roads */}
+      {ROADS.u.map(({ v, w }) => (
+        <Road key={`ru${v}`} along="u" at={v} w={w} from={u0} to={u1} />
+      ))}
+      {ROADS.v.map(({ u, w }) => (
+        <Road key={`rv${u}`} along="v" at={u} w={w} from={v0} to={v1} />
+      ))}
+      {ROADS.v.map(({ u, w }) =>
+        ROADS.u.map(({ v, w: w2 }) => (
+          <g key={`x${u}-${v}`}>
+            <polygon points={quad(u - w / 2, v - w2 / 2, u + w / 2, v + w2 / 2)} fill="url(#asphalt)" />
+            <Crosswalk u={u - w / 2 - 22} v={v} along="u" />
+            <Crosswalk u={u} v={v + w2 / 2 + 22} along="v" />
+          </g>
+        )),
+      )}
+
+      {/* HQ plaza + fountain */}
+      <Slab q={quad(PLAZA.u0, PLAZA.v0, PLAZA.u1, PLAZA.v1)} fill="url(#paving)" edge="#c4ccd7" lift={4} stroke="#ffffff" strokeWidth={5} />
+      <polygon points={quad(PLAZA.u0, PLAZA.v0, PLAZA.u1, PLAZA.v1)} fill="#fff6e0" opacity={0.18} />
+      {/* round planter bed in the middle of the plaza (HQ's own art already has the fountain) */}
+      <g transform={GROUND_MATRIX}>
+        <circle cx={FOUNTAIN.u} cy={FOUNTAIN.v} r={FOUNTAIN.r + 8} fill="#f6f7f9" stroke="#c9d1dc" strokeWidth={3} />
+        <circle cx={FOUNTAIN.u} cy={FOUNTAIN.v} r={FOUNTAIN.r} fill="url(#grass)" />
+      </g>
     </svg>
   )
 })

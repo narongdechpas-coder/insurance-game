@@ -13,7 +13,7 @@ export function CardList() {
   const setActive = useGameStore((s) => s.setActiveCard)
   const toast = useGameStore((s) => s.toast)
   return (
-    <nav className="absolute left-7 top-[172px] w-[300px] glass rounded-[24px] p-2.5 flex flex-col gap-1 pointer-events-auto anim-rise" style={{ animationDelay: '0.05s' }}>
+    <nav className="absolute left-7 top-[172px] w-[calc(300px+max(0px,100%-1600px)*0.15)] glass rounded-[24px] p-2.5 flex flex-col gap-1 pointer-events-auto anim-rise" style={{ animationDelay: '0.05s' }}>
       {CARDS.map((c) => {
         const open = isUnlocked(c, q)
         const on = c.id === active

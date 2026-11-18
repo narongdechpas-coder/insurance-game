@@ -16,7 +16,7 @@ export function EventStrip() {
   const focusEvent = useGameStore((s) => s.focusEvent)
   const selected = useGameStore((s) => s.ui.selected)
   return (
-    <section className="absolute left-[628px] bottom-5 w-[600px] glass rounded-[26px] px-4 pt-7 pb-4 pointer-events-auto anim-rise" style={{ animationDelay: '0.3s' }}>
+    <section className="absolute left-[calc(530px+(100%-1476px)/2)] bottom-5 w-[600px] glass rounded-[26px] px-4 pt-7 pb-4 pointer-events-auto anim-rise" style={{ animationDelay: '0.3s' }}>
       <div className="absolute -top-5 left-6 flex items-center gap-2 pill-navy rounded-full pl-1.5 pr-5 py-1.5 font-display font-semibold text-[16px]">
         <span className="grid place-items-center size-7 rounded-full bg-gradient-to-b from-gold-300 to-gold-500 text-navy-900">
           <Lightbulb size={15} />

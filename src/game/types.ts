@@ -48,7 +48,9 @@ export interface GameEvent {
   kind: EventKind
   title: string // short, shown on event card
   detail: string // narrative explanation
-  icon: 'ev' | 'flood' | 'competitor' | 'regulation' | 'economy'
+  icon: 'ev' | 'flood' | 'competitor' | 'regulation' | 'economy' | 'service' | 'claims' | 'repair' | 'complaint' | 'adverse' | 'referral'
+  /** true = raised by the player's own earlier decisions (a consequence), not by the outside world */
+  consequence?: boolean
   locations: LocationId[] // where in the world this event lands
   modules: ModuleId[]
 }
@@ -74,4 +76,10 @@ export interface GameState {
   kpiHistory: CompanyKpis[]
   competitors: Competitor[]
   events: GameEvent[] // events active this quarter
+  /** Simulation internals (engine-owned; UI reads only through reports and selectors). */
+  sim: import('./sim/types').SimState
+  /** Result of the quarter just simulated (null before the first simulation). */
+  lastReport: import('./sim/types').QuarterReport | null
+  /** Set when the game has ended (last quarter played, or bankruptcy). */
+  outcome: import('./sim/types').GameOutcome | null
 }

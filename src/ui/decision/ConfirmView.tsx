@@ -26,7 +26,7 @@ export function ConfirmView() {
   const warnings = reviewPlan(plan, game, responses).filter((n) => n.tone === 'warning')
 
   return (
-    <section data-stage="confirm" className="absolute left-7 top-[172px] w-[1127px] glass rounded-[28px] p-6 pointer-events-auto anim-rise">
+    <section data-stage="confirm" className="absolute left-7 right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] glass rounded-[28px] p-6 pointer-events-auto anim-rise">
       <div className="flex items-end justify-between">
         <div>
           <div className="text-[13px] text-brand-600 font-medium">ปีที่ {q.year} · ไตรมาส {q.q}</div>

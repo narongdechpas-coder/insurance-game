@@ -154,18 +154,18 @@
   "ext": "png"
  },
  "environments/cafe-terrace": {
-  "w": 185,
-  "h": 121,
-  "ax": 0.463,
-  "ay": 0.959,
-  "ext": "png"
+  "w": 640,
+  "h": 583,
+  "ax": 0.59,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "environments/carport": {
-  "w": 182,
-  "h": 120,
-  "ax": 0.398,
-  "ay": 0.958,
-  "ext": "png"
+  "w": 640,
+  "h": 574,
+  "ax": 0.509,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "environments/cone": {
   "w": 49,
@@ -265,6 +265,13 @@
   "ay": 0.915,
   "ext": "png"
  },
+ "events/ev-growth": {
+  "w": 640,
+  "h": 603,
+  "ax": 0.523,
+  "ay": 0.998,
+  "ext": "webp"
+ },
  "events/flood-warning": {
   "w": 175,
   "h": 91,
@@ -273,11 +280,11 @@
   "ext": "png"
  },
  "events/flood": {
-  "w": 283,
-  "h": 228,
-  "ax": 0.455,
-  "ay": 0.978,
-  "ext": "png"
+  "w": 640,
+  "h": 622,
+  "ax": 0.506,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "events/landslide": {
   "w": 265,
@@ -329,18 +336,18 @@
   "ext": "png"
  },
  "vehicles/ev-red": {
-  "w": 237,
-  "h": 132,
-  "ax": 0.458,
-  "ay": 0.97,
-  "ext": "png"
+  "w": 560,
+  "h": 377,
+  "ax": 0.393,
+  "ay": 0.997,
+  "ext": "webp"
  },
  "vehicles/ev-skyblue": {
-  "w": 226,
-  "h": 132,
-  "ax": 0.435,
-  "ay": 0.962,
-  "ext": "png"
+  "w": 560,
+  "h": 377,
+  "ax": 0.393,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "vehicles/pickup": {
   "w": 181,
@@ -348,6 +355,13 @@
   "ax": 0.352,
   "ay": 0.951,
   "ext": "png"
+ },
+ "vehicles/sedan-green": {
+  "w": 560,
+  "h": 357,
+  "ax": 0.414,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "vehicles/sedan-lilac": {
   "w": 179,
@@ -357,11 +371,11 @@
   "ext": "png"
  },
  "vehicles/sedan-red": {
-  "w": 190,
-  "h": 115,
-  "ax": 0.329,
-  "ay": 0.948,
-  "ext": "png"
+  "w": 560,
+  "h": 359,
+  "ax": 0.406,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "vehicles/sedan-white": {
   "w": 560,
@@ -378,11 +392,11 @@
   "ext": "webp"
  },
  "vehicles/suv-dark": {
-  "w": 247,
-  "h": 149,
-  "ax": 0.455,
-  "ay": 0.966,
-  "ext": "png"
+  "w": 560,
+  "h": 388,
+  "ax": 0.408,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "vehicles/suv-silver": {
   "w": 560,
