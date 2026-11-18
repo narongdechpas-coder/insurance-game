@@ -7,15 +7,9 @@
     },
     "sheet-b.webp": {
       "10": "vehicles/ev-green",
-      "11": "vehicles/sedan-lilac",
-      "12": "vehicles/pickup",
-      "13": "vehicles/van",
       "14": "environments/fountain-plaza",
       "15": "environments/tree-blossom",
       "16": "environments/tree",
-      "17": "environments/planter",
-      "18": "environments/bench",
-      "19": "environments/bus-stop",
       "20": "environments/ev-chargers",
       "21": "environments/street-lamp",
       "22": "environments/flag-planter",
@@ -28,8 +22,7 @@
       "15": "characters/mechanic",
       "21": "icons/shield",
       "22": "icons/clipboard",
-      "20": "icons/ev-charger",
-      "23": "environments/garden-island"
+      "20": "icons/ev-charger"
     },
     "sheet-e.webp": {
       "13": "environments/guard-gate",
@@ -40,7 +33,6 @@
       "26": "characters/call-agent",
       "28": "environments/cone",
       "29": "environments/tyres",
-      "32": "vehicles/tow-truck",
       "33": "events/flood-warning"
     }
   },
@@ -93,10 +85,6 @@
       "buildings/ev-center.webp",
       1100
     ],
-    "round2/market-intel.webp": [
-      "buildings/market-intel.webp",
-      1100
-    ],
     "round2/capital-vault.webp": [
       "buildings/capital-vault.webp",
       1100
@@ -129,10 +117,6 @@
       "events/ev-growth.webp",
       640
     ],
-    "round4/cafe-terrace.webp": [
-      "environments/cafe-terrace.webp",
-      640
-    ],
     "round4/carport.webp": [
       "environments/carport.webp",
       640
@@ -156,6 +140,74 @@
     "round3/vehicles/sedan-green.webp": [
       "vehicles/sedan-green.webp",
       560
+    ],
+    "round3/vehicles/tow-truck.webp": [
+      "vehicles/tow-truck.webp",
+      560
+    ],
+    "round3/vehicles/van.webp": [
+      "vehicles/van.webp",
+      560
+    ],
+    "round3/vehicles/pickup.webp": [
+      "vehicles/pickup.webp",
+      560
+    ],
+    "round3/vehicles/sedan-lilac.webp": [
+      "vehicles/sedan-lilac.webp",
+      560
+    ],
+    "round5/office-row.webp": [
+      "buildings/office-row.webp",
+      800
+    ],
+    "round5/office-tower.webp": [
+      "buildings/office-tower.webp",
+      800
+    ],
+    "round5/office-low.webp": [
+      "buildings/office-low.webp",
+      800
+    ],
+    "round6/garden-island.webp": [
+      "environments/garden-island.webp",
+      480
+    ],
+    "round6/planter.webp": [
+      "environments/planter.webp",
+      400
+    ],
+    "round6/bench.webp": [
+      "environments/bench.webp",
+      400
+    ],
+    "round6/bus-stop.webp": [
+      "environments/bus-stop.webp",
+      400
+    ],
+    "round6/market-intel.webp": [
+      "buildings/market-intel.webp",
+      1100
+    ],
+    "round7/claims-surge.webp": [
+      "events/claims-surge.webp",
+      640
+    ],
+    "round7/regulation.webp": [
+      "events/regulation.webp",
+      640
+    ],
+    "round7/economy.webp": [
+      "events/economy.webp",
+      640
+    ],
+    "round7/far-bank.webp": [
+      "brand/far-bank.webp",
+      2000
+    ],
+    "round7/cafe-terrace.webp": [
+      "environments/cafe-terrace.webp",
+      700
     ]
   }
 }

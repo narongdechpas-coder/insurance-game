@@ -35,7 +35,7 @@ interface Store {
   plan: QuarterPlan
   /** Step 1 answers: eventId → response id. */
   responses: Responses
-  startGame: (opts: { quarters: GameLength; difficulty: Difficulty }) => void
+  startGame: (opts: { quarters: GameLength; difficulty: Difficulty; companyName: string; playerName: string }) => void
   openDecisionRoom: (target?: DecisionId | DecisionStep) => void
   setStep: (step: DecisionStep) => void
   setActiveEvent: (eventId: string) => void
@@ -61,9 +61,9 @@ export const useGameStore = create<Store>((set, get) => ({
   plan: defaultPlan(),
   responses: {},
 
-  startGame: ({ quarters, difficulty }) =>
+  startGame: ({ quarters, difficulty, companyName, playerName }) =>
     set((s) => ({
-      game: createInitialState({ ...DEFAULT_CONFIG, quarters, difficulty }),
+      game: createInitialState({ ...DEFAULT_CONFIG, quarters, difficulty, companyName, playerName }),
       plan: defaultPlan(),
       responses: {},
       ui: { ...s.ui, planConfirmed: false, screen: 'command', introDone: false, selected: null, hovered: null, highlightedEvent: null },

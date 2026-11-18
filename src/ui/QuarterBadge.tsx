@@ -10,8 +10,10 @@ export function QuarterBadge() {
         <CalendarDays size={22} />
       </div>
       <div>
-        <div className="text-[12px] text-navy-700/70 leading-none">ปีที่ {quarter.year} · ไตรมาสปัจจุบัน</div>
-        <div className="font-display font-bold text-[22px] leading-tight text-navy-900">Q{quarter.q}</div>
+        <div className="text-[12px] text-navy-700/70 leading-none truncate max-w-[150px]">{config.companyName}</div>
+        <div className="font-display font-bold text-[22px] leading-tight text-navy-900">
+          Q{quarter.q} <span className="text-[13px] font-normal text-navy-700/60">ปีที่ {quarter.year}</span>
+        </div>
       </div>
       <div className="flex gap-1 ml-2">
         {Array.from({ length: config.quarters }).map((_, i) => (

@@ -17,18 +17,21 @@ interface Cam {
   s: number
 }
 
-/** World area framed by the home view: the bounding box of all seven buildings. */
+/** World area framed by the home view: the whole island (left/right/front corners) and the tops of every building on it. */
 const HOME = (() => {
-  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
-  for (const b of Object.values(BUILDINGS)) {
+  const corners = [project(ISLAND.u0, ISLAND.v0), project(ISLAND.u0, ISLAND.v1), project(ISLAND.u1, ISLAND.v1), project(ISLAND.u1, ISLAND.v0)]
+  let x0 = Math.min(...corners.map((c) => c.x)), x1 = Math.max(...corners.map((c) => c.x))
+  let y0 = Infinity
+  const y1 = Math.max(...corners.map((c) => c.y)) + 50 // front corner + plinth
+  for (const b of [...Object.values(BUILDINGS), ...DECOR.filter((d) => d.sprite.startsWith('buildings/'))]) {
     const m = SPRITES[b.sprite]
     const p = project(b.u, b.v)
     const [ax, ay] = anchorOf(b)
     const w = m.w * b.scale, h = m.h * b.scale
     x0 = Math.min(x0, p.x - w * ax); x1 = Math.max(x1, p.x + w * (1 - ax))
-    y0 = Math.min(y0, p.y - h * ay - 110); y1 = Math.max(y1, p.y + h * (1 - ay))
+    y0 = Math.min(y0, p.y - h * ay - (b.sprite.startsWith('buildings/office') ? 10 : 70))
   }
-  return { x0: x0 - 20, y0, x1: x1 + 20, y1: y1 + 10 }
+  return { x0: x0 - 10, y0, x1: x1 + 10, y1 }
 })()
 /** HUD keeps these bands of the 1600×900 stage covered; the home view avoids them. */
 const HUD = { top: 176, bottom: 168, right: 250, left: 24 }
@@ -163,7 +166,7 @@ export function WorldView() {
     <div
       ref={view}
       className="absolute inset-0 overflow-hidden touch-none"
-      style={{ background: '#cfdeee', cursor: drag.current?.moved ? 'grabbing' : 'grab' }}
+      style={{ background: '#8cc463', cursor: drag.current?.moved ? 'grabbing' : 'grab' }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -183,7 +186,7 @@ export function WorldView() {
       >
         <Ground />
         {GREENERY.map(([u, v, sprite, scale], i) => (
-          <Sprite key={`g${i}`} sprite={sprite} u={u} v={v} scale={scale} anchor={[0.5, 0.9]} />
+          <Sprite key={`g${i}`} sprite={sprite} u={u} v={v} scale={scale} anchor={SPRITES[sprite].ext === 'webp' ? [SPRITES[sprite].ax, SPRITES[sprite].ay] : [0.5, 0.9]} />
         ))}
         {LAMPS.map(([u, v], i) => (
           <Sprite key={`l${i}`} sprite="environments/street-lamp" u={u} v={v} scale={0.42} anchor={[0.5, 0.97]} />

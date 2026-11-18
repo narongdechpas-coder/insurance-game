@@ -35,4 +35,5 @@ export const CAR_SPRITES: SpriteKey[] = [
   'vehicles/sedan-lilac',
   'vehicles/pickup',
   'vehicles/van',
+  'vehicles/tow-truck',
 ]

@@ -35,7 +35,7 @@ export function createSimState(config: GameConfig, competitors: Competitor[], pl
     marketGwp: P.marketGwp0,
     baseDemand: { policies, claims: policies * P.claimsPerPolicy },
     player: firm('player', playerShare, P.satisfactionAnchor, config.startingCapitalMB, 1.0),
-    capacity: { contact: P.startCapacity, claims: P.startCapacity, repair: P.startCapacity },
+    capacity: { ...P.startCapacity },
     boosts: [],
     queue: [],
     firms: competitors.map((c) => firm(c.id, c.marketShare, SAT0[c.personality], c.marketShare * capitalPerShare, EXPOSURE0[c.personality])),
