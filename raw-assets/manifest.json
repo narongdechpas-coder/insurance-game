@@ -1,0 +1,89 @@
+{
+  "out": "public/assets",
+  "sheets": {
+    "sheet-d.webp": {
+      "0": "buildings/hq",
+      "1": "buildings/dealer",
+      "2": "buildings/repair",
+      "3": "buildings/ev-center",
+      "4": "buildings/claims",
+      "5": "buildings/risk",
+      "6": "buildings/customers",
+      "7": "buildings/capital-vault",
+      "8": "events/flood",
+      "9": "events/storm",
+      "10": "events/landslide",
+      "11": "vehicles/sedan-white",
+      "12": "vehicles/suv-silver",
+      "13": "vehicles/suv-blue",
+      "14": "vehicles/ev-red",
+      "15": "vehicles/ev-skyblue",
+      "16": "vehicles/suv-dark"
+    },
+    "sheet-b.webp": {
+      "3": "buildings/marketing-office",
+      "5": "buildings/market-intel",
+      "9": "vehicles/sedan-red",
+      "10": "vehicles/ev-green",
+      "11": "vehicles/sedan-lilac",
+      "12": "vehicles/pickup",
+      "13": "vehicles/van",
+      "14": "environments/fountain-plaza",
+      "15": "environments/tree-blossom",
+      "16": "environments/tree",
+      "17": "environments/planter",
+      "18": "environments/bench",
+      "19": "environments/bus-stop",
+      "20": "environments/ev-chargers",
+      "21": "environments/street-lamp",
+      "22": "environments/flag-planter",
+      "23": "environments/flag-pair"
+    },
+    "sheet-a.webp": {
+      "16": "characters/advisor-small",
+      "13": "characters/manager",
+      "14": "characters/executive",
+      "15": "characters/mechanic",
+      "21": "icons/shield",
+      "22": "icons/clipboard",
+      "20": "icons/ev-charger",
+      "23": "environments/garden-island"
+    },
+    "sheet-e.webp": {
+      "6": "environments/cafe-terrace",
+      "9": "environments/carport",
+      "13": "environments/guard-gate",
+      "17": "environments/tree-round",
+      "21": "environments/tree-small",
+      "22": "characters/ceo",
+      "25": "characters/surveyor",
+      "26": "characters/call-agent",
+      "28": "environments/cone",
+      "29": "environments/tyres",
+      "32": "vehicles/tow-truck",
+      "33": "events/flood-warning"
+    }
+  },
+  "singles": {
+    "singles/rival-promo.webp": [
+      "events/rival-promo",
+      640
+    ],
+    "singles/marketing-billboard.webp": [
+      "buildings/marketing",
+      900
+    ],
+    "singles/advisor-present.webp": [
+      "characters/advisor",
+      820
+    ],
+    "singles/advisor-happy.webp": [
+      "characters/advisor-happy",
+      820
+    ],
+    "singles/advisor-warning.webp": [
+      "characters/advisor-warning",
+      820
+    ]
+  }
+}

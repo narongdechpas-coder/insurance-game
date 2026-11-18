@@ -1,0 +1,356 @@
+{
+ "buildings/capital-vault": {
+  "w": 302,
+  "h": 217,
+  "ax": 0.319,
+  "ay": 0.977
+ },
+ "buildings/claims": {
+  "w": 478,
+  "h": 274,
+  "ax": 0.35,
+  "ay": 0.985
+ },
+ "buildings/customers": {
+  "w": 381,
+  "h": 204,
+  "ax": 0.286,
+  "ay": 0.975
+ },
+ "buildings/dealer": {
+  "w": 484,
+  "h": 341,
+  "ax": 0.35,
+  "ay": 0.985
+ },
+ "buildings/ev-center": {
+  "w": 502,
+  "h": 287,
+  "ax": 0.312,
+  "ay": 0.983
+ },
+ "buildings/hq": {
+  "w": 556,
+  "h": 396,
+  "ax": 0.724,
+  "ay": 0.987
+ },
+ "buildings/market-intel": {
+  "w": 345,
+  "h": 241,
+  "ax": 0.414,
+  "ay": 0.975
+ },
+ "buildings/marketing-office": {
+  "w": 361,
+  "h": 228,
+  "ax": 0.356,
+  "ay": 0.978
+ },
+ "buildings/marketing": {
+  "w": 900,
+  "h": 616,
+  "ax": 0.26,
+  "ay": 0.998
+ },
+ "buildings/repair": {
+  "w": 482,
+  "h": 326,
+  "ax": 0.406,
+  "ay": 0.985
+ },
+ "buildings/risk": {
+  "w": 451,
+  "h": 295,
+  "ax": 0.394,
+  "ay": 0.983
+ },
+ "characters/advisor-happy": {
+  "w": 303,
+  "h": 820,
+  "ax": 0.541,
+  "ay": 1.0
+ },
+ "characters/advisor-small": {
+  "w": 100,
+  "h": 148,
+  "ax": 0.373,
+  "ay": 0.959
+ },
+ "characters/advisor-warning": {
+  "w": 279,
+  "h": 820,
+  "ax": 0.27,
+  "ay": 1.0
+ },
+ "characters/advisor": {
+  "w": 363,
+  "h": 820,
+  "ax": 0.569,
+  "ay": 1.0
+ },
+ "characters/call-agent": {
+  "w": 56,
+  "h": 93,
+  "ax": 0.487,
+  "ay": 0.957
+ },
+ "characters/ceo": {
+  "w": 70,
+  "h": 104,
+  "ax": 0.45,
+  "ay": 0.952
+ },
+ "characters/executive": {
+  "w": 75,
+  "h": 157,
+  "ax": 0.42,
+  "ay": 0.962
+ },
+ "characters/manager": {
+  "w": 75,
+  "h": 151,
+  "ax": 0.403,
+  "ay": 0.96
+ },
+ "characters/mechanic": {
+  "w": 79,
+  "h": 154,
+  "ax": 0.362,
+  "ay": 0.961
+ },
+ "characters/surveyor": {
+  "w": 77,
+  "h": 99,
+  "ax": 0.4,
+  "ay": 0.949
+ },
+ "environments/bench": {
+  "w": 104,
+  "h": 93,
+  "ax": 0.692,
+  "ay": 0.946
+ },
+ "environments/bus-stop": {
+  "w": 156,
+  "h": 159,
+  "ax": 0.366,
+  "ay": 0.962
+ },
+ "environments/cafe-terrace": {
+  "w": 185,
+  "h": 121,
+  "ax": 0.463,
+  "ay": 0.959
+ },
+ "environments/carport": {
+  "w": 182,
+  "h": 120,
+  "ax": 0.398,
+  "ay": 0.958
+ },
+ "environments/cone": {
+  "w": 49,
+  "h": 59,
+  "ax": 0.478,
+  "ay": 0.915
+ },
+ "environments/ev-chargers": {
+  "w": 141,
+  "h": 138,
+  "ax": 0.285,
+  "ay": 0.964
+ },
+ "environments/flag-pair": {
+  "w": 133,
+  "h": 187,
+  "ax": 0.399,
+  "ay": 0.973
+ },
+ "environments/flag-planter": {
+  "w": 120,
+  "h": 179,
+  "ax": 0.427,
+  "ay": 0.972
+ },
+ "environments/fountain-plaza": {
+  "w": 319,
+  "h": 217,
+  "ax": 0.496,
+  "ay": 0.972
+ },
+ "environments/garden-island": {
+  "w": 236,
+  "h": 163,
+  "ax": 0.48,
+  "ay": 0.957
+ },
+ "environments/guard-gate": {
+  "w": 135,
+  "h": 102,
+  "ax": 0.433,
+  "ay": 0.951
+ },
+ "environments/planter": {
+  "w": 124,
+  "h": 121,
+  "ax": 0.66,
+  "ay": 0.942
+ },
+ "environments/street-lamp": {
+  "w": 61,
+  "h": 167,
+  "ax": 0.494,
+  "ay": 0.97
+ },
+ "environments/tree-blossom": {
+  "w": 156,
+  "h": 188,
+  "ax": 0.508,
+  "ay": 0.973
+ },
+ "environments/tree-round": {
+  "w": 99,
+  "h": 104,
+  "ax": 0.515,
+  "ay": 0.952
+ },
+ "environments/tree-small": {
+  "w": 83,
+  "h": 91,
+  "ax": 0.491,
+  "ay": 0.945
+ },
+ "environments/tree": {
+  "w": 155,
+  "h": 189,
+  "ax": 0.519,
+  "ay": 0.974
+ },
+ "environments/tyres": {
+  "w": 52,
+  "h": 59,
+  "ax": 0.49,
+  "ay": 0.915
+ },
+ "events/flood-warning": {
+  "w": 175,
+  "h": 91,
+  "ax": 0.507,
+  "ay": 0.956
+ },
+ "events/flood": {
+  "w": 283,
+  "h": 228,
+  "ax": 0.455,
+  "ay": 0.978
+ },
+ "events/landslide": {
+  "w": 265,
+  "h": 230,
+  "ax": 0.419,
+  "ay": 0.978
+ },
+ "events/rival-promo": {
+  "w": 640,
+  "h": 579,
+  "ax": 0.515,
+  "ay": 1.0
+ },
+ "events/storm": {
+  "w": 233,
+  "h": 221,
+  "ax": 0.466,
+  "ay": 0.977
+ },
+ "icons/clipboard": {
+  "w": 108,
+  "h": 112,
+  "ax": 0.601,
+  "ay": 0.92
+ },
+ "icons/ev-charger": {
+  "w": 96,
+  "h": 126,
+  "ax": 0.406,
+  "ay": 0.952
+ },
+ "icons/shield": {
+  "w": 112,
+  "h": 126,
+  "ax": 0.405,
+  "ay": 0.944
+ },
+ "vehicles/ev-green": {
+  "w": 191,
+  "h": 121,
+  "ax": 0.34,
+  "ay": 0.95
+ },
+ "vehicles/ev-red": {
+  "w": 237,
+  "h": 132,
+  "ax": 0.458,
+  "ay": 0.97
+ },
+ "vehicles/ev-skyblue": {
+  "w": 226,
+  "h": 132,
+  "ax": 0.435,
+  "ay": 0.962
+ },
+ "vehicles/pickup": {
+  "w": 181,
+  "h": 122,
+  "ax": 0.352,
+  "ay": 0.951
+ },
+ "vehicles/sedan-lilac": {
+  "w": 179,
+  "h": 109,
+  "ax": 0.324,
+  "ay": 0.954
+ },
+ "vehicles/sedan-red": {
+  "w": 190,
+  "h": 115,
+  "ax": 0.329,
+  "ay": 0.948
+ },
+ "vehicles/sedan-white": {
+  "w": 261,
+  "h": 133,
+  "ax": 0.384,
+  "ay": 0.97
+ },
+ "vehicles/suv-blue": {
+  "w": 221,
+  "h": 140,
+  "ax": 0.451,
+  "ay": 0.964
+ },
+ "vehicles/suv-dark": {
+  "w": 247,
+  "h": 149,
+  "ax": 0.455,
+  "ay": 0.966
+ },
+ "vehicles/suv-silver": {
+  "w": 223,
+  "h": 141,
+  "ax": 0.459,
+  "ay": 0.972
+ },
+ "vehicles/tow-truck": {
+  "w": 202,
+  "h": 90,
+  "ax": 0.212,
+  "ay": 0.956
+ },
+ "vehicles/van": {
+  "w": 178,
+  "h": 125,
+  "ax": 0.315,
+  "ay": 0.96
+ }
+}

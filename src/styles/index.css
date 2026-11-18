@@ -1,0 +1,141 @@
+@import '@fontsource/prompt/300.css';
+@import '@fontsource/prompt/400.css';
+@import '@fontsource/prompt/500.css';
+@import '@fontsource/prompt/600.css';
+@import '@fontsource/prompt/700.css';
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------
+ * Decision Master — Design Tokens
+ * One source of truth for UI colour, type, radius, depth and motion.
+ * 3D scene colours live in src/design/tokens.ts (same palette).
+ * ------------------------------------------------------------------ */
+@theme {
+  --font-display: 'Prompt', 'Noto Sans Thai', system-ui, sans-serif;
+  --font-body: 'Prompt', 'Noto Sans Thai', system-ui, sans-serif;
+
+  /* Brand — premium insurance blue */
+  --color-navy-950: #071537;
+  --color-navy-900: #0b1f4b;
+  --color-navy-800: #12306d;
+  --color-navy-700: #1a428f;
+  --color-brand-600: #1d5fe0;
+  --color-brand-500: #2f7bff;
+  --color-brand-400: #5b9bff;
+  --color-brand-200: #bcd6ff;
+  --color-brand-100: #e3eeff;
+  --color-brand-50: #f3f8ff;
+
+  /* Reward / call-to-action */
+  --color-gold-300: #ffe08a;
+  --color-gold-400: #ffcc4d;
+  --color-gold-500: #f7ad1e;
+  --color-gold-600: #d98a07;
+
+  /* Signal colours (status only, never decoration) */
+  --color-good: #22c55e;
+  --color-watch: #f59e0b;
+  --color-alert: #ef4444;
+  --color-chance: #14b8a6;
+
+  --radius-pill: 999px;
+  --radius-card: 22px;
+
+  --shadow-float: 0 18px 40px -18px rgb(9 30 80 / 0.55), 0 4px 12px -4px rgb(9 30 80 / 0.25);
+  --shadow-pill: 0 8px 20px -8px rgb(9 30 80 / 0.6);
+  --shadow-gold: 0 10px 28px -8px rgb(217 138 7 / 0.7), inset 0 2px 0 rgb(255 255 255 / 0.6);
+
+  --ease-game: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #cfe2f5;
+  font-family: var(--font-body);
+  color: var(--color-navy-900);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* ---------- Reusable surface recipes ---------- */
+@utility glass {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.9), rgb(240 246 255 / 0.82));
+  backdrop-filter: blur(14px) saturate(1.3);
+  border: 1px solid rgb(255 255 255 / 0.9);
+  box-shadow: var(--shadow-float), inset 0 0 0 1px rgb(47 123 255 / 0.12);
+}
+
+@utility glass-dark {
+  background: linear-gradient(180deg, rgb(18 48 109 / 0.88), rgb(7 21 55 / 0.88));
+  backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid rgb(140 180 255 / 0.35);
+  box-shadow: var(--shadow-float), inset 0 1px 0 rgb(255 255 255 / 0.18);
+}
+
+@utility pill-navy {
+  background: linear-gradient(180deg, #1f4aa0 0%, #0f2a66 100%);
+  border: 2px solid rgb(255 255 255 / 0.95);
+  box-shadow: var(--shadow-pill), inset 0 1px 0 rgb(255 255 255 / 0.35);
+  color: white;
+}
+
+@utility btn-gold {
+  background: linear-gradient(180deg, var(--color-gold-300) 0%, var(--color-gold-400) 45%, var(--color-gold-500) 100%);
+  border: 2px solid rgb(255 255 255 / 0.95);
+  box-shadow: var(--shadow-gold);
+  color: var(--color-navy-900);
+}
+
+/* ---------- Motion ---------- */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgb(239 68 68 / 0.6); }
+  100% { box-shadow: 0 0 0 10px rgb(239 68 68 / 0); }
+}
+@keyframes shimmer {
+  from { transform: translateX(-120%) skewX(-20deg); }
+  to { transform: translateX(220%) skewX(-20deg); }
+}
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes fade-out {
+  to { opacity: 0; visibility: hidden; }
+}
+
+.anim-rise { animation: rise-in 0.6s var(--ease-game) both; }
+.anim-slide-right { animation: slide-in-right 0.5s var(--ease-game) both; }
+.anim-bob { animation: bob 2.4s ease-in-out infinite; }
+.pulse-alert { animation: pulse-ring 1.4s ease-out infinite; }
+
+.shine { overflow: hidden; isolation: isolate; }
+.shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.65), transparent);
+  animation: shimmer 3.2s ease-in-out infinite;
+}
+
+/* 16:9 stage — the whole game scales as one unit on desktop */
+.stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1600px;
+  height: 900px;
+  transform-origin: center center;
+}

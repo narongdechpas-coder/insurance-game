@@ -1,0 +1,19 @@
+# Netlify build settings (read automatically when the site is linked to this repo)
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Single-page app: unknown paths fall back to the game
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Hashed JS/CSS and game art never change under the same URL → cache hard
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
