@@ -27,3 +27,9 @@ export function tone(value: number, higherIsBetter: boolean) {
 
 export const SPEED_LABEL: Record<Speed, string> = { fast: 'เห็นผลเร็ว', normal: 'เห็นผลปานกลาง', slow: 'เห็นผลช้า' }
 export const DURATION_LABEL: Record<Duration, string> = { short: 'ผลอยู่สั้น', normal: 'ผลอยู่ปานกลาง', long: 'ผลอยู่นาน' }
+
+export const KIND = {
+  opportunity: { label: 'โอกาส', cls: 'bg-chance' },
+  threat: { label: 'ภัยคุกคาม', cls: 'bg-alert' },
+  competitor: { label: 'คู่แข่ง', cls: 'bg-watch' },
+}

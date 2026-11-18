@@ -1,20 +1,24 @@
 import { Check, Lock, Wallet } from 'lucide-react'
 import { QUARTER_BUDGET_MB } from '../../game/decisions/cards'
-import { planCost } from '../../game/decisions/plan'
+import { planCost, unansweredEvents } from '../../game/decisions/plan'
 import { useGameStore, type DecisionStep } from '../../store/useGameStore'
 
-const STEPS: { id: DecisionStep; label: string; ready: boolean }[] = [
-  { id: 'scenario', label: 'รับมือเหตุการณ์', ready: false },
-  { id: 'strategy', label: 'วางกลยุทธ์', ready: true },
-  { id: 'confirm', label: 'ยืนยันแผน', ready: false },
+const STEPS: { id: DecisionStep; label: string }[] = [
+  { id: 'scenario', label: 'รับมือเหตุการณ์' },
+  { id: 'strategy', label: 'วางกลยุทธ์' },
+  { id: 'confirm', label: 'ยืนยันแผน' },
 ]
 
 /** Step tracker + the one number the player watches: budget. */
 export function DecisionHeader() {
   const step = useGameStore((s) => s.ui.step)
   const plan = useGameStore((s) => s.plan)
+  const responses = useGameStore((s) => s.responses)
+  const game = useGameStore((s) => s.game)
   const toast = useGameStore((s) => s.toast)
-  const used = planCost(plan)
+  const setStep = useGameStore((s) => s.setStep)
+  const used = planCost(plan, responses)
+  const pending = unansweredEvents(game, responses).length
   const pct = Math.min(1, used / QUARTER_BUDGET_MB)
   const over = used > QUARTER_BUDGET_MB
   return (
@@ -22,16 +26,19 @@ export function DecisionHeader() {
       <div className="glass rounded-full p-1.5 flex items-center gap-1">
         {STEPS.map((s, i) => {
           const active = s.id === step
+          const locked = s.id === 'confirm' && pending > 0
+          const done = s.id === 'scenario' && pending === 0
           return (
             <button
               key={s.id}
-              onClick={() => !s.ready && toast(`ขั้น "${s.label}" กำลังสร้าง — Phase 3 ส่วนถัดไป`)}
+              data-step={s.id}
+              onClick={() => (locked ? toast(`ตอบเหตุการณ์ให้ครบก่อน (เหลืออีก ${pending} เรื่อง)`) : setStep(s.id))}
               className={`flex items-center gap-2 h-10 pl-1.5 pr-4 rounded-full text-[15px] font-medium transition-colors ${
                 active ? 'bg-gradient-to-b from-brand-400 to-brand-600 text-white shadow' : 'text-navy-800/70 hover:bg-brand-50'
               }`}
             >
               <span className={`grid place-items-center size-7 rounded-full text-[13px] font-bold ${active ? 'bg-white text-brand-600' : 'bg-navy-900/8 text-navy-700/70'}`}>
-                {s.ready ? i + 1 : <Lock size={13} />}
+                {locked ? <Lock size={13} /> : done && !active ? <Check size={14} strokeWidth={3} className="text-good" /> : i + 1}
               </span>
               {s.label}
             </button>

@@ -2,21 +2,37 @@ import { AlertTriangle, Lightbulb, Sparkles } from 'lucide-react'
 import { spriteUrl } from '../../assets/registry'
 import { ADVISOR_NAME } from '../../game/narrative/advisor'
 import { CARD_BY_ID } from '../../game/decisions/cards'
-import { reviewPlan } from '../../game/decisions/plan'
+import { reviewPlan, unansweredEvents } from '../../game/decisions/plan'
+import { responseOf, SCENARIO_BY_EVENT } from '../../game/decisions/scenarios'
 import { useGameStore } from '../../store/useGameStore'
 
 /** Advisor reacts to the plan as it changes: warnings first, then tips, then card guidance. */
 export function DecisionAdvisor() {
   const plan = useGameStore((s) => s.plan)
   const game = useGameStore((s) => s.game)
-  const active = useGameStore((s) => s.ui.activeCard)
-  const notes = reviewPlan(plan, game)
+  const responses = useGameStore((s) => s.responses)
+  const step = useGameStore((s) => s.ui.step)
+  const activeCard = useGameStore((s) => s.ui.activeCard)
+  const activeEvent = useGameStore((s) => s.ui.activeEvent)
+  const notes = reviewPlan(plan, game, responses)
+  // what the player is looking at decides which note leads
+  const focus: string[] =
+    step === 'strategy' ? [activeCard] : step === 'scenario' && activeEvent ? (responseOf(responses, activeEvent)?.related ?? []) : []
   const warnings = notes.filter((n) => n.tone === 'warning')
   const tips = notes.filter((n) => n.tone === 'tip')
-  const about = (n: { cards: string[] }) => n.cards.length === 0 || n.cards.includes(active)
+  const about = (n: { cards: string[] }) => n.cards.length === 0 || n.cards.some((c) => focus.includes(c))
   const lead = warnings.find(about) ?? tips.find(about) ?? warnings[0] ?? tips[0]
+  const pending = unansweredEvents(game, responses).length
   const pose = warnings.length ? 'characters/advisor-warning' : tips.length ? 'characters/advisor' : 'characters/advisor-happy'
-  const text = lead?.text ?? `${CARD_BY_ID[active].question} — เลือกได้เลยค่ะ ถ้าแผนขัดกันเองหนูจะเตือน`
+  const sc = activeEvent ? SCENARIO_BY_EVENT[activeEvent] : undefined
+  const text =
+    step === 'scenario' && sc && !responses[sc.eventId]
+      ? `${sc.question} — แต่ละทางใช้งบจากก้อนเดียวกับกลยุทธ์นะคะ`
+      : step === 'confirm' && !lead
+        ? pending
+          ? `ยังเหลือเหตุการณ์ที่ต้องตอบอีก ${pending} เรื่องค่ะ`
+          : 'แผนไม่มีจุดขัดกันเองค่ะ พร้อมยืนยันได้เลย'
+        : (lead?.text ?? `${CARD_BY_ID[activeCard].question} — เลือกได้เลยค่ะ ถ้าแผนขัดกันเองหนูจะเตือน`)
   return (
     <div className="absolute left-4 bottom-3 flex items-end pointer-events-auto">
       <img key={pose} src={spriteUrl(pose)} alt={ADVISOR_NAME} className="relative z-10 h-[200px] w-[110px] object-contain object-bottom drop-shadow-[0_14px_20px_rgba(8,26,66,0.45)] anim-rise" />

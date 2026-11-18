@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { DEFAULT_CONFIG } from '../game/config'
 import { createInitialState } from '../game/initialState'
 import { CARD_BY_ID, CARDS, choiceFor, defaultPlan, isUnlocked } from '../game/decisions/cards'
+import { scenariosFor, type Responses } from '../game/decisions/scenarios'
 import type { DecisionId, QuarterPlan } from '../game/decisions/types'
 import type { Difficulty, GameLength, GameState, LocationId } from '../game/types'
 
@@ -22,6 +23,9 @@ interface UiState {
   screen: Screen
   step: DecisionStep
   activeCard: DecisionId
+  activeEvent: string | null
+  /** The plan was confirmed in step 3 and is waiting for the Phase 4 simulation. */
+  planConfirmed: boolean
 }
 
 interface Store {
@@ -29,8 +33,14 @@ interface Store {
   ui: UiState
   /** Draft plan for the current quarter (committed to the engine in Phase 4). */
   plan: QuarterPlan
+  /** Step 1 answers: eventId → response id. */
+  responses: Responses
   startGame: (opts: { quarters: GameLength; difficulty: Difficulty }) => void
-  openDecisionRoom: (card?: DecisionId) => void
+  openDecisionRoom: (target?: DecisionId | DecisionStep) => void
+  setStep: (step: DecisionStep) => void
+  setActiveEvent: (eventId: string) => void
+  respond: (eventId: string, responseId: string) => void
+  confirmPlan: () => void
   closeDecisionRoom: () => void
   setActiveCard: (id: DecisionId) => void
   choose: (card: DecisionId, option: string) => void
@@ -47,33 +57,44 @@ let toastId = 0
 
 export const useGameStore = create<Store>((set, get) => ({
   game: createInitialState(DEFAULT_CONFIG),
-  ui: { hovered: null, selected: null, highlightedEvent: null, introDone: false, toasts: [], screen: 'cover', step: 'strategy', activeCard: 'pricing' },
+  ui: { hovered: null, selected: null, highlightedEvent: null, introDone: false, toasts: [], screen: 'cover', step: 'scenario', activeCard: 'pricing', activeEvent: null, planConfirmed: false },
   plan: defaultPlan(),
+  responses: {},
 
   startGame: ({ quarters, difficulty }) =>
     set((s) => ({
       game: createInitialState({ ...DEFAULT_CONFIG, quarters, difficulty }),
       plan: defaultPlan(),
-      ui: { ...s.ui, screen: 'command', introDone: false, selected: null, hovered: null, highlightedEvent: null },
+      responses: {},
+      ui: { ...s.ui, planConfirmed: false, screen: 'command', introDone: false, selected: null, hovered: null, highlightedEvent: null },
     })),
 
-  openDecisionRoom: (card) =>
+  openDecisionRoom: (target) =>
     set((s) => {
       const q = s.game.quarter.index
       const first = CARDS.find((c) => isUnlocked(c, q))!.id
-      const target = card && isUnlocked(CARDS.find((c) => c.id === card)!, q) ? card : first
-      return { ui: { ...s.ui, screen: 'decision', step: 'strategy', activeCard: target, selected: null, hovered: null } }
+      const card = CARDS.find((c) => c.id === target)
+      const isStep = target === 'scenario' || target === 'strategy' || target === 'confirm'
+      // a building's card → strategy; otherwise start at step 1 (events come first)
+      const step: DecisionStep = card ? 'strategy' : isStep ? (target as DecisionStep) : 'scenario'
+      const activeCard = card && isUnlocked(card, q) ? card.id : s.ui.activeCard && isUnlocked(CARDS.find((c) => c.id === s.ui.activeCard)!, q) ? s.ui.activeCard : first
+      const activeEvent = s.ui.activeEvent ?? scenariosFor(s.game.events.map((e) => e.id))[0]?.eventId ?? null
+      return { ui: { ...s.ui, screen: 'decision', step, activeCard, activeEvent, selected: null, hovered: null } }
     }),
+  setStep: (step) => set((s) => ({ ui: { ...s.ui, step } })),
+  setActiveEvent: (eventId) => set((s) => ({ ui: { ...s.ui, activeEvent: eventId } })),
+  respond: (eventId, responseId) => set((s) => ({ responses: { ...s.responses, [eventId]: responseId }, ui: { ...s.ui, planConfirmed: false } })),
+  confirmPlan: () => set((s) => ({ ui: { ...s.ui, planConfirmed: true, screen: 'command' } })),
   closeDecisionRoom: () => set((s) => ({ ui: { ...s.ui, screen: 'command' } })),
   setActiveCard: (id) => set((s) => ({ ui: { ...s.ui, activeCard: id } })),
   choose: (card, option) =>
     set((s) => {
       if (s.plan[card].option === option) return s // re-clicking keeps the tactic the player picked
       const o = CARD_BY_ID[card].options.find((x) => x.id === option)!
-      return { plan: { ...s.plan, [card]: choiceFor(o) } }
+      return { plan: { ...s.plan, [card]: choiceFor(o) }, ui: { ...s.ui, planConfirmed: false } }
     }),
-  chooseTactic: (card, tactic) => set((s) => ({ plan: { ...s.plan, [card]: { ...s.plan[card], tactic } } })),
-  resetPlan: () => set({ plan: defaultPlan() }),
+  chooseTactic: (card, tactic) => set((s) => ({ plan: { ...s.plan, [card]: { ...s.plan[card], tactic } }, ui: { ...s.ui, planConfirmed: false } })),
+  resetPlan: () => set((s) => ({ plan: defaultPlan(), ui: { ...s.ui, planConfirmed: false } })),
 
   hover: (id) => set((s) => (s.ui.hovered === id ? s : { ui: { ...s.ui, hovered: id } })),
   select: (id) => set((s) => ({ ui: { ...s.ui, selected: id, highlightedEvent: id ? s.ui.highlightedEvent : null } })),

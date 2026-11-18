@@ -1,5 +1,6 @@
 import type { GameState } from '../types'
 import { CARD_BY_ID, CARDS, QUARTER_BUDGET_MB } from './cards'
+import { responseOf, scenariosFor, SCENARIOS, type Responses } from './scenarios'
 import type { DecisionId, Impact, ImpactAxis, QuarterPlan } from './types'
 
 /**
@@ -30,12 +31,22 @@ export function choiceCost(plan: QuarterPlan, id: DecisionId) {
   return tacticOf(plan, id)?.cost ?? optionOf(plan, id).cost
 }
 
-export function planCost(plan: QuarterPlan) {
-  return CARDS.reduce((s, c) => s + choiceCost(plan, c.id), 0)
+/** Spend on event responses (step 1). Shares the quarter budget with the strategy cards. */
+export function responsesCost(responses: Responses = {}) {
+  return SCENARIOS.reduce((s, sc) => s + (responseOf(responses, sc.eventId)?.cost ?? 0), 0)
 }
 
-export function budgetLeft(plan: QuarterPlan) {
-  return QUARTER_BUDGET_MB - planCost(plan)
+export function planCost(plan: QuarterPlan, responses: Responses = {}) {
+  return CARDS.reduce((s, c) => s + choiceCost(plan, c.id), 0) + responsesCost(responses)
+}
+
+export function budgetLeft(plan: QuarterPlan, responses: Responses = {}) {
+  return QUARTER_BUDGET_MB - planCost(plan, responses)
+}
+
+/** Events this quarter that still need a response. */
+export function unansweredEvents(s: GameState, responses: Responses) {
+  return scenariosFor(s.events.map((e) => e.id)).filter((sc) => !responses[sc.eventId]).map((sc) => sc.eventId)
 }
 
 export function changedCards(plan: QuarterPlan): DecisionId[] {
@@ -45,11 +56,15 @@ export function changedCards(plan: QuarterPlan): DecisionId[] {
 const AXES: ImpactAxis[] = ['growth', 'profit', 'risk', 'cx']
 
 /** Summed direction per axis, clamped to -3…+3 for display. */
-export function previewImpact(plan: QuarterPlan): Impact {
+export function previewImpact(plan: QuarterPlan, responses: Responses = {}): Impact {
   const sum: Impact = { growth: 0, profit: 0, risk: 0, cx: 0 }
   for (const c of CARDS) {
     const i = choiceImpact(plan, c.id)
     for (const a of AXES) sum[a] += i[a]
+  }
+  for (const sc of SCENARIOS) {
+    const r = responseOf(responses, sc.eventId)
+    if (r) for (const a of AXES) sum[a] += r.impact[a]
   }
   for (const a of AXES) sum[a] = Math.max(-3, Math.min(3, sum[a]))
   return sum
@@ -66,13 +81,14 @@ export interface AdvisorNote {
  * Advisor checks for plans that fight themselves or ignore this quarter's events.
  * Narrative only — never changes numbers.
  */
-export function reviewPlan(plan: QuarterPlan, s: GameState): AdvisorNote[] {
+export function reviewPlan(plan: QuarterPlan, s: GameState, responses: Responses = {}): AdvisorNote[] {
   const notes: AdvisorNote[] = []
   const has = (id: string) => s.events.some((e) => e.id === id)
   const p = Object.fromEntries(Object.entries(plan).map(([k, v]) => [k, v.option])) as Record<DecisionId, string>
   const t = (id: DecisionId) => tacticOf(plan, id)?.id
 
-  const left = budgetLeft(plan)
+  const left = budgetLeft(plan, responses)
+  const r = (eventId: string) => responses[eventId]
   if (left < 0) notes.push({ id: 'budget', tone: 'warning', text: `แผนนี้ใช้งบเกินไป ${-left} ล้านบาท ต้องลดบางรายการก่อนยืนยันค่ะ` , cards: [] })
   if ((p.pricing === 'cut2' || p.pricing === 'cut1') && p.underwriting === 'broad')
     notes.push({ id: 'cut+broad', tone: 'warning', text: 'ลดราคาพร้อมเปิดรับลูกค้ากว้าง จะได้ลูกค้าเสี่ยงสูงในราคาถูก Loss Ratio อาจพุ่งค่ะ' , cards: ['pricing', 'underwriting'] })
@@ -104,5 +120,14 @@ export function reviewPlan(plan: QuarterPlan, s: GameState): AdvisorNote[] {
     notes.push({ id: 'non-oem', tone: 'warning', text: 'อะไหล่เทียบแท้ประหยัดก็จริง แต่ระวังลูกค้าร้องเรียน และต้องแจ้งลูกค้าให้ชัดเจนค่ะ', cards: ['repair'] })
   if (t('pricing') === 'dealerPromo' && has('rival-promo'))
     notes.push({ id: 'dealer-promo', tone: 'tip', text: 'ตอบโต้ Lotus Guard ตรงช่องทางดีลเลอร์ ไม่ต้องลดราคาทั้งพอร์ตค่ะ', cards: ['pricing'] })
+  // event responses × strategy
+  if (r('flood-central') === 'monitor' && p.reinsurance === 'retain')
+    notes.push({ id: 'flood-exposed', tone: 'warning', text: 'เฝ้าดูน้ำท่วมเฉยๆ แถมรับความเสี่ยงเองด้วย ถ้าน้ำมาจริงเราจะเจ็บหนักที่สุดในตลาดค่ะ', cards: ['reinsurance'] })
+  if (r('rival-promo') === 'matchPromo' && (p.pricing === 'cut2' || p.pricing === 'cut1'))
+    notes.push({ id: 'double-discount', tone: 'warning', text: 'ลดราคาทั้งพอร์ตแล้วยังจัดโปรที่โชว์รูมซ้ำอีก กลายเป็นลดสองต่อ กำไรหายเร็วมากค่ะ', cards: ['pricing'] })
+  if (r('ev-growth') === 'launchCover' && t('repair') === 'ev')
+    notes.push({ id: 'ev-synergy', tone: 'tip', text: 'ออกความคุ้มครองแบตเตอรี่คู่กับลงทุนอู่ EV สอดคล้องกันดีค่ะ คุมค่าซ่อมได้เอง', cards: ['repair'] })
+  if (r('rival-promo') === 'valueAdd' && p.repair === 'costCut')
+    notes.push({ id: 'value-vs-cut', tone: 'warning', text: 'สัญญาบริการเสริมกับลูกค้า แต่ไปลดคุณภาพอู่ ลูกค้าจะรู้สึกว่าเราพูดไม่ตรงกับที่ทำค่ะ', cards: ['repair'] })
   return notes
 }
