@@ -85,6 +85,22 @@ describe('simulateQuarter', () => {
     expect([...w].sort((a, b) => b - a)).toEqual(w)
   })
 
+  it('channel P&L columns add up and match the engine result', () => {
+    const n = simulateQuarter(start(), plan({ distribution: 'digital', marketing: 'campaign' }), {}, { seed: 9 })
+    const { columns, netUwResult, reinsurance } = n.lastReport!.pnl
+    const total = columns.find((c) => c.id === 'total')!
+    const ch = columns.filter((c) => c.id !== 'total')
+    for (const k of ['writtenPremium', 'earnedPremium', 'incurredLoss', 'commission', 'marketing', 'otherUw', 'admin', 'uwResult'] as const)
+      expect(ch.reduce((a, c) => a + c[k], 0)).toBeCloseTo(total[k], 6)
+    expect(netUwResult).toBeCloseTo(n.lastReport!.uwResult, 6)
+    expect(total.uwResult - reinsurance).toBeCloseTo(n.lastReport!.uwResult, 6)
+    expect(total.incurredLoss / total.earnedPremium).toBeCloseTo(n.lastReport!.lossRatio, 6)
+    expect((total.incurredLoss + total.expenseTotal) / total.earnedPremium).toBeCloseTo(n.kpis.combinedRatio, 6)
+    // direct channel pays far less commission than agents
+    const d = ch.find((c) => c.id === 'direct')!, a = ch.find((c) => c.id === 'agent')!
+    expect(d.commission / d.writtenPremium).toBeLessThan(a.commission / a.writtenPremium)
+  })
+
   it('ends the game after the last quarter with standings', () => {
     let s: GameState = { ...start(), config: { ...start().config, quarters: 12 } }
     for (let i = 0; i < 12 && !s.outcome; i++) {

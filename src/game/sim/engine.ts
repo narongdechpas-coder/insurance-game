@@ -6,6 +6,7 @@ import type { DecisionId, Duration, Impact, ImpactAxis, QuarterPlan, Speed } fro
 import { EVENT_BY_ID } from '../data/events'
 import type { CompanyKpis, GameState } from '../types'
 import { attractiveness } from './init'
+import { acquisitionRate, buildPnl, commissionRate, distributionChannel, nextMix, START_MIX } from './channels'
 import { DIFFICULTY, DURATION_WEIGHTS, P } from './params'
 import { rng } from './rng'
 import type { Boost, Capacity, CompetitorMove, Driver, Firm, GameOutcome, Ops, QuarterReport, QueuedEffect, SimState, Standing } from './types'
@@ -327,8 +328,16 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   const attritional = rateLR - P.profitAxisLR * flow.profit + overloadLR + adverseLR + r.normal() * (P.attritionalNoise + P.riskAxisVolatility * riskUp)
   const catMult = floodActive ? (responseOf(responses, 'flood-central')?.sim?.catLossMult ?? 1) : 1
   const catGross = floodHit ? diff.floodSeverity * P.floodLossOfGwp * gwp * pl.catExposure * r.range(P.floodSeverity[0], P.floodSeverity[1]) * (1 + 0.08 * riskUp) * catMult : 0
-  const expense = P.adminRatio + P.commissionRatio + (spend - P.baselineSpend) / gwp
-  const uw = underwrite(gwp, attritional, expense, catGross, qs, xl)
+  // premium is written now and earned over two quarters; commission follows written premium and the channel mix
+  const prevMix = sim.mix
+  sim.mix = nextMix(sim.mix, plan)
+  const ep = 0.5 * (gwp + sim.prevWp)
+  const prevWp = sim.prevWp
+  sim.prevWp = gwp
+  const commission = gwp * (commissionRate(sim.mix) + acquisitionRate(sim.mix))
+  const adminAmount = P.adminRatio * ep - P.baselineSpend
+  const expense = (commission + adminAmount + spend) / ep
+  const uw = underwrite(ep, attritional, expense, catGross * (ep / gwp), qs, xl)
   const investment = pl.capital * P.investmentYield
   pl.capital += uw.netResult + investment
   pl.combinedRatio = uw.lossRatio + uw.expenseRatio
@@ -340,7 +349,8 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
     const g = f.share * sim.marketGwp
     const lr = (P.baseLossRatio * trend) / Math.min(P.rateCap, earnedRate(f.rateHist)) + r.normal() * P.attritionalNoise
     const cat = floodHit || (floodActive && r.next() < diff.floodChance) ? diff.floodSeverity * P.floodLossOfGwp * g * f.catExposure * r.range(P.floodSeverity[0], P.floodSeverity[1]) : 0
-    const res = underwrite(g, lr, P.adminRatio + P.commissionRatio, cat, P.quotaShare.keep, { retention: P.xl.retention * (g / 2000), cost: P.xl.cost })
+    // rivals carry the same cost structure as the player at the starting channel mix (incl. routine spend)
+    const res = underwrite(g, lr, P.adminRatio + commissionRate(START_MIX) + acquisitionRate(START_MIX), cat, P.quotaShare.keep, { retention: P.xl.retention * (g / 2000), cost: P.xl.cost })
     f.capital += res.netResult + f.capital * P.investmentYield
     f.combinedRatio = res.lossRatio + res.expenseRatio
     f.crSum += f.combinedRatio
@@ -388,7 +398,7 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   if (floodHit)
     drivers.push({
       id: 'flood',
-      text: `น้ำท่วมภาคกลางเกิดจริง เคลมรวม ${Math.round(catGross)} ล้านบาท ประกันภัยต่อรับไป ${Math.round(catGross - uw.catNet)} ล้าน`,
+      text: `น้ำท่วมภาคกลางเกิดจริง เคลมรวม ${Math.round(uw.catGross)} ล้านบาท ประกันภัยต่อรับไป ${Math.round(uw.catGross - uw.catNet)} ล้าน`,
       tone: 'bad',
       weight: uw.catNet,
     })
@@ -404,6 +414,36 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
       })
   if (spend > 40) drivers.push({ id: 'spend', text: `ใช้งบกลยุทธ์และรับมือเหตุการณ์ ${spend} ล้านบาท`, tone: 'bad', weight: spend * 0.5 })
   const reCost = uw.grossResult - uw.netResult
+  const cost = (id: DecisionId) => (tacticOf(plan, id)?.cost ?? optionOf(plan, id).cost)
+  const marketingSpend = cost('marketing')
+  const distributionSpend = cost('distribution')
+  const pnl = buildPnl({
+    mix: sim.mix,
+    prevMix,
+    wp: gwp,
+    prevWp,
+    attritionalLR: attritional,
+    // paid/incurred moves with how tightly losses are controlled: fast-track and generous service pay sooner,
+    // strict loss control and an overloaded claims team pay later
+    paidRatio: clamp(
+      0.82 +
+        (responseOf(responses, 'claims-backlog')?.id === 'fastTrack' ? 0.08 : 0) +
+        (plan.repair.option === 'premium' ? 0.03 : 0) -
+        (plan.repair.option === 'costCut' ? 0.04 : 0) -
+        (plan.underwriting.option === 'strict' ? 0.02 : 0) -
+        excess.claims * 0.5,
+      0.55,
+      0.95,
+    ),
+    catGross: uw.catGross,
+    marketingSpend,
+    distributionSpend,
+    distChannel: distributionChannel(plan),
+    otherSpend: spend - marketingSpend - distributionSpend,
+    adminAmount,
+    reinsurance: reCost,
+    investmentIncome: investment,
+  })
   if (Math.abs(reCost) > 20)
     drivers.push({
       id: 'reinsurance',
@@ -437,7 +477,7 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
     uwResult: uw.netResult,
     investmentIncome: investment,
     reinsuranceCost: reCost,
-    catLossGross: catGross,
+    catLossGross: uw.catGross,
     catLossNet: uw.catNet,
     flood: floodHit ? 'hit' : floodActive ? 'missed' : 'none',
     spend,
@@ -446,6 +486,8 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
     competitorMoves: moves,
     consequences,
     rank,
+    earnedPremium: ep,
+    pnl,
   }
 
   const next: GameState = {

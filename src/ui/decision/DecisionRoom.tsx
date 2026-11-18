@@ -86,7 +86,6 @@ export function DecisionRoom() {
                 disabled={over || pending > 0}
                 onClick={() => {
                   confirm()
-                  toast('ยืนยันแผนแล้ว — การจำลองผลไตรมาสจะเปิดใน Phase 4')
                 }}
                 className={GOLD}
               >

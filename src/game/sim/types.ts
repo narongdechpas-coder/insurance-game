@@ -1,6 +1,7 @@
 import type { Responses } from '../decisions/scenarios'
 import type { ImpactAxis, QuarterPlan } from '../decisions/types'
 import type { CompanyKpis, QuarterStamp } from '../types'
+import type { Mix, Pnl } from './channels'
 
 /** Operational capacity, as a multiple of the demand the company had at game start. */
 export interface Capacity {
@@ -54,6 +55,9 @@ export interface SimState {
   /** Quarters in a row the player ran a loose underwriting appetite with a price cut. */
   looseStreak: number
   highCxStreak: number
+  /** player's channel mix and last written premium (for earned premium and the channel P&L) */
+  mix: Mix
+  prevWp: number
   /** quarter index each consequence event was last raised (cooldowns) */
   lastRaised: Record<string, number>
 }
@@ -92,6 +96,8 @@ export interface QuarterReport {
   drivers: Driver[]
   competitorMoves: CompetitorMove[]
   consequences: string[] // event ids raised for next quarter
+  earnedPremium: number
+  pnl: Pnl
   rank: number
 }
 

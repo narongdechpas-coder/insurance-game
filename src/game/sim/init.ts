@@ -1,3 +1,4 @@
+import { START_MIX } from './channels'
 import { P } from './params'
 import type { Firm, SimState } from './types'
 import type { Competitor, GameConfig } from '../types'
@@ -42,5 +43,7 @@ export function createSimState(config: GameConfig, competitors: Competitor[], pl
     looseStreak: 0,
     highCxStreak: 0,
     lastRaised: {},
+    mix: { ...START_MIX },
+    prevWp: playerShare * P.marketGwp0,
   }
 }
