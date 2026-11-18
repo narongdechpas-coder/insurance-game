@@ -1,4 +1,4 @@
-import type { DecisionCard, DecisionId, QuarterPlan } from './types'
+import type { Choice, DecisionCard, DecisionId, DecisionOption, QuarterPlan } from './types'
 
 /**
  * Strategy cards — game-design values (mock).
@@ -46,9 +46,33 @@ export const CARDS: DecisionCard[] = [
     unlockQuarter: 0,
     defaultOption: 'maintain',
     options: [
-      { id: 'save', label: 'ประหยัด', blurb: 'เก็บเงินไว้ใช้ที่อื่น แบรนด์ค่อยๆ จางลง', cost: 0, icon: 'piggy', impact: { growth: -1, profit: 0, risk: 0, cx: -1 } },
+      {
+        id: 'save',
+        label: 'ประหยัด',
+        blurb: 'เก็บเงินไว้ใช้ที่อื่น แบรนด์ค่อยๆ จางลง',
+        cost: 0,
+        icon: 'piggy',
+        impact: { growth: -1, profit: 0, risk: 0, cx: -1 },
+        tactics: [
+          { id: 'onlineOnly', label: 'ตัดสื่อออฟไลน์ เหลือออนไลน์', blurb: 'เลิกบิลบอร์ดและทีวี ยังยิงโฆษณาออนไลน์ต่อ คนรู้จักน้อยลงบ้างแต่ลูกค้าเดิมยังเห็นเรา', cost: 10, icon: 'smartphone', impact: { cx: 1 }, speed: 'normal', duration: 'normal', recommended: true },
+          { id: 'stopEvents', label: 'หยุดสปอนเซอร์และอีเวนต์', blurb: 'สื่อหลักยังอยู่ ยอดขายไม่กระทบทันที แต่ลูกค้าเก่าห่างเหินแบรนด์', cost: 15, icon: 'ticket', impact: { growth: 1, cx: -1 }, speed: 'slow', duration: 'long' },
+          { id: 'cutTeam', label: 'ลดคนในทีมการตลาด', blurb: 'ประหยัดที่สุดและกำไรดีขึ้น แต่ทีมเล็กลง ไตรมาสหน้าทำแคมเปญได้อ่อนลง', cost: 0, icon: 'userMinus', impact: { profit: 1 }, speed: 'fast', duration: 'long' },
+        ],
+      },
       { id: 'maintain', label: 'รักษาระดับ', blurb: 'คนยังจำแบรนด์ได้ ไม่เพิ่มไม่ลด', cost: 25, icon: 'hold', impact: { growth: 0, profit: 0, risk: 0, cx: 0 } },
-      { id: 'campaign', label: 'แคมเปญใหญ่', blurb: 'ดึงลูกค้าใหม่และตอบโต้คู่แข่งได้ แต่ใช้งบหนัก', cost: 70, icon: 'megaphone', impact: { growth: 2, profit: 0, risk: 0, cx: 1 } },
+      {
+        id: 'campaign',
+        label: 'แคมเปญใหญ่',
+        blurb: 'ดึงลูกค้าใหม่และตอบโต้คู่แข่งได้ แต่ใช้งบหนัก',
+        cost: 70,
+        icon: 'megaphone',
+        impact: { growth: 2, profit: 0, risk: 0, cx: 1 },
+        tactics: [
+          { id: 'inHouse', label: 'ทำแคมเปญออนไลน์เอง', blurb: 'ทีมเราทำโฆษณาออนไลน์และโซเชียลเอง ยอดขึ้นเร็ว แต่กระแสจางเร็ว', cost: 60, icon: 'smartphone', impact: {}, speed: 'fast', duration: 'short', recommended: true },
+          { id: 'ambassador', label: 'จ้าง Brand Ambassador', blurb: 'คนดังที่ลูกค้าไว้ใจช่วยสร้างแบรนด์ ใช้งบหนัก แต่ภาพจำอยู่นานหลายไตรมาส', cost: 95, icon: 'mic', impact: { growth: 1 }, speed: 'normal', duration: 'long' },
+          { id: 'sponsor', label: 'สปอนเซอร์กีฬาและอีเวนต์', blurb: 'ลูกค้ารู้สึกผูกพันกับแบรนด์ ต่ออายุดีขึ้น แต่ยอดลูกค้าใหม่โตช้า', cost: 55, icon: 'trophy', impact: { growth: -1, cx: 1 }, speed: 'slow', duration: 'long' },
+        ],
+      },
     ],
   },
   {
@@ -130,7 +154,13 @@ export const CARD_BY_ID = Object.fromEntries(CARDS.map((c) => [c.id, c])) as Rec
 export const QUARTER_BUDGET_MB = 150
 
 export function defaultPlan(): QuarterPlan {
-  return Object.fromEntries(CARDS.map((c) => [c.id, c.defaultOption])) as QuarterPlan
+  return Object.fromEntries(CARDS.map((c) => [c.id, { option: c.defaultOption }])) as QuarterPlan
+}
+
+/** Choosing a stance pre-selects its recommended tactic, so a quick player can move on. */
+export function choiceFor(option: DecisionOption): Choice {
+  const t = option.tactics?.find((x) => x.recommended) ?? option.tactics?.[0]
+  return t ? { option: option.id, tactic: t.id } : { option: option.id }
 }
 
 export function isUnlocked(card: DecisionCard, quarterIndex: number, unlockAll = false) {

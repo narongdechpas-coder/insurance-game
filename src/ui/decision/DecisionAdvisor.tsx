@@ -13,7 +13,8 @@ export function DecisionAdvisor() {
   const notes = reviewPlan(plan, game)
   const warnings = notes.filter((n) => n.tone === 'warning')
   const tips = notes.filter((n) => n.tone === 'tip')
-  const lead = warnings[0] ?? tips[0]
+  const about = (n: { cards: string[] }) => n.cards.length === 0 || n.cards.includes(active)
+  const lead = warnings.find(about) ?? tips.find(about) ?? warnings[0] ?? tips[0]
   const pose = warnings.length ? 'characters/advisor-warning' : tips.length ? 'characters/advisor' : 'characters/advisor-happy'
   const text = lead?.text ?? `${CARD_BY_ID[active].question} — เลือกได้เลยค่ะ ถ้าแผนขัดกันเองหนูจะเตือน`
   return (

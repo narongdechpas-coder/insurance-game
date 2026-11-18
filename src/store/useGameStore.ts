@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { DEFAULT_CONFIG } from '../game/config'
 import { createInitialState } from '../game/initialState'
-import { CARDS, defaultPlan, isUnlocked } from '../game/decisions/cards'
+import { CARD_BY_ID, CARDS, choiceFor, defaultPlan, isUnlocked } from '../game/decisions/cards'
 import type { DecisionId, QuarterPlan } from '../game/decisions/types'
 import type { Difficulty, GameLength, GameState, LocationId } from '../game/types'
 
@@ -34,6 +34,7 @@ interface Store {
   closeDecisionRoom: () => void
   setActiveCard: (id: DecisionId) => void
   choose: (card: DecisionId, option: string) => void
+  chooseTactic: (card: DecisionId, tactic: string) => void
   resetPlan: () => void
   hover: (id: LocationId | null) => void
   select: (id: LocationId | null) => void
@@ -65,7 +66,13 @@ export const useGameStore = create<Store>((set, get) => ({
     }),
   closeDecisionRoom: () => set((s) => ({ ui: { ...s.ui, screen: 'command' } })),
   setActiveCard: (id) => set((s) => ({ ui: { ...s.ui, activeCard: id } })),
-  choose: (card, option) => set((s) => ({ plan: { ...s.plan, [card]: option } })),
+  choose: (card, option) =>
+    set((s) => {
+      if (s.plan[card].option === option) return s // re-clicking keeps the tactic the player picked
+      const o = CARD_BY_ID[card].options.find((x) => x.id === option)!
+      return { plan: { ...s.plan, [card]: choiceFor(o) } }
+    }),
+  chooseTactic: (card, tactic) => set((s) => ({ plan: { ...s.plan, [card]: { ...s.plan[card], tactic } } })),
   resetPlan: () => set({ plan: defaultPlan() }),
 
   hover: (id) => set((s) => (s.ui.hovered === id ? s : { ui: { ...s.ui, hovered: id } })),
