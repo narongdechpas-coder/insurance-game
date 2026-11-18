@@ -30,6 +30,7 @@ export const CAR_SPRITES: SpriteKey[] = [
   'vehicles/ev-skyblue',
   'vehicles/suv-dark',
   'vehicles/sedan-red',
+  'vehicles/sedan-green',
   'vehicles/ev-green',
   'vehicles/sedan-lilac',
   'vehicles/pickup',

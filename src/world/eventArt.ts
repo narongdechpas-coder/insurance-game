@@ -3,9 +3,15 @@ import type { GameEvent } from '../game/types'
 
 /** Illustration for each event icon. `null` = art not delivered yet (UI shows an icon placeholder). */
 export const EVENT_ART: Record<GameEvent['icon'], SpriteKey | null> = {
-  ev: 'icons/ev-charger',
+  ev: 'events/ev-growth',
   flood: 'events/flood',
   competitor: 'events/rival-promo',
   regulation: 'icons/clipboard',
   economy: null,
+  service: 'characters/call-agent',
+  claims: 'vehicles/tow-truck',
+  repair: 'environments/tyres',
+  complaint: 'icons/clipboard',
+  adverse: 'icons/shield',
+  referral: 'characters/manager',
 }

@@ -1,5 +1,6 @@
 import { COMPETITORS } from './data/competitors'
 import { EVENT_DECK } from './data/events'
+import { createSimState } from './sim/init'
 import type { GameConfig, GameState, QuarterStamp } from './types'
 
 export function quarterStamp(index: number): QuarterStamp {
@@ -23,5 +24,8 @@ export function createInitialState(config: GameConfig): GameState {
     kpiHistory: [kpis],
     competitors,
     events: EVENT_DECK.slice(0, 3),
+    sim: createSimState(config, competitors, playerShare),
+    lastReport: null,
+    outcome: null,
   }
 }

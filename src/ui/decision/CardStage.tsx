@@ -112,7 +112,7 @@ export function CardStage() {
   const tight = compact && card.options.length >= 5 // five compact tiles: smaller icon, shorter cost chip
 
   return (
-    <section key={id} className="absolute left-[344px] top-[172px] w-[810px] max-h-[612px] glass rounded-[28px] overflow-hidden pointer-events-auto anim-rise">
+    <section key={id} className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-hidden pointer-events-auto anim-rise">
       <header className={`relative bg-gradient-to-br from-brand-100 via-white to-brand-50 flex items-center px-8 gap-6 transition-[height] duration-300 ${compact ? 'h-[128px]' : 'h-[178px]'}`}>
         <img
           src={spriteUrl(PANEL_ART[card.location] ?? BUILDINGS[card.location].sprite)}

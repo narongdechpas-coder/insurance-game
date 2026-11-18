@@ -13,7 +13,7 @@ export function ScenarioList() {
   const setActive = useGameStore((s) => s.setActiveEvent)
   const scen = scenariosFor(events.map((e) => e.id))
   return (
-    <nav data-list="events" className="absolute left-7 top-[172px] w-[300px] glass rounded-[24px] p-2.5 flex flex-col gap-1.5 pointer-events-auto anim-rise">
+    <nav data-list="events" className="absolute left-7 top-[172px] w-[calc(300px+max(0px,100%-1600px)*0.15)] glass rounded-[24px] p-2.5 flex flex-col gap-1.5 pointer-events-auto anim-rise">
       <div className="px-2 pt-1 pb-1.5 text-[13px] text-navy-700/70">เหตุการณ์ไตรมาสนี้ ต้องตอบทุกเรื่อง</div>
       {scen.map((sc) => {
         const ev = events.find((e) => e.id === sc.eventId)!

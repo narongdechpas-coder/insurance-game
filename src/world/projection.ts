@@ -25,7 +25,7 @@ export const V = { x: Math.cos(rad(A.v)), y: Math.sin(rad(A.v)) }
 export const FOCUS_Z = 6000
 
 export const WORLD = { w: 4200, h: 2200 }
-export const ORIGIN = { x: 1220, y: 1210 }
+export const ORIGIN = { x: 760, y: 1300 }
 
 export function project(u: number, v: number) {
   return { x: ORIGIN.x + u * U.x + v * V.x, y: ORIGIN.y + u * U.y + v * V.y }

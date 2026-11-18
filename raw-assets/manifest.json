@@ -2,15 +2,10 @@
   "out": "public/assets",
   "sheets": {
     "sheet-d.webp": {
-      "8": "events/flood",
       "9": "events/storm",
-      "10": "events/landslide",
-      "14": "vehicles/ev-red",
-      "15": "vehicles/ev-skyblue",
-      "16": "vehicles/suv-dark"
+      "10": "events/landslide"
     },
     "sheet-b.webp": {
-      "9": "vehicles/sedan-red",
       "10": "vehicles/ev-green",
       "11": "vehicles/sedan-lilac",
       "12": "vehicles/pickup",
@@ -37,8 +32,6 @@
       "23": "environments/garden-island"
     },
     "sheet-e.webp": {
-      "6": "environments/cafe-terrace",
-      "9": "environments/carport",
       "13": "environments/guard-gate",
       "17": "environments/tree-round",
       "21": "environments/tree-small",
@@ -126,6 +119,42 @@
     ],
     "round3/vehicles/sedan-white.webp": [
       "vehicles/sedan-white.webp",
+      560
+    ],
+    "round4/flood.webp": [
+      "events/flood.webp",
+      640
+    ],
+    "round4/ev-growth.webp": [
+      "events/ev-growth.webp",
+      640
+    ],
+    "round4/cafe-terrace.webp": [
+      "environments/cafe-terrace.webp",
+      640
+    ],
+    "round4/carport.webp": [
+      "environments/carport.webp",
+      640
+    ],
+    "round3/vehicles/sedan-red.webp": [
+      "vehicles/sedan-red.webp",
+      560
+    ],
+    "round3/vehicles/suv-dark.webp": [
+      "vehicles/suv-dark.webp",
+      560
+    ],
+    "round3/vehicles/ev-skyblue.webp": [
+      "vehicles/ev-skyblue.webp",
+      560
+    ],
+    "round3/vehicles/ev-red.webp": [
+      "vehicles/ev-red.webp",
+      560
+    ],
+    "round3/vehicles/sedan-green.webp": [
+      "vehicles/sedan-green.webp",
       560
     ]
   }

@@ -37,7 +37,7 @@ export function ScenarioStage() {
   }
 
   return (
-    <section key={sc.eventId} data-stage="scenario" className="absolute left-[344px] top-[172px] w-[810px] glass rounded-[28px] overflow-hidden pointer-events-auto anim-rise">
+    <section key={sc.eventId} data-stage="scenario" className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] glass rounded-[28px] overflow-hidden pointer-events-auto anim-rise">
       <header className="relative bg-gradient-to-br from-brand-100 via-white to-brand-50 flex items-center px-8 py-5 gap-6">
         <span className="shrink-0 grid place-items-center w-[180px] h-[150px]">
           {art ? (

@@ -6,7 +6,7 @@ import { Building } from './Building'
 import { Ground } from './Ground'
 import { SPRITES } from '../assets/registry'
 import { preloadMasks } from './hitTest'
-import { anchorOf, BUILDINGS, DECOR, GREENERY, LAMPS } from './layout'
+import { anchorOf, BUILDINGS, DECOR, GREENERY, ISLAND, LAMPS } from './layout'
 import { FOCUS_Z, project, WORLD } from './projection'
 import { Sprite } from './Sprite'
 import { Traffic } from './Traffic'
@@ -32,7 +32,7 @@ const HOME = (() => {
 })()
 /** HUD keeps these bands of the 1600×900 stage covered; the home view avoids them. */
 const HUD = { top: 176, bottom: 168, right: 250, left: 24 }
-const MIN_S = 0.45
+const MIN_S = 0.3
 const MAX_S = 1.5
 
 function homeCam(vw: number, vh: number): Cam {
@@ -46,11 +46,26 @@ function homeCam(vw: number, vh: number): Cam {
   return { s, x: HUD.left * k + availW / 2 - cx * s, y: top + availH / 2 - cy * s }
 }
 
+/** Pannable area: the island plus a margin (more above it, for the river and far bank). */
+const BOUNDS = (() => {
+  const pts = [project(ISLAND.u0, ISLAND.v0), project(ISLAND.u0, ISLAND.v1), project(ISLAND.u1, ISLAND.v1), project(ISLAND.u1, ISLAND.v0)]
+  const xs = pts.map((p) => p.x)
+  const ys = pts.map((p) => p.y)
+  return { x0: Math.min(...xs) - 260, x1: Math.max(...xs) + 260, y0: Math.min(...ys) - 520, y1: Math.max(...ys) + 220 }
+})()
+
 function clamp(c: Cam, vw: number, vh: number): Cam {
   const s = Math.min(MAX_S, Math.max(MIN_S, c.s))
-  const minX = vw - WORLD.w * s
-  const minY = vh - WORLD.h * s
-  return { s, x: Math.min(0, Math.max(minX, c.x)), y: Math.min(0, Math.max(minY, c.y)) }
+  const fit = (pos: number, lo: number, hi: number, view: number) => {
+    const span = (hi - lo) * s
+    // smaller than the window: it can still be nudged, but never more than a fifth of the window off-centre
+    if (span <= view) {
+      const centre = view / 2 - ((lo + hi) / 2) * s
+      return Math.min(centre + view * 0.2, Math.max(centre - view * 0.2, pos))
+    }
+    return Math.min(-lo * s, Math.max(view - hi * s, pos))
+  }
+  return { s, x: fit(c.x, BOUNDS.x0, BOUNDS.x1, vw), y: fit(c.y, BOUNDS.y0, BOUNDS.y1, vh) }
 }
 
 /**
@@ -148,7 +163,7 @@ export function WorldView() {
     <div
       ref={view}
       className="absolute inset-0 overflow-hidden touch-none"
-      style={{ background: '#a9cf8f', cursor: drag.current?.moved ? 'grabbing' : 'grab' }}
+      style={{ background: '#cfdeee', cursor: drag.current?.moved ? 'grabbing' : 'grab' }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -174,7 +189,7 @@ export function WorldView() {
           <Sprite key={`l${i}`} sprite="environments/street-lamp" u={u} v={v} scale={0.42} anchor={[0.5, 0.97]} />
         ))}
         {DECOR.map((d, i) => (
-          <Sprite key={`d${i}`} sprite={d.sprite} u={d.u} v={d.v} scale={d.scale} anchor={d.sprite.startsWith('buildings/') ? anchorOf(d) : (d.anchor ?? [0.5, 0.8])} flip={d.flip} style={{ filter: 'drop-shadow(0 8px 10px rgba(30,50,90,0.15))' }} />
+          <Sprite key={`d${i}`} sprite={d.sprite} u={d.u} v={d.v} scale={d.scale} anchor={d.anchor ?? (d.sprite.startsWith('buildings/') || SPRITES[d.sprite].ext === 'webp' ? anchorOf(d) : [0.5, 0.8])} flip={d.flip} style={{ filter: 'drop-shadow(0 8px 10px rgba(30,50,90,0.15))' }} />
         ))}
         <People />
         <Traffic />

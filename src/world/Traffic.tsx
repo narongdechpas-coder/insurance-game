@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { CAR_SPRITES, SPRITES, spriteUrl, type SpriteKey } from '../assets/registry'
-import { DISTRICT, ROADS } from './layout'
+import { ISLAND, ROADS } from './layout'
 import { project } from './projection'
 
 interface Lane {
@@ -17,9 +17,11 @@ interface Lane {
  * directions the art supports: −U (as drawn) and +V (mirrored).
  */
 const LANES: Lane[] = [
-  { axis: 'u', at: ROADS.front.v + 26, from: 2500, to: -900, speed: 120, cars: 6 },
-  { axis: 'u', at: ROADS.back.v + 22, from: 2300, to: -700, speed: 95, cars: 4 },
-  { axis: 'v', at: ROADS.cross.u - 20, from: DISTRICT.v0 - 40, to: DISTRICT.v1 + 200, speed: 80, cars: 2 },
+  // cars enter and leave at the island edge (they fade in/out there)
+  { axis: 'u', at: ROADS.u[1].v + 26, from: ISLAND.u1, to: ISLAND.u0, speed: 110, cars: 4 },
+  { axis: 'u', at: ROADS.u[0].v + 26, from: ISLAND.u1, to: ISLAND.u0, speed: 90, cars: 3 },
+  { axis: 'v', at: ROADS.v[0].u - 24, from: ISLAND.v0, to: ISLAND.v1, speed: 80, cars: 2 },
+  { axis: 'v', at: ROADS.v[1].u - 24, from: ISLAND.v0, to: ISLAND.v1, speed: 70, cars: 2 },
 ]
 
 /** On-screen car length in world units; each sprite is scaled to it, so mixed art sizes match. */
@@ -28,7 +30,7 @@ const scaleOf = (k: SpriteKey) => CAR_LENGTH / SPRITES[k].w
 /** Cars at the 24° house camera (round-3 WebP art). Until enough exist, older art fills in. */
 const HOUSE_CARS = CAR_SPRITES.filter((k) => SPRITES[k].ext === 'webp')
 const TRAFFIC = HOUSE_CARS.length ? HOUSE_CARS : CAR_SPRITES
-const FADE = 160
+const FADE = 110
 
 interface CarState {
   el: HTMLImageElement
