@@ -7,7 +7,7 @@ import { useGameStore } from '../store/useGameStore'
 import { isOpaque } from './hitTest'
 import { LOCATION_ICONS } from './icons'
 import { BUILDINGS } from './layout'
-import { project } from './projection'
+import { FOCUS_Z, project } from './projection'
 
 
 const STATUS_DOT = { good: 'bg-good', watch: 'bg-watch', alert: 'bg-alert pulse-alert', chance: 'bg-chance' }
@@ -40,6 +40,8 @@ export const Building = memo(function Building({ id }: { id: LocationId }) {
 
   const Icon = LOCATION_ICONS[loc.icon]
   const lit = hovered || selected
+  const someoneSelected = useGameStore((s) => s.ui.selected !== null)
+  const dimmed = someoneSelected && !selected
 
   return (
     <>
@@ -54,7 +56,7 @@ export const Building = memo(function Building({ id }: { id: LocationId }) {
           top,
           width: w,
           height: h,
-          zIndex: Math.round(p.y),
+          zIndex: selected ? FOCUS_Z + 1 : Math.round(p.y),
           cursor: hovered ? 'pointer' : 'default',
           translate: lit ? '0 -6px' : '0 0',
           filter: selected
@@ -73,11 +75,12 @@ export const Building = memo(function Building({ id }: { id: LocationId }) {
       />
       {/* name pill — counter-scaled so it stays readable at any zoom */}
       <button
-        className="absolute flex items-center whitespace-nowrap pr-5 pl-1 py-1 rounded-full pill-navy font-display font-semibold text-[17px] tracking-tight transition-[scale,translate] duration-300"
+        className="absolute flex items-center whitespace-nowrap pr-5 pl-1 py-1 rounded-full pill-navy font-display font-semibold text-[17px] tracking-tight transition-[scale,translate,opacity] duration-300"
         style={{
           left: left + w * 0.5,
           top: top + h * 0.08,
-          zIndex: 5000,
+          zIndex: selected ? FOCUS_Z + 3 : 5000,
+          opacity: dimmed ? 0.35 : 1,
           transform: 'translate(-50%, -100%) scale(var(--inv-scale, 1))',
           transformOrigin: '50% 100%',
           translate: lit ? '0 -8px' : '0 0',

@@ -33,6 +33,7 @@ Done in round 1: AI Advisor high-res (3 poses), competitor event art, Marketing 
 
 | # | Asset | Why | Spec |
 |---|---|---|---|
+| 0 | **Marketing & Brand at the city camera angle** | The billboard building is shot too frontally, so it is used only in the panel for now; the city shows the older office sprite | Prompt 3 + pass `public/assets/buildings/dealer.png` as the reference image for camera angle |
 | 1 | **Buildings re-rendered at one camera angle, 2× size** | HQ and the new Marketing building use different angles from the others; sprites are 450–550 px wide and soften when zoomed in | All buildings same camera, ≥ 1000 px wide each |
 | 2 | Economy / regulation event art | Planned event types | 1:1 iso vignette, ~600 px |
 | 3 | Far skyline + Thai temple strip (optional) | The reference has a city horizon behind the river | Wide transparent strip, low detail, hazy |
@@ -74,6 +75,7 @@ two shiny cars on display with blank price boards, confetti on the floor, square
 ### 3. Marketing & Brand building with billboard
 ```
 [Style block]
+Camera: exactly match the reference image's isometric angle — we see the long front facade rising to the right at a shallow ~16° and the short left side receding down-right at ~25°; the plinth's lowest corner is at the front-left, not centred.
 Two-storey modern creative-agency office, white curved facade with royal-blue trim, open cutaway glass front showing
 miniature staff at a mood board and video-editing desks, a large rooftop LED billboard showing an abstract blue gradient
 with a white car silhouette (blank, no text), a small megaphone sculpture by the entrance, landscaped plinth, 1600×1100

@@ -7,7 +7,7 @@ import { Ground } from './Ground'
 import { SPRITES } from '../assets/registry'
 import { preloadMasks } from './hitTest'
 import { BUILDINGS, DECOR, GREENERY, LAMPS } from './layout'
-import { project, WORLD } from './projection'
+import { FOCUS_Z, project, WORLD } from './projection'
 import { Sprite } from './Sprite'
 import { Traffic } from './Traffic'
 
@@ -183,6 +183,11 @@ export function WorldView() {
         ))}
         <EventBubbles />
         <CloudShadows />
+        {/* focus scrim: dims the city so the selected place, its panel and the advisor carry the eye */}
+        <div
+          className="absolute inset-0 transition-opacity duration-500"
+          style={{ zIndex: FOCUS_Z, background: 'rgba(6,18,46,0.55)', opacity: selected ? 1 : 0, pointerEvents: selected ? 'auto' : 'none' }}
+        />
       </div>
       {/* soft vignette to pull focus toward the centre */}
       <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(10,30,70,0.28) 100%)' }} />
