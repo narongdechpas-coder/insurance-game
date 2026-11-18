@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_CONFIG } from '../config'
 import { createInitialState } from '../initialState'
 import { CARD_BY_ID, CARDS, choiceFor, defaultPlan, isUnlocked, QUARTER_BUDGET_MB } from './cards'
-import { budgetLeft, changedCards, planCost, previewImpact, reviewPlan, tacticOf } from './plan'
+import { budgetLeft, changedCards, planCost, previewImpact, reviewPlan, tacticOf, unansweredEvents } from './plan'
+import { SCENARIOS, scenariosFor } from './scenarios'
 import type { DecisionId, QuarterPlan } from './types'
 
 /** Plan from option ids (each gets its recommended tactic); `tactics` overrides the tactic. */
@@ -106,5 +107,36 @@ describe('advisor review', () => {
   })
   it('suggests a response to the rival promotion when doing nothing', () => {
     expect(reviewPlan(defaultPlan(), state).some((n) => n.id === 'rival-tip')).toBe(true)
+  })
+})
+
+describe('event responses (step 1)', () => {
+  it('every active event has a scenario with 3 distinct responses', () => {
+    const sc = scenariosFor(state.events.map((e) => e.id))
+    expect(sc.length).toBe(state.events.length)
+    for (const s of SCENARIOS) {
+      expect(s.responses.length).toBe(3)
+      const sigs = s.responses.map((r) => JSON.stringify([r.cost, r.impact, r.speed]))
+      expect(new Set(sigs).size).toBe(3)
+    }
+  })
+  it('all events start unanswered and none remain after answering', () => {
+    expect(unansweredEvents(state, {}).length).toBe(3)
+    const all = { 'ev-growth': 'waitData', 'flood-central': 'monitor', 'rival-promo': 'holdLine' }
+    expect(unansweredEvents(state, all)).toEqual([])
+  })
+  it('responses share the strategy budget and move the impact preview', () => {
+    const p = defaultPlan()
+    const r = { 'flood-central': 'preposition' }
+    expect(planCost(p, r)).toBe(planCost(p) + 20)
+    expect(budgetLeft(p, r)).toBe(budgetLeft(p) - 20)
+    expect(previewImpact(p, r).cx).toBe(previewImpact(p).cx + 2)
+  })
+  it('warns when the flood is only monitored while risk is retained', () => {
+    const notes = reviewPlan(mk({ reinsurance: 'retain' }), state, { 'flood-central': 'monitor' })
+    expect(notes.some((n) => n.id === 'flood-exposed')).toBe(true)
+  })
+  it('warns about discounting twice', () => {
+    expect(reviewPlan(mk({ pricing: 'cut1' }), state, { 'rival-promo': 'matchPromo' }).some((n) => n.id === 'double-discount')).toBe(true)
   })
 })

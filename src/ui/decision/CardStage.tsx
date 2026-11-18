@@ -10,7 +10,7 @@ import { BUILDINGS, PANEL_ART } from '../../world/layout'
 import { ImpactArrows } from './ImpactArrows'
 import { AXES, DURATION_LABEL, OPTION_ICONS, SPEED_LABEL } from './visuals'
 
-function ImpactRow({ impact, size = 14 }: { impact: Impact; size?: number }) {
+export function ImpactRow({ impact, size = 14 }: { impact: Impact; size?: number }) {
   return (
     <span className="grid grid-cols-4 gap-1">
       {AXES.map((a) => (
@@ -25,7 +25,7 @@ function ImpactRow({ impact, size = 14 }: { impact: Impact; size?: number }) {
   )
 }
 
-function CostChip({ cost }: { cost: number }) {
+export function CostChip({ cost }: { cost: number }) {
   return (
     <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[12px] ${cost ? 'bg-gold-300/50 text-navy-900' : 'bg-navy-900/5 text-navy-700/60'}`}>
       <Coins size={12} /> {cost ? `${cost} ล้านบาท` : 'ไม่ใช้งบ'}
