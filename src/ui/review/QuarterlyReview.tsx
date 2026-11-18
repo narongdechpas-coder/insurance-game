@@ -11,6 +11,7 @@ import { mb, pct, signed } from './format'
 import { PnlTable } from './PnlTable'
 import { RivalsPanel } from './RivalsPanel'
 import { Sparkline } from './Sparkline'
+import { Glossed } from '../glossary/Term'
 
 type Tab = 'story' | 'rivals' | 'pnl'
 
@@ -102,7 +103,7 @@ export function QuarterlyReview() {
                     return (
                       <div key={k.label} className="rounded-2xl bg-white px-4 py-3 border border-navy-900/5">
                         <div className="flex items-center gap-2 text-[13px] text-navy-700/75">
-                          <Icon size={16} /> {k.label}
+                          <Icon size={16} /> <Glossed text={k.label} />
                         </div>
                         <div className="flex items-end justify-between mt-1">
                           <div>

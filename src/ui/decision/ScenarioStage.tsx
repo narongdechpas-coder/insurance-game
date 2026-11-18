@@ -6,6 +6,7 @@ import { useGameStore } from '../../store/useGameStore'
 import { EVENT_ART } from '../../world/eventArt'
 import { CostChip, ImpactRow } from './CardStage'
 import { KIND, OPTION_ICONS, SPEED_LABEL } from './visuals'
+import { Glossed } from '../glossary/Term'
 
 /** Step 1: the active event as a story, and three ways to respond. */
 export function ScenarioStage() {
@@ -75,9 +76,9 @@ export function ScenarioStage() {
                 <span className={`shrink-0 grid place-items-center size-11 rounded-2xl ${on ? 'bg-gradient-to-b from-brand-400 to-brand-600 text-white' : 'bg-brand-50 text-brand-600'}`}>
                   <Icon size={23} strokeWidth={2.4} />
                 </span>
-                <span className="font-display font-semibold text-[16.5px] leading-tight text-navy-900">{r.label}</span>
+                <span className="font-display font-semibold text-[16.5px] leading-tight text-navy-900"><Glossed text={r.label} /></span>
               </span>
-              <span className="text-[13px] leading-snug text-navy-700/85 mt-2.5 flex-1">{r.blurb}</span>
+              <span className="text-[13px] leading-snug text-navy-700/85 mt-2.5 flex-1"><Glossed text={r.blurb} /></span>
               <span className="inline-flex self-start items-center gap-1 rounded-full bg-brand-50 text-brand-600 px-2 py-0.5 text-[11px] mb-2">
                 <Clock size={11} /> {SPEED_LABEL[r.speed]}
               </span>

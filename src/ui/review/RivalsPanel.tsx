@@ -3,6 +3,7 @@ import { responseOf, scenariosFor } from '../../game/decisions/scenarios'
 import type { RivalReport } from '../../game/sim/types'
 import type { GameState } from '../../game/types'
 import { mb, pct, signed } from './format'
+import { Glossed } from '../glossary/Term'
 
 const PERSONA: Record<string, string> = {
   aggressive: 'สายบุกราคา',
@@ -17,7 +18,7 @@ function Delta({ label, a, b, fmt, higherIsBetter = true }: { label: string; a: 
   const good = flat ? null : d > 0 === higherIsBetter
   return (
     <div className="rounded-xl bg-navy-900/[0.035] px-2.5 py-1.5">
-      <div className="text-[11.5px] text-navy-700/65">{label}</div>
+      <div className="text-[11.5px] text-navy-700/65"><Glossed text={label} /></div>
       <div className="font-semibold text-[15px] text-navy-900 tabular-nums">{fmt(b)}</div>
       <div className={`text-[11.5px] tabular-nums ${good === null ? 'text-navy-700/45' : good ? 'text-good' : 'text-alert'}`}>{flat ? 'ทรงตัว' : signed(d, fmt)}</div>
     </div>

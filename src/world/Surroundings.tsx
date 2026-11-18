@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react'
 import { spriteUrl } from '../assets/registry'
 import { ISLAND, RIVER, ROADS } from './layout'
 import { project, quad } from './projection'
+import { RoadNet } from './Roads'
 
 /**
  * The wider city around the island: a street grid that continues the island's roads, and
@@ -42,16 +43,17 @@ function roadSegments(): ['u' | 'v', number, number, number][] {
   const uMin = uCuts[0] - 260
   const uMax = uCuts[uCuts.length - 1] + 260
   const vMax = vCuts[vCuts.length - 1] + 260
-  // roads along U (constant v): skip the part that runs through the island
+  // roads along U (constant v): the island's own streets continue outward from its edge,
+  // so they join the ring road instead of stopping short of it
   for (const v of vCuts.slice(1)) {
     if (v < v1 + RING) {
-      segs.push(['u', v, uMin, u0 - RING + ROAD_W / 2])
-      segs.push(['u', v, u1 + RING - ROAD_W / 2, uMax])
+      segs.push(['u', v, uMin, u0])
+      segs.push(['u', v, u1, uMax])
     } else segs.push(['u', v, uMin, uMax])
   }
   // roads along V (constant u)
   for (const u of uCuts) {
-    if (u > u0 - RING && u < u1 + RING) segs.push(['v', u, v1 + RING - ROAD_W / 2, vMax])
+    if (u > u0 - RING && u < u1 + RING) segs.push(['v', u, v1, vMax])
     else segs.push(['v', u, RIVER.v1 + 10, vMax])
   }
   return segs
@@ -135,16 +137,7 @@ export const SurroundingsGround = memo(function SurroundingsGround() {
           <polygon points={quad(...p)} fill="#eef5e4" opacity={0.35} />
         </g>
       ))}
-      {segs.map(([along, at, from, to], i) => {
-        const q = along === 'u' ? quad(from, at - ROAD_W / 2, to, at + ROAD_W / 2) : quad(at - ROAD_W / 2, from, at + ROAD_W / 2, to)
-        const k = along === 'u' ? quad(from, at - ROAD_W / 2 - 8, to, at + ROAD_W / 2 + 8) : quad(at - ROAD_W / 2 - 8, from, at + ROAD_W / 2 + 8, to)
-        return (
-          <g key={i}>
-            <polygon points={k} fill="#f4f5f7" />
-            <polygon points={q} fill="#8c94a3" />
-          </g>
-        )
-      })}
+      <RoadNet segs={segs.map(([along, at, from, to]) => ({ along, at, w: ROAD_W, from, to }))} />
     </g>
   )
 })

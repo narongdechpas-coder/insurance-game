@@ -11,6 +11,8 @@ import { useGameStore } from '../../store/useGameStore'
 import { BUILDINGS, PANEL_ART } from '../../world/layout'
 import { ImpactArrows } from './ImpactArrows'
 import { AXES, DURATION_LABEL, OPTION_ICONS, SPEED_LABEL } from './visuals'
+import { splitTerms } from '../../game/glossary'
+import { Glossed } from '../glossary/Term'
 
 export function ImpactRow({ impact, size = 14 }: { impact: Impact; size?: number }) {
   return (
@@ -36,7 +38,7 @@ export function CostChip({ cost }: { cost: number }) {
 }
 
 /** Layer 2: how to carry out the chosen stance. */
-function TacticRow({ card, stanceLabel, tactics }: { card: DecisionId; stanceLabel: string; tactics: Tactic[] }) {
+function TacticRow({ card, stanceLabel, tactics, skip }: { card: DecisionId; stanceLabel: string; tactics: Tactic[]; skip: string[] }) {
   const plan = useGameStore((s) => s.plan)
   const chooseTactic = useGameStore((s) => s.chooseTactic)
   const chosen = tacticOf(plan, card)?.id
@@ -70,9 +72,9 @@ function TacticRow({ card, stanceLabel, tactics }: { card: DecisionId; stanceLab
                 <span className={`shrink-0 grid place-items-center size-10 rounded-xl ${on ? 'bg-gradient-to-b from-gold-300 to-gold-500 text-navy-900' : 'bg-gold-300/30 text-gold-600'}`}>
                   <Icon size={21} strokeWidth={2.3} />
                 </span>
-                <span className="font-display font-semibold text-[15.5px] leading-tight text-navy-900">{t.label}</span>
+                <span className="font-display font-semibold text-[15.5px] leading-tight text-navy-900"><Glossed text={t.label} skip={skip} /></span>
               </span>
-              <span className="text-[12.5px] leading-snug text-navy-700/85 mt-2 flex-1">{t.blurb}</span>
+              <span className="text-[12.5px] leading-snug text-navy-700/85 mt-2 flex-1"><Glossed text={t.blurb} skip={skip} /></span>
               <span className="flex flex-wrap gap-1 mt-1.5">
                 {t.recommended && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-gold-300/60 text-navy-900 px-2 py-0.5 text-[11px] font-medium">
@@ -107,6 +109,8 @@ export function CardStage() {
   const choose = useGameStore((s) => s.choose)
   const card = CARD_BY_ID[id]
   const loc = LOCATION_BY_ID[card.location]
+  // a term already explained in the card title gets no second "?" below it
+  const inTitle = splitTerms(card.title).flatMap((p) => ('id' in p ? [p.id] : []))
   const game = useGameStore((s) => s.game)
   const head = portraitKey(card.location, moodOfStatus(locationStatus(game, card.location)))
   const chosenOption = card.options.find((o) => o.id === chosen)
@@ -127,8 +131,8 @@ export function CardStage() {
           <div className="text-[13px] text-brand-600 font-medium">
             {loc.en} · {loc.th}
           </div>
-          <h2 className={`font-display font-bold leading-tight text-navy-900 ${compact ? 'text-[25px]' : 'text-[30px]'}`}>{card.title}</h2>
-          <p className="text-[16px] text-navy-800 mt-0.5">{card.question}</p>
+          <h2 className={`font-display font-bold leading-tight text-navy-900 ${compact ? 'text-[25px]' : 'text-[30px]'}`}><Glossed text={card.title} /></h2>
+          <p className="text-[16px] text-navy-800 mt-0.5"><Glossed text={card.question} skip={inTitle} /></p>
           {!compact && (
             <div className="flex flex-wrap gap-1.5 mt-2.5">
               {card.modules.map((m) => (
@@ -177,9 +181,9 @@ export function CardStage() {
                 >
                   <Icon size={tight ? 17 : compact ? 21 : 28} strokeWidth={2.4} />
                 </span>
-                <span className={`font-display font-semibold leading-tight text-navy-900 ${compact ? `whitespace-nowrap ${tight ? 'text-[14.5px]' : 'text-[16px]'}` : 'text-[18px]'}`}>{o.label}</span>
+                <span className={`font-display font-semibold leading-tight text-navy-900 ${compact ? `whitespace-nowrap ${tight ? 'text-[14.5px]' : 'text-[16px]'}` : 'text-[18px]'}`}><Glossed text={o.label} skip={inTitle} /></span>
               </span>
-              {!compact && <span className="text-[13px] leading-snug text-navy-700/80 mt-1.5 flex-1">{o.blurb}</span>}
+              {!compact && <span className="text-[13px] leading-snug text-navy-700/80 mt-1.5 flex-1"><Glossed text={o.blurb} skip={inTitle} /></span>}
               {!compact && (
                 <span className="mt-2 pt-2.5 border-t border-brand-100">
                   <ImpactRow impact={o.impact} />
@@ -199,7 +203,7 @@ export function CardStage() {
           )
         })}
       </div>
-      {tactics && chosenOption && <TacticRow card={id} stanceLabel={chosenOption.label} tactics={tactics} />}
+      {tactics && chosenOption && <TacticRow card={id} stanceLabel={chosenOption.label} tactics={tactics} skip={inTitle} />}
     </section>
   )
 }

@@ -123,6 +123,8 @@ export interface Standing {
   share: number
   avgCombinedRatio: number
   satisfaction: number
+  /** Score by component (capital /30, share /25, combined ratio /25, satisfaction /20), before any bankruptcy penalty. */
+  parts?: { capital: number; share: number; cr: number; cx: number }
 }
 
 export interface GameOutcome {

@@ -173,3 +173,27 @@ img[data-portrait],
   -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent 98%);
   mask-image: linear-gradient(to bottom, #000 70%, transparent 98%);
 }
+
+/* ---------- Touch / tablet ---------- */
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+  touch-action: manipulation; /* no double-tap zoom delay */
+}
+.rotate-hint { display: none; }
+@media (orientation: portrait) and (pointer: coarse) {
+  .rotate-hint { display: grid; }
+}
+.rotate-hint-icon { animation: rotate-nudge 2.4s var(--ease-game) infinite; }
+@keyframes rotate-nudge { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(90deg); } }
+/* the glossary "?" is small on screen: give fingers a bigger invisible target */
+@media (pointer: coarse) {
+  [data-term] { position: relative; }
+  [data-term]::after { content: ''; position: absolute; inset: -11px; }
+}
+
+/* city vignette (under the HUD): bright centre, edges darken softly toward navy */
+.vignette {
+  background: radial-gradient(ellipse 72% 68% at 50% 54%, transparent 48%, rgb(8 26 66 / 0.2) 72%, rgb(8 26 66 / 0.5) 100%);
+}

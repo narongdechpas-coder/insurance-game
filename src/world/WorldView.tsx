@@ -75,7 +75,7 @@ function clamp(c: Cam, vw: number, vh: number): Cam {
 
 /**
  * The living company: a pannable, zoomable miniature district.
- * Drag to pan, wheel to zoom, click a building to focus it.
+ * Drag to pan, wheel or two-finger pinch to zoom, click (tap) a building to focus it.
  */
 export function WorldView() {
   const view = useRef<HTMLDivElement>(null)
@@ -86,6 +86,9 @@ export function WorldView() {
   })
   const [animate, setAnimate] = useState(true)
   const drag = useRef<{ x: number; y: number; cx: number; cy: number; moved: boolean } | null>(null)
+  // touch: every finger on the city, and the pinch that two of them make
+  const fingers = useRef(new Map<number, { x: number; y: number }>())
+  const pinch = useRef<{ d: number; mx: number; my: number; cam: Cam } | null>(null)
   const selected = useGameStore((s) => s.ui.selected)
   const screen = useGameStore((s) => s.ui.screen)
   const select = useGameStore((s) => s.select)
@@ -125,12 +128,32 @@ export function WorldView() {
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
+      fingers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      if (fingers.current.size === 2) {
+        const [a, b] = [...fingers.current.values()]
+        pinch.current = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, cam }
+        if (drag.current) drag.current.moved = true // a pinch is never a tap
+        setAnimate(false)
+        return
+      }
       drag.current = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y, moved: false }
     },
-    [cam.x, cam.y],
+    [cam],
   )
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
+      if (fingers.current.has(e.pointerId)) fingers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      const pz = pinch.current
+      if (pz && fingers.current.size >= 2) {
+        const [a, b] = [...fingers.current.values()]
+        const s = Math.min(MAX_S, Math.max(MIN_S, pz.cam.s * (Math.hypot(a.x - b.x, a.y - b.y) / pz.d)))
+        const k = s / pz.cam.s
+        const mx = (a.x + b.x) / 2
+        const my = (a.y + b.y) / 2
+        // the point under the fingers' midpoint stays under it, and follows it when both fingers move
+        setCam(clamp({ s, x: mx - (pz.mx - pz.cam.x) * k, y: my - (pz.my - pz.cam.y) * k }, size.w, size.h))
+        return
+      }
       const d = drag.current
       if (!d) return
       const dx = e.clientX - d.x
@@ -145,7 +168,18 @@ export function WorldView() {
     },
     [size.w, size.h],
   )
-  const onPointerUp = useCallback(() => {
+  const onPointerUp = useCallback((e: React.PointerEvent) => {
+    fingers.current.delete(e.pointerId)
+    if (fingers.current.size < 2) pinch.current = null
+    if (fingers.current.size > 0) {
+      // one finger left after a pinch: carry on panning from where it is now, without a jump
+      const [f] = [...fingers.current.values()]
+      setCam((c) => {
+        drag.current = { x: f.x, y: f.y, cx: c.x, cy: c.y, moved: true }
+        return c
+      })
+      return
+    }
     // a click on empty ground clears the selection; a drag does not
     setTimeout(() => (drag.current = null), 0)
   }, [])
@@ -173,6 +207,7 @@ export function WorldView() {
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
       onClickCapture={onClickCapture}
       onClick={() => selected && select(null)}
       onWheel={onWheel}

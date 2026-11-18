@@ -159,14 +159,19 @@ function competitorMoves(firms: Firm[], personalities: string[], names: string[]
   return moves
 }
 
-function scoreOf(f: { capital: number; share: number; avgCR: number; satisfaction: number }, startCapital: number) {
+function scoreParts(f: { capital: number; share: number; avgCR: number; satisfaction: number }, startCapital: number) {
   const c01 = (x: number) => clamp(x, 0, 1)
-  return (
-    30 * c01((f.capital / startCapital - 0.5) / 1.5) + // 0.5× start → 0, 2× start → 30
-    25 * c01(f.share / 0.3) + // 30% share → full
-    25 * c01((1.05 - f.avgCR) / 0.12) + // avg CR 105% → 0, 93% → full
-    20 * c01((f.satisfaction - 2.5) / 2.5) // 2.5★ → 0, 5★ → full
-  )
+  return {
+    capital: 30 * c01((f.capital / startCapital - 0.5) / 1.5), // 0.5× start → 0, 2× start → 30
+    share: 25 * c01(f.share / 0.3), // 30% share → full
+    cr: 25 * c01((1.05 - f.avgCR) / 0.12), // avg CR 105% → 0, 93% → full
+    cx: 20 * c01((f.satisfaction - 2.5) / 2.5), // 2.5★ → 0, 5★ → full
+  }
+}
+
+function scoreOf(f: { capital: number; share: number; avgCR: number; satisfaction: number }, startCapital: number) {
+  const p = scoreParts(f, startCapital)
+  return p.capital + p.share + p.cr + p.cx
 }
 
 function standings(state: GameState, sim: SimState): Standing[] {
@@ -179,11 +184,17 @@ function standings(state: GameState, sim: SimState): Standing[] {
       share: f.share,
       avgCombinedRatio: avgCR,
       satisfaction: f.satisfaction,
+      parts: scoreParts({ capital: f.capital, share: f.share, avgCR, satisfaction: f.satisfaction }, startCapital),
       // a company that fell below the bankruptcy line cannot outrank a solvent one
       score: Math.round(scoreOf({ capital: f.capital, share: f.share, avgCR, satisfaction: f.satisfaction }, startCapital) * (f.capital < startCapital * P.bankruptcyFraction ? 0.3 : 1)),
     }
   })
   return all.sort((a, b) => b.score - a.score)
+}
+
+/** Live ranking for the HUD, scored the same way as the final result. */
+export function currentStandings(state: GameState): Standing[] {
+  return standings(state, state.sim)
 }
 
 /** Consequence events raised by this quarter's results (max 2, most urgent first). */

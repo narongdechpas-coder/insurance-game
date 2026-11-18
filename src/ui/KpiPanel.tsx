@@ -1,6 +1,7 @@
 import { Coins, Gauge, PieChart, Star } from 'lucide-react'
 import { playerRank } from '../game/selectors'
 import { useGameStore } from '../store/useGameStore'
+import { Glossed } from './glossary/Term'
 
 /** Four essentials only. Detail lives in the Quarterly Review. */
 export function KpiPanel() {
@@ -22,7 +23,7 @@ export function KpiPanel() {
             <Icon size={20} strokeWidth={2.3} />
           </div>
           <div className="min-w-0">
-            <div className="text-[12px] text-navy-700/70 leading-none">{label}</div>
+            <div className="text-[12px] text-navy-700/70 leading-none"><Glossed text={label} /></div>
             <div className="flex items-baseline gap-1.5">
               <span className="font-display font-bold text-[21px] text-navy-900 leading-tight">{value}</span>
             </div>
