@@ -6,9 +6,17 @@ import { scenariosFor, type Responses } from '../game/decisions/scenarios'
 import type { DecisionId, QuarterPlan } from '../game/decisions/types'
 import { simulateQuarter } from '../game/sim/engine'
 import type { Difficulty, GameLength, GameState, LocationId } from '../game/types'
+import { clearSave, readSave, readSettings, writeSave, writeSettings, type Settings } from './save'
 
 export type Screen = 'cover' | 'command' | 'decision' | 'running' | 'simulating' | 'review' | 'gameover' | 'market' | 'operation'
 export type DecisionStep = 'scenario' | 'strategy' | 'confirm'
+export type Modal = 'ranking' | 'guide' | 'settings'
+/** An open glossary popover: the term and where its "?" sits, in stage coordinates. */
+export interface TermPopover {
+  id: string
+  x: number
+  y: number
+}
 
 interface Toast {
   id: number
@@ -29,6 +37,8 @@ interface UiState {
   reviewOnly: boolean
   /** Date.now() when the city-run animation started */
   runStart: number
+  modal: Modal | null
+  term: TermPopover | null
 }
 
 interface Store {
@@ -38,6 +48,7 @@ interface Store {
   plan: QuarterPlan
   /** Step 1 answers: eventId → response id. */
   responses: Responses
+  settings: Settings
   startGame: (opts: { quarters: GameLength; difficulty: Difficulty; companyName: string; playerName: string }) => void
   openDecisionRoom: (target?: DecisionId | DecisionStep) => void
   setStep: (step: DecisionStep) => void
@@ -65,23 +76,57 @@ interface Store {
   focusEvent: (eventId: string | null) => void
   finishIntro: () => void
   toast: (text: string) => void
+  /** Load the autosave (last finished quarter) and go to the Command Center. */
+  continueGame: () => void
+  openModal: (m: Modal | null) => void
+  showTerm: (t: TermPopover | null) => void
+  setRunSpeed: (v: Settings['runSpeed']) => void
+  /** Back to the cover; the game stays saved and can be continued. */
+  toCover: () => void
+  deleteSave: () => void
 }
 
 let toastId = 0
 
 export const useGameStore = create<Store>((set, get) => ({
   game: createInitialState(DEFAULT_CONFIG),
-  ui: { hovered: null, selected: null, highlightedEvent: null, introDone: false, toasts: [], screen: 'cover', step: 'scenario', activeCard: 'pricing', activeEvent: null, reviewOnly: false, runStart: 0 },
+  ui: { hovered: null, selected: null, highlightedEvent: null, introDone: false, toasts: [], screen: 'cover', step: 'scenario', activeCard: 'pricing', activeEvent: null, reviewOnly: false, runStart: 0, modal: null, term: null },
   plan: defaultPlan(),
   responses: {},
+  settings: readSettings(),
 
-  startGame: ({ quarters, difficulty, companyName, playerName }) =>
+  startGame: ({ quarters, difficulty, companyName, playerName }) => {
+    const game = createInitialState({ ...DEFAULT_CONFIG, quarters, difficulty, companyName, playerName })
+    writeSave(game)
     set((s) => ({
-      game: createInitialState({ ...DEFAULT_CONFIG, quarters, difficulty, companyName, playerName }),
+      game,
       plan: defaultPlan(),
       responses: {},
-      ui: { ...s.ui, screen: 'command', introDone: false, selected: null, hovered: null, highlightedEvent: null },
-    })),
+      ui: { ...s.ui, screen: 'command', introDone: false, selected: null, hovered: null, highlightedEvent: null, modal: null, term: null },
+    }))
+  },
+  continueGame: () => {
+    const save = readSave()
+    if (!save) return
+    set((s) => ({
+      game: save.game,
+      plan: defaultPlan(),
+      responses: {},
+      ui: { ...s.ui, screen: 'command', step: 'scenario', activeEvent: null, introDone: false, selected: null, hovered: null, highlightedEvent: null, modal: null, term: null },
+    }))
+  },
+  openModal: (m) => set((s) => ({ ui: { ...s.ui, modal: m, term: null } })),
+  showTerm: (t) => set((s) => ({ ui: { ...s.ui, term: t } })),
+  setRunSpeed: (runSpeed) => {
+    const settings = { ...get().settings, runSpeed }
+    writeSettings(settings)
+    set({ settings })
+  },
+  toCover: () => set((s) => ({ plan: defaultPlan(), responses: {}, ui: { ...s.ui, screen: 'cover', modal: null, term: null, activeEvent: null } })),
+  deleteSave: () => {
+    clearSave()
+    set((s) => ({ plan: defaultPlan(), responses: {}, ui: { ...s.ui, screen: 'cover', modal: null, term: null, activeEvent: null } }))
+  },
 
   openDecisionRoom: (target) =>
     set((s) => {
@@ -98,11 +143,16 @@ export const useGameStore = create<Store>((set, get) => ({
   setStep: (step) => set((s) => ({ ui: { ...s.ui, step } })),
   setActiveEvent: (eventId) => set((s) => ({ ui: { ...s.ui, activeEvent: eventId } })),
   respond: (eventId, responseId) => set((s) => ({ responses: { ...s.responses, [eventId]: responseId } })),
-  confirmPlan: () =>
-    set((s) => ({
-      game: simulateQuarter(s.game, s.plan, s.responses),
-      ui: { ...s.ui, reviewOnly: false, screen: 'running', runStart: Date.now(), selected: null, hovered: null, highlightedEvent: null },
-    })),
+  confirmPlan: () => {
+    const s = get()
+    const game = simulateQuarter(s.game, s.plan, s.responses)
+    if (game.outcome) clearSave()
+    else writeSave(game)
+    set({
+      game,
+      ui: { ...s.ui, reviewOnly: false, screen: s.settings.runSpeed === 0 ? 'simulating' : 'running', runStart: Date.now(), selected: null, hovered: null, highlightedEvent: null },
+    })
+  },
   nextQuarter: () =>
     set((s) => ({
       plan: defaultPlan(),

@@ -6,6 +6,7 @@ import { CARD_BY_ID } from '../../game/decisions/cards'
 import { reviewPlan, unansweredEvents } from '../../game/decisions/plan'
 import { responseOf, SCENARIO_BY_EVENT } from '../../game/decisions/scenarios'
 import { useGameStore } from '../../store/useGameStore'
+import { Glossed } from '../glossary/Term'
 
 /** Advisor reacts to the plan as it changes: warnings first, then tips, then card guidance. */
 export function DecisionAdvisor() {
@@ -52,7 +53,7 @@ export function DecisionAdvisor() {
           {warnings.length > 0 && <span className="ml-1 inline-flex items-center gap-1 text-[12px] font-medium text-alert"><AlertTriangle size={13} /> {warnings.length} ข้อควรระวัง</span>}
           {tips.length > 0 && <span className="inline-flex items-center gap-1 text-[12px] font-medium text-chance"><Lightbulb size={13} /> {tips.length} คำแนะนำ</span>}
         </div>
-        <p className="mt-1 text-[16px] leading-relaxed text-navy-900">{text}</p>
+        <p className="mt-1 text-[16px] leading-relaxed text-navy-900"><Glossed text={text} /></p>
       </div>
     </div>
   )

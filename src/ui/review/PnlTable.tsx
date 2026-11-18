@@ -1,5 +1,6 @@
 import type { Pnl, PnlColumn } from '../../game/sim/channels'
 import { mb, pct } from './format'
+import { Glossed } from '../glossary/Term'
 
 type Row = { label: string; get: (c: PnlColumn) => number; kind?: 'bold' | 'result' | 'neg' }
 
@@ -47,7 +48,7 @@ export function PnlTable({ pnl }: { pnl: Pnl }) {
         <tbody>
           {AMOUNTS.map((r) => (
             <tr key={r.label} className={`${r.kind === 'result' ? 'bg-emerald-50 font-bold' : r.kind === 'bold' ? 'font-semibold' : ''} border-t border-navy-900/5`}>
-              <td className="px-3 py-[5px] text-left text-navy-900">{r.label}</td>
+              <td className="px-3 py-[5px] text-left text-navy-900"><Glossed text={r.label} /></td>
               {cols.map((c) => {
                 const v = r.get(c)
                 return (
@@ -60,7 +61,7 @@ export function PnlTable({ pnl }: { pnl: Pnl }) {
           ))}
           {RATIOS.map((r, i) => (
             <tr key={r.label} className={`bg-navy-900/[0.035] ${r.kind === 'bold' ? 'font-bold' : ''} ${i === 0 ? 'border-t-2 border-navy-900/15' : 'border-t border-navy-900/5'}`}>
-              <td className="px-3 py-[5px] text-left text-navy-900">{r.label}</td>
+              <td className="px-3 py-[5px] text-left text-navy-900"><Glossed text={r.label} /></td>
               {cols.map((c) => {
                 const v = r.get(c)
                 return (
@@ -80,7 +81,7 @@ export function PnlTable({ pnl }: { pnl: Pnl }) {
           { label: 'รายได้จากการลงทุน', v: pnl.investmentIncome },
         ].map((x) => (
           <div key={x.label} className="bg-white px-3 py-2 flex justify-between">
-            <span className="text-navy-700/80">{x.label}</span>
+            <span className="text-navy-700/80"><Glossed text={x.label} /></span>
             <b className={x.v < 0 ? 'text-alert' : 'text-navy-900'}>{mb(x.v)}</b>
           </div>
         ))}

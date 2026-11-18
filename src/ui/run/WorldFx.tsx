@@ -16,17 +16,18 @@ const TONE = {
 export function WorldFx() {
   const game = useGameStore((s) => s.game)
   const start = useGameStore((s) => s.ui.runStart)
+  const speed = useGameStore((s) => s.settings.runSpeed || 1)
   const [t, setT] = useState(0)
   const { chips } = useMemo(() => buildTimeline(game), [game])
   useEffect(() => {
     let raf = 0
     const tick = () => {
-      setT((Date.now() - start) / 1000)
-      if ((Date.now() - start) / 1000 < RUN_SECONDS + 2) raf = requestAnimationFrame(tick)
+      setT(((Date.now() - start) / 1000) * speed)
+      if (((Date.now() - start) / 1000) * speed < RUN_SECONDS + 2) raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [start])
+  }, [start, speed])
   const live = chips.map((c, i) => ({ ...c, i })).filter((c) => t >= c.at && t < c.at + 1.7)
   // stack chips that share a building at the same moment
   const seen: Record<string, number> = {}
@@ -54,7 +55,7 @@ export function WorldFx() {
             <div
               data-fx-chip={c.tone}
               className={`chip-up absolute whitespace-nowrap rounded-full px-5 py-2 font-display font-bold text-[30px] shadow-[0_8px_18px_-6px_rgba(8,26,66,0.55)] ${TONE[c.tone]}`}
-              style={{ top: -96 - k * 62, animationDelay: '0s' }}
+              style={{ top: -96 - k * 62, animationDelay: '0s', animationDuration: `${1.7 / speed}s` }}
             >
               {c.text}
             </div>

@@ -9,6 +9,7 @@ import { Simulating } from './ui/review/Simulating'
 import { RunHud } from './ui/run/RunHud'
 import { MarketPage } from './ui/pages/MarketPage'
 import { OperationPage } from './ui/pages/OperationPage'
+import { Overlays } from './ui/overlays/Overlays'
 import { WorldView } from './world/WorldView'
 
 /** Screen router. The city is always alive underneath; screens are HUD layers over it. */
@@ -18,6 +19,8 @@ export default function App() {
   return (
     <>
       <WorldView />
+      {/* vignette: the centre of the city stays bright, the edges fall off, so the eye lands on the business units */}
+      <div className="vignette fixed inset-0 pointer-events-none" />
       {/* top shade spans the full window, even outside the 16:9 HUD stage */}
       <div className="fixed inset-x-0 top-0 pointer-events-none" style={{ height: 'calc(min(100vw / 1600, 100vh / 900) * 92px + max(0px, (100vh - 100vw * 9 / 16) / 2))', background: 'linear-gradient(180deg, rgba(8,26,66,0.78) 0%, rgba(8,26,66,0.35) 70%, transparent 100%)' }} />
       {screen === 'command' && <CommandCenter />}
@@ -29,6 +32,7 @@ export default function App() {
       {screen === 'market' && <MarketPage />}
       {screen === 'operation' && <OperationPage />}
       <Intro />
+      <Overlays />
     </>
   )
 }

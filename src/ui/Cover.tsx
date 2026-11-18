@@ -1,10 +1,12 @@
-import { Building2, CalendarRange, Coins, Gauge, Play, Swords, UserRound, X } from 'lucide-react'
+import { Building2, CalendarRange, Coins, Gauge, Play, RotateCcw, Swords, UserRound, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { preloadAssets } from '../assets/preload'
 import { brandUrl } from '../assets/registry'
 import { DEFAULT_CONFIG, DIFFICULTIES, GAME_LENGTHS, STARTING_CAPITAL_MB } from '../game/config'
 import type { Difficulty, GameLength } from '../game/types'
+import { readSave } from '../store/save'
 import { useGameStore } from '../store/useGameStore'
+import { InstallButton } from './InstallButton'
 import { Stage } from './Stage'
 
 const DIFF_NOTE: Record<Difficulty, string> = {
@@ -30,7 +32,7 @@ function Choice<T extends string | number>({ value, on, onPick, children }: { va
 }
 
 /** Game setup, shown only after the player presses Start. */
-function ModeModal({ onClose }: { onClose: () => void }) {
+function ModeModal({ onClose, replacing }: { onClose: () => void; replacing: boolean }) {
   const start = useGameStore((s) => s.startGame)
   const [quarters, setQuarters] = useState<GameLength>(12)
   const [difficulty, setDifficulty] = useState<Difficulty>('normal')
@@ -105,6 +107,7 @@ function ModeModal({ onClose }: { onClose: () => void }) {
           <div className="text-[13.5px] text-navy-800 space-y-1">
             <div className="flex items-center gap-2"><Coins size={16} className="text-gold-600" /> ทุนเริ่มต้น {STARTING_CAPITAL_MB.toLocaleString('th-TH')} ล้านบาท</div>
             <div className="flex items-center gap-2"><Swords size={16} className="text-brand-600" /> ตลาดประกันวินาศภัยไทย</div>
+            {replacing && <div className="text-[12.5px] text-amber-700">เกมใหม่จะแทนที่เกมที่บันทึกไว้</div>}
           </div>
           <button
             onClick={go}
@@ -123,6 +126,9 @@ export function Cover() {
   const [progress, setProgress] = useState(0)
   const [ready, setReady] = useState(false)
   const [modal, setModal] = useState(false)
+  const continueGame = useGameStore((s) => s.continueGame)
+  // read once: the save only changes after the player leaves this screen
+  const [save] = useState(readSave)
 
   useEffect(() => {
     let alive = true
@@ -163,15 +169,39 @@ export function Cover() {
               </div>
             </div>
           ) : (
-            <button
-              onClick={() => setModal(true)}
-              className="h-[80px] w-[340px] rounded-[26px] btn-gold shine flex items-center justify-center gap-3 font-display font-bold text-[30px] hover:brightness-105 hover:-translate-y-0.5 transition-all anim-rise"
-            >
-              <Play size={30} fill="currentColor" /> เริ่มเกม
-            </button>
+            save ? (
+              <div className="flex items-center gap-3 anim-rise">
+                <button
+                  onClick={continueGame}
+                  data-action="continue"
+                  className="h-[80px] w-[340px] rounded-[26px] btn-gold shine flex flex-col items-center justify-center font-display hover:brightness-105 hover:-translate-y-0.5 transition-all"
+                >
+                  <span className="flex items-center gap-3 font-bold text-[28px] leading-none">
+                    <Play size={26} fill="currentColor" /> เล่นต่อ
+                  </span>
+                  <span className="mt-1 text-[13px] font-medium text-navy-800/80 max-w-[300px] truncate">
+                    {save.game.config.companyName} · ปีที่ {save.game.quarter.year} ไตรมาส {save.game.quarter.q}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setModal(true)}
+                  className="h-[64px] px-6 rounded-[22px] glass-dark text-white flex items-center justify-center gap-2 font-display font-semibold text-[19px] hover:brightness-125 transition-all"
+                >
+                  <RotateCcw size={20} /> เริ่มเกมใหม่
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setModal(true)}
+                className="h-[80px] w-[340px] rounded-[26px] btn-gold shine flex items-center justify-center gap-3 font-display font-bold text-[30px] hover:brightness-105 hover:-translate-y-0.5 transition-all anim-rise"
+              >
+                <Play size={30} fill="currentColor" /> เริ่มเกม
+              </button>
+            )
           )}
         </div>
-        {modal && <ModeModal onClose={() => setModal(false)} />}
+        <InstallButton className="absolute top-6 right-7" />
+        {modal && <ModeModal onClose={() => setModal(false)} replacing={!!save} />}
       </Stage>
     </>
   )

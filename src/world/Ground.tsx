@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { world as C } from '../design/tokens'
 import { BLOCKS, FOUNTAIN, ISLAND, PLAZA, RIVER, ROADS } from './layout'
+import { RoadNet } from './Roads'
 import { SurroundingsGround } from './Surroundings'
 import { GROUND_MATRIX, project, quad, U, WORLD } from './projection'
 
@@ -30,23 +31,6 @@ function Slab({ q, fill, edge, lift = 5, stroke, strokeWidth, tint }: { q: strin
       <polygon points={q} fill={edge} transform={`translate(0 ${lift})`} />
       <polygon points={q} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeLinejoin="round" />
       {tint && <polygon points={q} fill={tint} opacity={0.22} />}
-    </g>
-  )
-}
-
-function Road({ along, at, w, from, to }: { along: 'u' | 'v'; at: number; w: number; from: number; to: number }) {
-  const r = (a0: number, b0: number, a1: number, b1: number) => (along === 'u' ? quad(a0, b0, a1, b1) : quad(b0, a0, b1, a1))
-  const dashes = []
-  for (let t = from + 20; t < to - 40; t += 74) dashes.push(t)
-  return (
-    <g>
-      {/* curb: light kerb stone with a shadow line where it meets the asphalt */}
-      <polygon points={r(from, at - w / 2 - 12, to, at + w / 2 + 12)} fill={C.roadEdge} />
-      <polygon points={r(from, at - w / 2, to, at + w / 2)} fill="url(#asphalt)" />
-      <polygon points={r(from, at - w / 2, to, at - w / 2 + 5)} fill="#000" opacity={0.18} />
-      {dashes.map((t) => (
-        <polygon key={t} points={r(t, at - 2.5, t + 38, at + 2.5)} fill={C.roadLine} opacity={0.9} />
-      ))}
     </g>
   )
 }
@@ -151,6 +135,20 @@ export const Ground = memo(function Ground() {
       <polygon points={face(a, b)} fill="url(#plinthL)" />
       <polygon points={face(b, c)} fill="url(#plinthR)" />
       <polyline points={`${a.x},${a.y} ${b.x},${b.y} ${c.x},${c.y}`} fill="none" stroke="#ffffff" strokeWidth={4} />
+      {/* where a street leaves the island, carry it down the plinth wall so it joins the outer street without a cut */}
+      {[
+        ...ROADS.u.map(({ v, w }) => [project(u0, v - w / 2), project(u0, v + w / 2), w] as const),
+        ...ROADS.v.map(({ u, w }) => [project(u - w / 2, v1), project(u + w / 2, v1), w] as const),
+      ].map(([p, q, w], i) => {
+        const k = 12 / w // kerb width as a share of the road width
+        const lerp = (t: number) => ({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t })
+        return (
+          <g key={`ramp${i}`}>
+            <polygon points={face(lerp(-k), lerp(1 + k))} fill={C.roadEdge} />
+            <polygon points={face(p, q)} fill="url(#asphalt)" />
+          </g>
+        )
+      })}
       <polygon points={quad(u0, v0, u1, v1)} fill="url(#paving)" />
       <polygon points={quad(u0, v0, u1, v1)} fill="#ffffff" opacity={0.12} />
 
@@ -165,16 +163,10 @@ export const Ground = memo(function Ground() {
       ))}
 
       {/* roads */}
-      {ROADS.u.map(({ v, w }) => (
-        <Road key={`ru${v}`} along="u" at={v} w={w} from={u0} to={u1} />
-      ))}
-      {ROADS.v.map(({ u, w }) => (
-        <Road key={`rv${u}`} along="v" at={u} w={w} from={v0} to={v1} />
-      ))}
+      <RoadNet segs={[...ROADS.u.map(({ v, w }) => ({ along: 'u' as const, at: v, w, from: u0, to: u1 })), ...ROADS.v.map(({ u, w }) => ({ along: 'v' as const, at: u, w, from: v0, to: v1 }))]} />
       {ROADS.v.map(({ u, w }) =>
         ROADS.u.map(({ v, w: w2 }) => (
           <g key={`x${u}-${v}`}>
-            <polygon points={quad(u - w / 2, v - w2 / 2, u + w / 2, v + w2 / 2)} fill="url(#asphalt)" />
             <Crosswalk u={u - w / 2 - 22} v={v} along="u" />
             <Crosswalk u={u} v={v + w2 / 2 + 22} along="v" />
           </g>

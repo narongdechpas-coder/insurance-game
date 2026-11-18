@@ -18,6 +18,7 @@ export function TopBar() {
   const openReport = useGameStore((s) => s.openReport)
   const openPage = useGameStore((s) => s.openPage)
   const hasReport = useGameStore((s) => !!s.game.lastReport)
+  const openModal = useGameStore((s) => s.openModal)
   return (
     <header className="absolute inset-x-0 top-0 h-[92px] flex items-center px-7 gap-6 pointer-events-auto">
       <div className="flex items-center gap-3 min-w-[330px]">
@@ -57,11 +58,11 @@ export function TopBar() {
       </nav>
       <div className="flex gap-3 min-w-[330px] justify-end">
         {[
-          { icon: Trophy, tip: 'อันดับบริษัท', cls: 'text-gold-400' },
-          { icon: BookOpen, tip: 'คู่มือ CEO', cls: 'text-white' },
-          { icon: Settings, tip: 'ตั้งค่า', cls: 'text-white' },
-        ].map(({ icon: Icon, tip, cls }) => (
-          <button key={tip} title={tip} onClick={() => toast(`${tip} — กำลังพัฒนา`)} className={`grid place-items-center size-12 rounded-full glass-dark hover:brightness-125 ${cls}`}>
+          { icon: Trophy, tip: 'อันดับบริษัท', cls: 'text-gold-400', modal: 'ranking' as const },
+          { icon: BookOpen, tip: 'คู่มือ CEO', cls: 'text-white', modal: 'guide' as const },
+          { icon: Settings, tip: 'ตั้งค่า', cls: 'text-white', modal: 'settings' as const },
+        ].map(({ icon: Icon, tip, cls, modal }) => (
+          <button key={tip} title={tip} aria-label={tip} data-open-modal={modal} onClick={() => openModal(modal)} className={`grid place-items-center size-12 rounded-full glass-dark hover:brightness-125 ${cls}`}>
             <Icon size={22} />
           </button>
         ))}

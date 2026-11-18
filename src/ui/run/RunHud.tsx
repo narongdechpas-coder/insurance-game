@@ -16,13 +16,14 @@ const MONTH_NAMES = [
 export function RunHud() {
   const game = useGameStore((s) => s.game)
   const start = useGameStore((s) => s.ui.runStart)
+  const speed = useGameStore((s) => s.settings.runSpeed || 1)
   const finish = useGameStore((s) => s.finishRun)
   const [t, setT] = useState(0)
   const { toasts, floodFrom } = useMemo(() => buildTimeline(game), [game])
   useEffect(() => {
-    const id = setInterval(() => setT((Date.now() - start) / 1000), 80)
+    const id = setInterval(() => setT(((Date.now() - start) / 1000) * speed), 80)
     return () => clearInterval(id)
-  }, [start])
+  }, [start, speed])
   useEffect(() => {
     if (t >= RUN_SECONDS) finish()
   }, [t, finish])
