@@ -23,7 +23,7 @@ function DriverBadge({ d, n }: { d: Driver; n: number }) {
   return (
     <span className="relative shrink-0 size-11" data-portrait={head}>
       <span className="absolute inset-0 rounded-full bg-gradient-to-b from-brand-100 to-brand-50 ring-2 ring-white shadow overflow-hidden">
-        <img src={spriteUrl(head)} alt="" className="absolute left-1/2 -translate-x-1/2 -bottom-1 h-[52px] max-w-none object-contain" />
+        <img src={spriteUrl(head)} alt="" className="absolute left-1/2 -translate-x-1/2 top-0.5 h-[92px] max-w-none" />
       </span>
       <span className={`absolute -right-0.5 -bottom-0.5 grid place-items-center size-[18px] rounded-full text-[10.5px] font-bold text-white ring-2 ring-white ${dot}`}>{n}</span>
     </span>

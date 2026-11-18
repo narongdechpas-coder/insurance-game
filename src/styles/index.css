@@ -166,3 +166,10 @@ body,
   height: 900px;
   transform-origin: center center;
 }
+
+/* half portraits are cut at mid-chest: fade the cut so they melt into the panel */
+img[data-portrait],
+.portrait-fade {
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent 98%);
+  mask-image: linear-gradient(to bottom, #000 70%, transparent 98%);
+}

@@ -44,7 +44,7 @@ export function LocationPanel() {
             src={spriteUrl(head)}
             alt=""
             data-portrait={head}
-            className="absolute right-3 bottom-0 h-[150px] w-[140px] object-contain object-bottom drop-shadow-[0_10px_14px_rgba(20,50,110,0.3)] anim-rise"
+            className="absolute right-4 bottom-3 h-[146px] w-[130px] object-contain object-bottom drop-shadow-[0_10px_14px_rgba(20,50,110,0.3)] anim-rise"
           />
         )}
         <span className={`absolute top-4 left-4 text-[12.5px] font-medium rounded-full px-3 py-1 bg-white/90 shadow-sm ${STATUS_STYLE[status]}`}>{STATUS_LABEL[status]}</span>
