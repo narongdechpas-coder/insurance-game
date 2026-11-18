@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { LOCATIONS } from '../game/data/locations'
 import { useGameStore } from '../store/useGameStore'
-import { CloudShadows, EventBubbles, People } from './Ambient'
+import { Clouds, CloudShadows, EventBubbles, People } from './Ambient'
 import { Building } from './Building'
 import { Ground } from './Ground'
+import { Surroundings } from './Surroundings'
 import { SPRITES } from '../assets/registry'
 import { preloadMasks } from './hitTest'
 import { anchorOf, BUILDINGS, DECOR, GREENERY, ISLAND, LAMPS } from './layout'
 import { FOCUS_Z, project, WORLD } from './projection'
 import { Sprite } from './Sprite'
 import { Traffic } from './Traffic'
+import { WorldFx } from '../ui/run/WorldFx'
 
 interface Cam {
   x: number
@@ -85,6 +87,7 @@ export function WorldView() {
   const [animate, setAnimate] = useState(true)
   const drag = useRef<{ x: number; y: number; cx: number; cy: number; moved: boolean } | null>(null)
   const selected = useGameStore((s) => s.ui.selected)
+  const screen = useGameStore((s) => s.ui.screen)
   const select = useGameStore((s) => s.select)
   const finishIntro = useGameStore((s) => s.finishIntro)
 
@@ -185,6 +188,7 @@ export function WorldView() {
         }}
       >
         <Ground />
+        <Surroundings />
         {GREENERY.map(([u, v, sprite, scale], i) => (
           <Sprite key={`g${i}`} sprite={sprite} u={u} v={v} scale={scale} anchor={SPRITES[sprite].ext === 'webp' ? [SPRITES[sprite].ax, SPRITES[sprite].ay] : [0.5, 0.9]} />
         ))}
@@ -199,8 +203,9 @@ export function WorldView() {
         {LOCATIONS.map((l) => (
           <Building key={l.id} id={l.id} />
         ))}
-        <EventBubbles />
+        {screen === 'running' ? <WorldFx /> : <EventBubbles />}
         <CloudShadows />
+        <Clouds />
         {/* focus scrim: dims the city so the selected place, its panel and the advisor carry the eye */}
         <div
           className="absolute inset-0 transition-opacity duration-500"

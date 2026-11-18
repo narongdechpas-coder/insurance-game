@@ -1,4 +1,5 @@
 import { RotateCcw, Trophy } from 'lucide-react'
+import { portraitKey } from '../../assets/portraits'
 import { spriteUrl } from '../../assets/registry'
 import { useGameStore } from '../../store/useGameStore'
 import { Stage } from '../Stage'
@@ -18,7 +19,11 @@ export function GameOver() {
       <Stage>
         <section data-screen="gameover" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[860px] glass rounded-[30px] p-8 pointer-events-auto anim-rise">
           <div className="flex items-center gap-5">
-            <img src={spriteUrl(won ? 'characters/advisor-happy' : 'characters/advisor-warning')} alt="" className="h-[150px] w-[90px] object-contain object-bottom" />
+            <img
+              src={spriteUrl(portraitKey('advisor', won ? 'happy' : 'shocked') ?? (won ? 'characters/advisor-happy' : 'characters/advisor-warning'))}
+              alt=""
+              className={`object-contain object-bottom ${portraitKey('advisor') ? 'h-[140px] w-[130px]' : 'h-[150px] w-[90px]'}`}
+            />
             <div>
               <div className="text-[14px] text-brand-600 font-medium">{o.reason === 'bankrupt' ? 'เงินทุนต่ำกว่าครึ่งของทุนเริ่มต้น เกมจบก่อนกำหนด' : `จบเกม ${game.config.quarters} ไตรมาส`}</div>
               <h1 className="font-display font-bold text-[32px] leading-tight text-navy-900">

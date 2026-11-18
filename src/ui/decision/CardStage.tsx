@@ -1,10 +1,12 @@
 import { Check, Clock, Coins, Hourglass, Sparkles } from 'lucide-react'
+import { moodOfStatus, portraitKey } from '../../assets/portraits'
 import { spriteUrl } from '../../assets/registry'
 import { CARD_BY_ID } from '../../game/decisions/cards'
 import { choiceImpact, tacticOf } from '../../game/decisions/plan'
 import type { DecisionId, Impact, Tactic } from '../../game/decisions/types'
 import { LOCATION_BY_ID } from '../../game/data/locations'
 import { MODULES } from '../../game/data/modules'
+import { locationStatus } from '../../game/selectors'
 import { useGameStore } from '../../store/useGameStore'
 import { BUILDINGS, PANEL_ART } from '../../world/layout'
 import { ImpactArrows } from './ImpactArrows'
@@ -105,6 +107,8 @@ export function CardStage() {
   const choose = useGameStore((s) => s.choose)
   const card = CARD_BY_ID[id]
   const loc = LOCATION_BY_ID[card.location]
+  const game = useGameStore((s) => s.game)
+  const head = portraitKey(card.location, moodOfStatus(locationStatus(game, card.location)))
   const chosenOption = card.options.find((o) => o.id === chosen)
   const tactics = chosenOption?.tactics
   const compact = !!tactics
@@ -119,7 +123,7 @@ export function CardStage() {
           alt=""
           className={`object-contain drop-shadow-[0_12px_16px_rgba(20,50,110,0.25)] transition-all duration-300 ${compact ? 'h-[108px] w-[160px]' : 'h-[150px] w-[230px]'}`}
         />
-        <div className="min-w-0">
+        <div className={`min-w-0 ${head ? 'flex-1' : ''}`}>
           <div className="text-[13px] text-brand-600 font-medium">
             {loc.en} · {loc.th}
           </div>
@@ -135,6 +139,15 @@ export function CardStage() {
             </div>
           )}
         </div>
+        {head && (
+          <img
+            key={head}
+            src={spriteUrl(head)}
+            alt=""
+            data-portrait={head}
+            className={`self-end shrink-0 object-contain object-bottom drop-shadow-[0_10px_14px_rgba(20,50,110,0.3)] transition-all duration-300 ${compact ? 'h-[116px] w-[110px]' : 'h-[164px] w-[150px]'}`}
+          />
+        )}
       </header>
       <div className={`grid ${cols} gap-3 px-5 ${compact ? 'pt-4 pb-3' : 'p-5'}`}>
         {card.options.map((o) => {

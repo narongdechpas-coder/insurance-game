@@ -1,6 +1,8 @@
 import { ArrowDownRight, ArrowUpRight, BookOpen, ChevronsRight, CloudRain, Coins, Gauge, Lightbulb, PieChart, Sparkles, Star, Swords, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
+import { driverDept, driverMood, portraitKey } from '../../assets/portraits'
 import { spriteUrl } from '../../assets/registry'
+import type { Driver } from '../../game/sim/types'
 import { ADVISOR_NAME } from '../../game/narrative/advisor'
 import { consequenceLines, floodLine, headline, recommendations } from '../../game/narrative/review'
 import { useGameStore } from '../../store/useGameStore'
@@ -13,6 +15,21 @@ import { Sparkline } from './Sparkline'
 type Tab = 'story' | 'rivals' | 'pnl'
 
 /** Screen C — what happened this quarter, why, and what to do next. */
+/** Rank badge; once portraits exist, the department head who owns the line shows how it went. */
+function DriverBadge({ d, n }: { d: Driver; n: number }) {
+  const head = portraitKey(driverDept(d.id), driverMood(d))
+  const dot = d.tone === 'good' ? 'bg-good' : 'bg-alert'
+  if (!head) return <span className={`shrink-0 grid place-items-center size-6 rounded-full text-[12px] font-bold text-white ${dot}`}>{n}</span>
+  return (
+    <span className="relative shrink-0 size-11" data-portrait={head}>
+      <span className="absolute inset-0 rounded-full bg-gradient-to-b from-brand-100 to-brand-50 ring-2 ring-white shadow overflow-hidden">
+        <img src={spriteUrl(head)} alt="" className="absolute left-1/2 -translate-x-1/2 -bottom-1 h-[52px] max-w-none object-contain" />
+      </span>
+      <span className={`absolute -right-0.5 -bottom-0.5 grid place-items-center size-[18px] rounded-full text-[10.5px] font-bold text-white ring-2 ring-white ${dot}`}>{n}</span>
+    </span>
+  )
+}
+
 export function QuarterlyReview() {
   const game = useGameStore((s) => s.game)
   const next = useGameStore((s) => s.nextQuarter)
@@ -27,8 +44,9 @@ export function QuarterlyReview() {
   const recs = recommendations(r, game)
   const cons = consequenceLines(r)
   const pose = h.tone === 'good' ? 'characters/advisor-happy' : h.tone === 'bad' ? 'characters/advisor-warning' : 'characters/advisor'
+  const bust = portraitKey('advisor', h.tone === 'good' ? 'happy' : h.tone === 'bad' ? 'shocked' : 'normal')
   const kpis = [
-    { icon: Coins, label: 'เงินทุน', now: r.after.capitalMB, d: r.after.capitalMB - r.before.capitalMB, fmt: (v: number) => `${mb(v)} ล้าน`, good: 1, series: hist.map((k) => k.capitalMB), color: '#d98a07' },
+    { icon: Coins, label: 'เงินทุน (ล้านบาท)', now: r.after.capitalMB, d: r.after.capitalMB - r.before.capitalMB, fmt: (v: number) => mb(v), good: 1, series: hist.map((k) => k.capitalMB), color: '#d98a07' },
     { icon: PieChart, label: 'ส่วนแบ่งตลาด', now: r.after.marketShare, d: r.after.marketShare - r.before.marketShare, fmt: (v: number) => pct(v), good: 1, series: hist.map((k) => k.marketShare), color: '#2f7bff' },
     { icon: Gauge, label: 'Combined Ratio', now: r.after.combinedRatio, d: r.after.combinedRatio - r.before.combinedRatio, fmt: (v: number) => pct(v), good: -1, series: hist.map((k) => k.combinedRatio), color: '#22a06b' },
     { icon: Star, label: 'ความพอใจ', now: r.after.satisfaction, d: r.after.satisfaction - r.before.satisfaction, fmt: (v: number) => v.toFixed(2), good: 1, series: hist.map((k) => k.satisfaction), color: '#e5487a' },
@@ -42,7 +60,7 @@ export function QuarterlyReview() {
     <>
       <div className="fixed inset-0" style={{ backdropFilter: 'blur(8px) saturate(0.8)', background: 'rgba(7,21,55,0.55)' }} />
       <Stage>
-        <section data-screen="review" className="absolute left-7 right-7 top-6 bottom-6 glass rounded-[30px] pointer-events-auto anim-rise flex flex-col overflow-hidden">
+        <section data-screen="review" className="absolute left-1/2 -translate-x-1/2 w-[75%] min-w-[1180px] top-6 bottom-6 glass rounded-[30px] pointer-events-auto anim-rise flex flex-col overflow-hidden">
           {/* header */}
           <header className="flex items-center gap-5 px-8 pt-6 pb-4">
             <div>
@@ -78,7 +96,7 @@ export function QuarterlyReview() {
                 <div className="grid grid-cols-4 gap-3">
                   {kpis.map((k) => {
                     const better = k.d * k.good > 0
-                    const flat = Math.abs(k.d) < (k.label === 'เงินทุน' ? 0.5 : 0.0005)
+                    const flat = Math.abs(k.d) < (k.label.startsWith('เงินทุน') ? 0.5 : 0.0005)
                     const Icon = k.icon
                     const Arrow = k.d > 0 ? ArrowUpRight : ArrowDownRight
                     return (
@@ -107,8 +125,8 @@ export function QuarterlyReview() {
                   <ol className="space-y-2">
                     {r.drivers.slice(0, 4).map((d, i) => (
                       <li key={d.id} className="flex gap-3 items-start text-[14.5px] text-navy-800" data-driver={d.id}>
-                        <span className={`shrink-0 grid place-items-center size-6 rounded-full text-[12px] font-bold text-white ${d.tone === 'good' ? 'bg-good' : 'bg-alert'}`}>{i + 1}</span>
-                        {d.text}
+                        <DriverBadge d={d} n={i + 1} />
+                        <span className="self-center">{d.text}</span>
                       </li>
                     ))}
                   </ol>
@@ -153,7 +171,12 @@ export function QuarterlyReview() {
               {/* right column: advisor + ranking */}
               <div className="flex flex-col gap-4 min-h-0">
                 <div className="relative rounded-2xl bg-gradient-to-b from-brand-50 to-white border border-brand-100 pl-[118px] pr-5 py-4 min-h-[210px]">
-                  <img src={spriteUrl(pose)} alt={ADVISOR_NAME} className="absolute left-2 bottom-0 h-[200px] w-[104px] object-contain object-bottom" />
+                  <img
+                    src={spriteUrl(bust ?? pose)}
+                    alt={ADVISOR_NAME}
+                    data-portrait={bust ?? undefined}
+                    className={`absolute bottom-0 object-contain object-bottom ${bust ? 'left-0 h-[150px] w-[118px]' : 'left-2 h-[200px] w-[104px]'}`}
+                  />
                   <div className="flex items-center gap-2 font-display font-semibold text-brand-600 text-[15px]">
                     <Sparkles size={15} /> คำแนะนำไตรมาสหน้า
                   </div>

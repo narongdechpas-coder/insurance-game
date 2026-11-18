@@ -7,7 +7,7 @@ import type { DecisionId, QuarterPlan } from '../game/decisions/types'
 import { simulateQuarter } from '../game/sim/engine'
 import type { Difficulty, GameLength, GameState, LocationId } from '../game/types'
 
-export type Screen = 'cover' | 'command' | 'decision' | 'simulating' | 'review' | 'gameover' | 'market' | 'operation'
+export type Screen = 'cover' | 'command' | 'decision' | 'running' | 'simulating' | 'review' | 'gameover' | 'market' | 'operation'
 export type DecisionStep = 'scenario' | 'strategy' | 'confirm'
 
 interface Toast {
@@ -27,6 +27,8 @@ interface UiState {
   activeEvent: string | null
   /** Review opened from the Report tab: closing it returns to the current quarter instead of advancing. */
   reviewOnly: boolean
+  /** Date.now() when the city-run animation started */
+  runStart: number
 }
 
 interface Store {
@@ -46,6 +48,8 @@ interface Store {
   nextQuarter: () => void
   restart: () => void
   openReport: () => void
+  /** The city-run animation finished (or was skipped): show the newspaper. */
+  finishRun: () => void
   /** Market / Operation information pages (read-only, return to the Command Center). */
   openPage: (page: 'market' | 'operation') => void
   /** The analysis animation finished (or was skipped): show the Quarterly Review. */
@@ -67,7 +71,7 @@ let toastId = 0
 
 export const useGameStore = create<Store>((set, get) => ({
   game: createInitialState(DEFAULT_CONFIG),
-  ui: { hovered: null, selected: null, highlightedEvent: null, introDone: false, toasts: [], screen: 'cover', step: 'scenario', activeCard: 'pricing', activeEvent: null, reviewOnly: false },
+  ui: { hovered: null, selected: null, highlightedEvent: null, introDone: false, toasts: [], screen: 'cover', step: 'scenario', activeCard: 'pricing', activeEvent: null, reviewOnly: false, runStart: 0 },
   plan: defaultPlan(),
   responses: {},
 
@@ -97,7 +101,7 @@ export const useGameStore = create<Store>((set, get) => ({
   confirmPlan: () =>
     set((s) => ({
       game: simulateQuarter(s.game, s.plan, s.responses),
-      ui: { ...s.ui, reviewOnly: false, screen: 'simulating', selected: null, hovered: null, highlightedEvent: null },
+      ui: { ...s.ui, reviewOnly: false, screen: 'running', runStart: Date.now(), selected: null, hovered: null, highlightedEvent: null },
     })),
   nextQuarter: () =>
     set((s) => ({
@@ -106,6 +110,7 @@ export const useGameStore = create<Store>((set, get) => ({
       ui: { ...s.ui, screen: s.game.outcome ? 'gameover' : 'command', step: 'scenario', activeEvent: null },
     })),
   finishSimulation: () => set((s) => (s.ui.screen === 'simulating' ? { ui: { ...s.ui, screen: 'review' } } : s)),
+  finishRun: () => set((s) => (s.ui.screen === 'running' ? { ui: { ...s.ui, screen: 'simulating' } } : s)),
   openPage: (page) => set((s) => ({ ui: { ...s.ui, screen: page, selected: null, hovered: null } })),
   openReport: () => set((s) => (s.game.lastReport ? { ui: { ...s.ui, screen: 'review', reviewOnly: true, selected: null } } : s)),
   closeReport: () => set((s) => ({ ui: { ...s.ui, screen: 'command', reviewOnly: false } })),

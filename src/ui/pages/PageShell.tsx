@@ -12,7 +12,7 @@ export function PageShell({ id, kicker, title, children }: { id: string; kicker:
       <div className="fixed inset-0" style={{ backdropFilter: 'blur(7px) saturate(0.8)', background: 'rgba(7,21,55,0.5)' }} />
       <Stage>
         <TopBar />
-        <section data-screen={id} className="absolute left-7 right-7 top-[100px] bottom-6 glass rounded-[30px] pointer-events-auto anim-rise flex flex-col overflow-hidden">
+        <section data-screen={id} className="absolute left-1/2 -translate-x-1/2 w-[75%] min-w-[1180px] top-[100px] bottom-6 glass rounded-[30px] pointer-events-auto anim-rise flex flex-col overflow-hidden">
           <header className="flex items-end gap-4 px-8 pt-5 pb-3">
             <div>
               <div className="text-[13px] text-brand-600 font-medium">{kicker}</div>
