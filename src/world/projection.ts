@@ -25,7 +25,7 @@ export const V = { x: Math.cos(rad(A.v)), y: Math.sin(rad(A.v)) }
 export const FOCUS_Z = 6000
 
 export const WORLD = { w: 4200, h: 2200 }
-const ORIGIN = { x: 1220, y: 1210 }
+export const ORIGIN = { x: 1220, y: 1210 }
 
 export function project(u: number, v: number) {
   return { x: ORIGIN.x + u * U.x + v * V.x, y: ORIGIN.y + u * U.y + v * V.y }
@@ -39,3 +39,9 @@ export function quad(u0: number, v0: number, u1: number, v1: number) {
 /** Angle (deg) of an axis on screen — used to rotate road markings and car paths. */
 export const ANGLE_U = (Math.atan2(U.y, U.x) * 180) / Math.PI
 export const ANGLE_V = (Math.atan2(V.y, V.x) * 180) / Math.PI
+
+/**
+ * SVG patternTransform that lays a flat (top-down) texture onto the ground plane:
+ * pattern x → U axis, pattern y → V axis. Pattern sizes are then in grid units.
+ */
+export const GROUND_MATRIX = `matrix(${U.x} ${U.y} ${V.x} ${V.y} ${ORIGIN.x} ${ORIGIN.y})`

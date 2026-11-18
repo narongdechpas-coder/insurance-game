@@ -22,7 +22,12 @@ const LANES: Lane[] = [
   { axis: 'v', at: ROADS.cross.u - 20, from: DISTRICT.v0 - 40, to: DISTRICT.v1 + 200, speed: 80, cars: 2 },
 ]
 
-const SCALE = 0.3
+/** On-screen car length in world units; each sprite is scaled to it, so mixed art sizes match. */
+const CAR_LENGTH = 92
+const scaleOf = (k: SpriteKey) => CAR_LENGTH / SPRITES[k].w
+/** Cars at the 24° house camera (round-3 WebP art). Until enough exist, older art fills in. */
+const HOUSE_CARS = CAR_SPRITES.filter((k) => SPRITES[k].ext === 'webp')
+const TRAFFIC = HOUSE_CARS.length ? HOUSE_CARS : CAR_SPRITES
 const FADE = 160
 
 interface CarState {
@@ -42,14 +47,14 @@ export function Traffic() {
     for (const lane of LANES) {
       const len = Math.abs(lane.to - lane.from)
       for (let i = 0; i < lane.cars; i++) {
-        const sprite = CAR_SPRITES[k++ % CAR_SPRITES.length]
+        const sprite = TRAFFIC[k++ % TRAFFIC.length]
         const m = SPRITES[sprite]
         const el = document.createElement('img')
         el.src = spriteUrl(sprite)
         el.draggable = false
         el.className = 'absolute pointer-events-none will-change-transform'
-        el.style.width = `${m.w * SCALE}px`
-        el.style.height = `${m.h * SCALE}px`
+        el.style.width = `${m.w * scaleOf(sprite)}px`
+        el.style.height = `${m.h * scaleOf(sprite)}px`
         el.style.left = '0'
         el.style.top = '0'
         root.appendChild(el)
@@ -68,8 +73,8 @@ export function Traffic() {
         const pos = lane.from + Math.sign(lane.to - lane.from) * c.t
         const p = lane.axis === 'u' ? project(pos, lane.at) : project(lane.at, pos)
         const m = SPRITES[c.sprite]
-        const w = m.w * SCALE
-        const h = m.h * SCALE
+        const w = m.w * scaleOf(c.sprite)
+        const h = m.h * scaleOf(c.sprite)
         const flip = lane.axis === 'v'
         const fade = Math.min(1, c.t / FADE, (len - c.t) / FADE)
         c.el.style.transform = `translate(${p.x - w / 2}px, ${p.y - h * 0.78}px)${flip ? ' scaleX(-1)' : ''}`

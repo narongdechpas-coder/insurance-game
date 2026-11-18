@@ -364,18 +364,18 @@
   "ext": "png"
  },
  "vehicles/sedan-white": {
-  "w": 261,
-  "h": 133,
+  "w": 560,
+  "h": 376,
   "ax": 0.384,
-  "ay": 0.97,
-  "ext": "png"
+  "ay": 0.997,
+  "ext": "webp"
  },
  "vehicles/suv-blue": {
-  "w": 221,
-  "h": 140,
-  "ax": 0.451,
-  "ay": 0.964,
-  "ext": "png"
+  "w": 560,
+  "h": 408,
+  "ax": 0.419,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "vehicles/suv-dark": {
   "w": 247,
@@ -385,11 +385,11 @@
   "ext": "png"
  },
  "vehicles/suv-silver": {
-  "w": 223,
-  "h": 141,
-  "ax": 0.459,
-  "ay": 0.972,
-  "ext": "png"
+  "w": 560,
+  "h": 411,
+  "ax": 0.415,
+  "ay": 0.998,
+  "ext": "webp"
  },
  "vehicles/tow-truck": {
   "w": 202,
