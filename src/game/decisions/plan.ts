@@ -96,5 +96,13 @@ export function reviewPlan(plan: QuarterPlan, s: GameState): AdvisorNote[] {
     notes.push({ id: 'cut-team', tone: 'warning', text: 'คู่แข่งกำลังบุก ถ้าลดคนในทีมการตลาดตอนนี้ ไตรมาสหน้าเราจะตอบโต้ได้ช้าค่ะ' , cards: ['marketing'] })
   if (t('marketing') === 'sponsor' && has('rival-promo'))
     notes.push({ id: 'sponsor-slow', tone: 'tip', text: 'สปอนเซอร์ช่วยเรื่องความผูกพันกับลูกค้า แต่เห็นผลช้า อาจไม่ทันรับมือโปรโมชันของ Lotus Guard ค่ะ' , cards: ['marketing'] })
+  if (has('flood-central') && t('reinsurance') === 'catXL')
+    notes.push({ id: 'catxl-flood', tone: 'tip', text: 'Cat XL ตรงกับความเสี่ยงน้ำท่วมไตรมาสนี้พอดี และถูกกว่า Quota share ค่ะ', cards: ['reinsurance'] })
+  if (has('flood-central') && t('catExposure') === 'lowlandGap')
+    notes.push({ id: 'lowland-flood', tone: 'warning', text: 'รับงานพื้นที่ลุ่มตอนที่มีสัญญาณน้ำท่วม เคลมอาจเข้าพร้อมกันจำนวนมากค่ะ', cards: ['catExposure'] })
+  if (t('repair') === 'nonOEM')
+    notes.push({ id: 'non-oem', tone: 'warning', text: 'อะไหล่เทียบแท้ประหยัดก็จริง แต่ระวังลูกค้าร้องเรียน และต้องแจ้งลูกค้าให้ชัดเจนค่ะ', cards: ['repair'] })
+  if (t('pricing') === 'dealerPromo' && has('rival-promo'))
+    notes.push({ id: 'dealer-promo', tone: 'tip', text: 'ตอบโต้ Lotus Guard ตรงช่องทางดีลเลอร์ ไม่ต้องลดราคาทั้งพอร์ตค่ะ', cards: ['pricing'] })
   return notes
 }

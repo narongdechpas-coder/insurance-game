@@ -109,6 +109,7 @@ export function CardStage() {
   const tactics = chosenOption?.tactics
   const compact = !!tactics
   const cols = card.options.length >= 5 ? 'grid-cols-5' : card.options.length === 4 ? 'grid-cols-4' : 'grid-cols-3'
+  const tight = compact && card.options.length >= 5 // five compact tiles: smaller icon, shorter cost chip
 
   return (
     <section key={id} className="absolute left-[344px] top-[172px] w-[810px] max-h-[612px] glass rounded-[28px] overflow-hidden pointer-events-auto anim-rise">
@@ -159,11 +160,11 @@ export function CardStage() {
               )}
               <span className={`flex ${compact ? 'items-center gap-2.5' : 'flex-col'}`}>
                 <span
-                  className={`shrink-0 grid place-items-center rounded-2xl transition-colors ${compact ? 'size-10' : 'size-14 mb-3'} ${on ? 'bg-gradient-to-b from-brand-400 to-brand-600 text-white' : 'bg-brand-50 text-brand-600'}`}
+                  className={`shrink-0 grid place-items-center rounded-2xl transition-colors ${compact ? (tight ? 'size-8 rounded-xl' : 'size-10') : 'size-14 mb-3'} ${on ? 'bg-gradient-to-b from-brand-400 to-brand-600 text-white' : 'bg-brand-50 text-brand-600'}`}
                 >
-                  <Icon size={compact ? 21 : 28} strokeWidth={2.4} />
+                  <Icon size={tight ? 17 : compact ? 21 : 28} strokeWidth={2.4} />
                 </span>
-                <span className={`font-display font-semibold leading-tight text-navy-900 ${compact ? 'text-[16px]' : 'text-[18px]'}`}>{o.label}</span>
+                <span className={`font-display font-semibold leading-tight text-navy-900 ${compact ? `whitespace-nowrap ${tight ? 'text-[14.5px]' : 'text-[16px]'}` : 'text-[18px]'}`}>{o.label}</span>
               </span>
               {!compact && <span className="text-[13px] leading-snug text-navy-700/80 mt-1.5 flex-1">{o.blurb}</span>}
               {!compact && (
@@ -173,8 +174,9 @@ export function CardStage() {
               )}
               <span className={`flex items-center gap-1.5 ${compact ? 'mt-auto' : 'mt-2'}`}>
                 {o.tactics ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gold-300/50 px-2.5 py-0.5 text-[12px] text-navy-900">
-                    <Coins size={12} /> {from === to ? from : `${from}–${to}`} ล้านบาท · {o.tactics.length} วิธี
+                  <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[12px] ${to ? 'bg-gold-300/50 text-navy-900' : 'bg-navy-900/5 text-navy-700/60'}`}>
+                    <Coins size={12} /> {to === 0 ? 'ไม่ใช้งบ' : `${from === to ? from : `${from}–${to}`} ${tight ? 'ล้าน' : 'ล้านบาท'}`}
+                    {!tight && ` · ${o.tactics.length} วิธี`}
                   </span>
                 ) : (
                   <CostChip cost={o.cost} />
