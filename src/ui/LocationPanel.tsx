@@ -2,6 +2,7 @@ import { ArrowRight, X } from 'lucide-react'
 import { spriteUrl } from '../assets/registry'
 import { LOCATION_BY_ID } from '../game/data/locations'
 import { MODULES } from '../game/data/modules'
+import { CARDS } from '../game/decisions/cards'
 import { eventsAt, locationStatus, STATUS_LABEL } from '../game/selectors'
 import { useGameStore } from '../store/useGameStore'
 import { LOCATION_ICONS } from '../world/icons'
@@ -20,7 +21,7 @@ export function LocationPanel() {
   const id = useGameStore((s) => s.ui.selected)
   const game = useGameStore((s) => s.game)
   const select = useGameStore((s) => s.select)
-  const toast = useGameStore((s) => s.toast)
+  const openRoom = useGameStore((s) => s.openDecisionRoom)
   if (!id) return null
   const loc = LOCATION_BY_ID[id]
   const status = locationStatus(game, id)
@@ -65,7 +66,7 @@ export function LocationPanel() {
           ))}
         </div>
         <button
-          onClick={() => toast('Decision Room จะเปิดใช้งานใน Phase 3')}
+          onClick={() => openRoom(CARDS.find((c) => c.location === id)?.id)}
           className="mt-4 w-full h-12 rounded-2xl bg-gradient-to-b from-brand-400 to-brand-600 text-white font-display font-semibold text-[16px] flex items-center justify-center gap-2 hover:brightness-110 shadow-[0_10px_20px_-8px_rgba(29,95,224,0.8)]"
         >
           วางกลยุทธ์ของหน่วยงานนี้ <ArrowRight size={18} />

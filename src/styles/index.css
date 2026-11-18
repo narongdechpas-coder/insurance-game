@@ -53,7 +53,7 @@ body,
 #root {
   height: 100%;
   margin: 0;
-  overflow: hidden;
+  overflow: clip; /* 'hidden' still allows focus/scrollIntoView to shift the 16:9 stage */
   background: #cfe2f5;
   font-family: var(--font-body);
   color: var(--color-navy-900);
