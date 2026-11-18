@@ -1,7 +1,7 @@
 import { Lock } from 'lucide-react'
 import { spriteUrl } from '../../assets/registry'
 import { CARDS, isUnlocked } from '../../game/decisions/cards'
-import { optionOf } from '../../game/decisions/plan'
+import { optionOf, tacticOf } from '../../game/decisions/plan'
 import { useGameStore } from '../../store/useGameStore'
 import { BUILDINGS } from '../../world/layout'
 
@@ -17,7 +17,8 @@ export function CardList() {
       {CARDS.map((c) => {
         const open = isUnlocked(c, q)
         const on = c.id === active
-        const changed = plan[c.id] !== c.defaultOption
+        const changed = plan[c.id].option !== c.defaultOption
+        const t = tacticOf(plan, c.id)
         return (
           <button
             key={c.id}
@@ -37,7 +38,7 @@ export function CardList() {
             <span className="min-w-0 flex-1">
               <span className="block font-medium text-[14.5px] text-navy-900 leading-tight truncate">{c.title}</span>
               <span className={`block text-[12px] leading-tight truncate ${changed ? 'text-brand-600 font-medium' : 'text-navy-700/60'}`}>
-                {open ? optionOf(plan, c.id).label : `ปลดล็อกไตรมาส ${c.unlockQuarter + 1}`}
+                {open ? (t ? `${optionOf(plan, c.id).label} · ${t.label}` : optionOf(plan, c.id).label) : `ปลดล็อกไตรมาส ${c.unlockQuarter + 1}`}
               </span>
             </span>
             {changed && <span className="size-2.5 rounded-full bg-gold-500 ring-2 ring-white" title="ปรับจากเดิมแล้ว" />}

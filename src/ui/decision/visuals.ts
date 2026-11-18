@@ -1,14 +1,15 @@
 import {
   ChevronDown, ChevronsDown, ChevronsUp, ChevronUp, Car, DoorOpen, Globe, Landmark, MapPinned, Megaphone,
-  Minus, PiggyBank, Scale, Shapes, ShieldCheck, Star, Store, Umbrella, Users, Wrench, Zap,
+  Mic, Minus, PiggyBank, Scale, Shapes, ShieldCheck, Smartphone, Star, Store, Ticket, Trophy, Tv, Umbrella, UserMinus, Users, Wrench, Zap,
 } from 'lucide-react'
-import type { DecisionOption, ImpactAxis } from '../../game/decisions/types'
+import type { Duration, ImpactAxis, OptionIcon, Speed } from '../../game/decisions/types'
 
-export const OPTION_ICONS: Record<DecisionOption['icon'], typeof Car> = {
+export const OPTION_ICONS: Record<OptionIcon, typeof Car> = {
   down2: ChevronsDown, down: ChevronDown, hold: Minus, up: ChevronUp, up2: ChevronsUp,
   car: Car, scale: Scale, spread: Shapes, shield: ShieldCheck, open: DoorOpen, store: Store,
   users: Users, globe: Globe, piggy: PiggyBank, megaphone: Megaphone, wrench: Wrench, star: Star,
   bolt: Zap, map: MapPinned, umbrella: Umbrella, safe: Landmark,
+  smartphone: Smartphone, mic: Mic, trophy: Trophy, tv: Tv, ticket: Ticket, userMinus: UserMinus,
 }
 
 /** For 'risk' a rise is bad; for every other axis a rise is good. */
@@ -23,3 +24,6 @@ export function tone(value: number, higherIsBetter: boolean) {
   if (value === 0) return 'neutral'
   return value > 0 === higherIsBetter ? 'good' : 'bad'
 }
+
+export const SPEED_LABEL: Record<Speed, string> = { fast: 'เห็นผลเร็ว', normal: 'เห็นผลปานกลาง', slow: 'เห็นผลช้า' }
+export const DURATION_LABEL: Record<Duration, string> = { short: 'ผลอยู่สั้น', normal: 'ผลอยู่ปานกลาง', long: 'ผลอยู่นาน' }

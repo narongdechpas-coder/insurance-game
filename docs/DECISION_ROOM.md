@@ -17,7 +17,9 @@ Entry points: gold "เข้าห้องตัดสินใจ" button, th
 `QuarterPlan` is the contract with Phase 4: the simulation engine will read the same object.
 
 ## Design rules
-- Options are discrete stances (3–5 per card), not sliders.
+- Two layers: a **stance** (3–5 per card, what to do) and, for stances that need it, a **tactic** (2–3, how to do it). Choosing a stance pre-selects its recommended tactic, so a quick player can move on.
+- Tactics must differ in real outcomes: cost (replaces the stance cost), an impact modifier, speed (how soon) and duration (how long). A unit test enforces that no two tactics in a stance are identical. Speed and duration are recorded for the Phase 4 engine.
+- Status: tactics are live on **Marketing & Brand**. The other cards follow the approved table.
 - The only number shown is the budget (million THB). Impact is shown as direction (chevrons), never as forecasts.
 - Q1 unlocks 4 cards (pricing, distribution, marketing, reinsurance); product mix + underwriting unlock in Q2, repair + cat exposure in Q3. `isUnlocked(card, q, unlockAll)` lets a mode open everything.
 - Customer Experience and Claims have no card of their own; they move through repair, distribution and marketing choices.
@@ -28,6 +30,7 @@ Entry points: gold "เข้าห้องตัดสินใจ" button, th
 - Impact directions: −2…+2 per axis (growth, profit, risk, customer).
 
 ## For insurance-expert review
+0. Tactic effects (Marketing now; later reinsurance quota share vs Cat XL, non-OEM parts, non-renewal of high-risk customers, which needs a regulatory/fair-treatment check).
 1. Impact direction of every option in `cards.ts`, especially the timing (a price cut lifts volume now and hurts the loss ratio later; the preview can't show that lag yet).
 2. Reinsurance is simplified to 3 stances (keep / buy more / retain). It doesn't separate quota share from excess of loss.
 3. Product groups: motor / property-fire / misc-PA. Should compulsory motor (พ.ร.บ.) be its own line?

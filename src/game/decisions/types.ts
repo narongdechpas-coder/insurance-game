@@ -20,14 +20,60 @@ export interface Impact {
 
 export type ImpactAxis = keyof Impact
 
+export type Speed = 'fast' | 'normal' | 'slow' // how soon the effect shows (used by the Phase 4 engine)
+export type Duration = 'short' | 'normal' | 'long' // how long the effect lasts
+
+/** Layer 2: HOW to carry out a stance. Must differ in real outcomes, not just in name. */
+export interface Tactic {
+  id: string
+  label: string
+  blurb: string
+  cost: number // replaces the stance cost when chosen, million THB
+  impact: Partial<Impact> // added on top of the stance impact
+  speed: Speed
+  duration: Duration
+  recommended?: boolean
+  icon: OptionIcon
+}
+
 export interface DecisionOption {
   id: string
   label: string
   blurb: string // the trade-off in one line
-  cost: number // discretionary budget this quarter, million THB
+  cost: number // discretionary budget this quarter, million THB (when there is no tactic)
   impact: Impact
-  icon: 'down2' | 'down' | 'hold' | 'up' | 'up2' | 'car' | 'scale' | 'spread' | 'shield' | 'open' | 'store' | 'users' | 'globe' | 'piggy' | 'megaphone' | 'wrench' | 'star' | 'bolt' | 'map' | 'umbrella' | 'safe'
+  icon: OptionIcon
+  tactics?: Tactic[]
 }
+
+export type OptionIcon =
+  | 'down2'
+  | 'down'
+  | 'hold'
+  | 'up'
+  | 'up2'
+  | 'car'
+  | 'scale'
+  | 'spread'
+  | 'shield'
+  | 'open'
+  | 'store'
+  | 'users'
+  | 'globe'
+  | 'piggy'
+  | 'megaphone'
+  | 'wrench'
+  | 'star'
+  | 'bolt'
+  | 'map'
+  | 'umbrella'
+  | 'safe'
+  | 'smartphone'
+  | 'mic'
+  | 'trophy'
+  | 'tv'
+  | 'ticket'
+  | 'userMinus'
 
 export interface DecisionCard {
   id: DecisionId
@@ -40,5 +86,11 @@ export interface DecisionCard {
   options: DecisionOption[]
 }
 
-/** The CEO's plan for one quarter: one chosen option per decision card. */
-export type QuarterPlan = Record<DecisionId, string>
+/** One card's choice: the stance, and how to carry it out (when the stance has tactics). */
+export interface Choice {
+  option: string
+  tactic?: string
+}
+
+/** The CEO's plan for one quarter: one choice per decision card. */
+export type QuarterPlan = Record<DecisionId, Choice>
