@@ -25,6 +25,19 @@
 | Cheaper repairs / non-OEM parts | cost ↓ | complaints ↑ | "ข้อร้องเรียนพุ่ง" |
 | Satisfaction ≥ 4.3★ for 2 quarters | — | customers recommend us | "ลูกค้าบอกต่อ" (opportunity) |
 
+## Channel P&L (Quarterly Review → งบการรับประกัน)
+Columns Dealer / Agent / Direct / Total, rows in the usual channel-performance layout: Written and Earned Premium, Paid and Incurred Loss, Commission, Marketing, Other U/W, Admin, Expense Total, U/W Result, plus Loss / Commission / Marketing & other / Admin / Combined ratios (all on earned premium).
+- Premium is written now and earned over two quarters (50/50).
+- Channel mix starts at Dealer 50 / Agent 28 / Direct 22 and shifts with the distribution decision.
+- Commission on written premium: Dealer 19%, Agent 27%, Direct 3%. Direct instead pays ~15% acquisition (ads, platforms), shown under Marketing.
+- Channel loss-ratio offsets (Dealer +1.5, Agent −1.2, Direct +0.4 pts) are re-centred on earned premium, so the columns always add up to the engine's total.
+- Strategy spend: the marketing card is spread by channel marketing weight; the distribution card goes to its channel; everything else is "Other U/W". The routine spend (50) sits inside Admin.
+- Below the table: reinsurance net cost, net U/W result (= capital impact before investment) and investment income.
+- Paid ÷ Incurred starts at 82% and moves with loss control: fast-track claims and premium repairs pay sooner; cost-cut repairs, strict underwriting and an overloaded claims team pay later (55–95%). Flood claims are paid more slowly.
+- All rates are game-design estimates, not market data.
+
+**Expert review (Jack, 18 Nov 2026):** channel commission and loss-ratio differences are reasonable because each channel has different customers and selling; 50/50 earning over two quarters is acceptable for the game; paid/incurred should vary with loss-control strictness (implemented above).
+
 ## Difficulty
 | | Easy | Normal | Hard |
 |---|---|---|---|

@@ -26,7 +26,7 @@ export const P = {
   adverseSelection: { freeGap: 0.04, lrPerGap: 0.55 },
 
   // expenses
-  adminRatio: 0.15, // includes a routine strategy spend of `baselineSpend`
+  adminRatio: 0.125, // includes a routine strategy spend of `baselineSpend`
   baselineSpend: 50, // spend up to this is already inside the admin ratio
   commissionRatio: 0.18,
   investmentYield: 0.006, // on capital, per quarter
