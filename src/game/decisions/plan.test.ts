@@ -76,17 +76,27 @@ describe('tactics (layer 2)', () => {
         if (o.tactics) expect(o.tactics.filter((t) => t.recommended).length).toBe(1)
       }
   })
+  it('every changeable stance on every card now has tactics', () => {
+    for (const c of CARDS) for (const o of c.options) if (o.id !== c.defaultOption && o.id !== 'maintain') expect(o.tactics?.length ?? 0).toBeGreaterThanOrEqual(2)
+  })
   it('stances without tactics carry no tactic', () => {
     expect(mk({ marketing: 'maintain' }).marketing.tactic).toBeUndefined()
   })
 })
 
 describe('advisor review', () => {
+  it('recommends Cat XL as the targeted cover for the flood warning', () => {
+    expect(reviewPlan(mk({ reinsurance: 'buyMore' }, { reinsurance: 'catXL' }), state).some((n) => n.id === 'catxl-flood')).toBe(true)
+  })
+  it('every advisor note names the cards it is about', () => {
+    const p = mk({ pricing: 'cut2', underwriting: 'broad', reinsurance: 'retain', repair: 'costCut' }, { repair: 'nonOEM' })
+    for (const n of reviewPlan(p, state)) expect(Array.isArray(n.cards)).toBe(true)
+  })
   it('warns about cutting the marketing team while a rival attacks', () => {
     expect(reviewPlan(mk({ marketing: 'save' }, { marketing: 'cutTeam' }), state).some((n) => n.id === 'cut-team')).toBe(true)
   })
   it('flags over-budget plans', () => {
-    const p = mk({ marketing: 'campaign', distribution: 'digital', reinsurance: 'buyMore', repair: 'ev' })
+    const p = mk({ marketing: 'campaign', distribution: 'digital', reinsurance: 'buyMore', repair: 'ev' }, { marketing: 'ambassador', repair: 'ownEvCenter' })
     expect(budgetLeft(p)).toBeLessThan(0)
     expect(reviewPlan(p, state).some((n) => n.id === 'budget')).toBe(true)
   })
