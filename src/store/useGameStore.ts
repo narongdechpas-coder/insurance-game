@@ -11,7 +11,7 @@ import type { SegmentId } from '../game/sim/v2'
 import type { Difficulty, GameLength, GameState, LocationId } from '../game/types'
 import { clearSave, readSave, readSettings, writeSave, writeSettings, type Settings } from './save'
 
-export type Screen = 'cover' | 'command' | 'decision' | 'running' | 'simulating' | 'review' | 'gameover' | 'market' | 'operation'
+export type Screen = 'cover' | 'command' | 'decision' | 'running' | 'simulating' | 'review' | 'gameover' | 'market' | 'operation' | 'product'
 export type DecisionStep = 'scenario' | 'strategy' | 'confirm'
 export type Modal = 'ranking' | 'guide' | 'settings'
 /** An open glossary popover: the term and where its "?" sits, in stage coordinates. */
@@ -67,7 +67,7 @@ interface Store {
   /** The city-run animation finished (or was skipped): show the newspaper. */
   finishRun: () => void
   /** Market / Operation information pages (read-only, return to the Command Center). */
-  openPage: (page: 'market' | 'operation') => void
+  openPage: (page: 'market' | 'operation' | 'product') => void
   /** The analysis animation finished (or was skipped): show the Quarterly Review. */
   finishSimulation: () => void
   closeReport: () => void

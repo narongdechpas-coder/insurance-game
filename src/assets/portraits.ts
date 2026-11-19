@@ -39,6 +39,7 @@ const DRIVER_DEPT: Record<string, LocationId> = {
   'overload-repair': 'repair',
   fine: 'claims',
   'reg-pass': 'claims',
+  renewal: 'customers',
 }
 
 /** Which department head explains a "why" line. cx-/pr-/gr-<source> belong to that card's or event's home. */

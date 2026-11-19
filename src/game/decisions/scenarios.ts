@@ -35,6 +35,8 @@ export interface SimHook {
   lr?: number
   /** extra share stickiness this quarter (renewal offers) */
   inertia?: number
+  /** renewal-rate points added in the renewal season */
+  renewal?: number
 }
 
 export interface Scenario {
@@ -118,6 +120,15 @@ export const SCENARIOS: Scenario[] = [
       { id: 'matchPromo', label: 'อัดโปรโมชันตาม', blurb: 'รักษายอดงานใหม่ได้ แต่ส่วนลดทำให้ Loss Ratio ไตรมาสนี้แย่ลง', cost: 20, speed: 'fast', icon: 'down', impact: { growth: 1, profit: -1, risk: 0, cx: 0 }, sim: { channelAttr: { dealer: 0.08, agent: 0.08, direct: 0.08 }, lr: 0.012 } },
       { id: 'renewalOffer', label: 'เน้นรักษาลูกค้าเดิม (ส่วนลดต่ออายุ)', blurb: 'ไม่แย่งงานใหม่ แต่กันลูกค้าเดิมไม่ให้ถูกดึงไป ต้นทุนต่ำกว่า', cost: 15, speed: 'fast', icon: 'shield', impact: { growth: 0, profit: 0, risk: 0, cx: 1 }, sim: { inertia: 0.04, lr: 0.004 } },
       { id: 'holdLine', label: 'ไม่ลงสงครามราคา', blurb: 'รักษากำไร แต่เสียงานใหม่ช่วงนี้ให้คู่แข่ง', cost: 0, speed: 'fast', icon: 'hold', impact: { growth: -1, profit: 1, risk: 0, cx: 0 } },
+    ],
+  },
+  {
+    eventId: 'renewal-season',
+    question: 'ฤดูต่ออายุมาถึง จะทำอะไรเพื่อรักษาลูกค้าเดิม',
+    responses: [
+      { id: 'loyaltyDiscount', label: 'ส่วนลดต่ออายุลูกค้าเก่า', blurb: 'อัตราต่ออายุเพิ่มราว 4 จุด แต่ส่วนลดทำให้กำไรต่อกรมธรรม์ลดลง', cost: 15, speed: 'fast', icon: 'down', impact: { growth: 1, profit: -1, risk: 0, cx: 1 }, sim: { renewal: 0.04, lr: 0.005 } },
+      { id: 'retentionCalls', label: 'ทีมโทรติดตามก่อนหมดอายุ', blurb: 'อัตราต่ออายุเพิ่มราว 3 จุด ถ้าสายด่วนล้นอยู่แล้ว ได้ผลแค่ครึ่งเดียว', cost: 20, speed: 'fast', icon: 'users', impact: { growth: 1, profit: 0, risk: 0, cx: 1 }, sim: { renewal: 0.03 } },
+      { id: 'standardRenewal', label: 'ปล่อยตามปกติ', blurb: 'ไม่ใช้งบ อัตราต่ออายุเป็นไปตามผลงานทั้งปีที่ผ่านมา', cost: 0, speed: 'fast', icon: 'hold', impact: { growth: 0, profit: 0, risk: 0, cx: 0 } },
     ],
   },
   // ---- consequence events (raised by the engine) ----

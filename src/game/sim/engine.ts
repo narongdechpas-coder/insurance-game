@@ -4,10 +4,11 @@ import { choiceImpact, optionOf, planCost, tacticOf } from '../decisions/plan'
 import { responseOf, SCENARIO_BY_EVENT, type Responses, type SimHook } from '../decisions/scenarios'
 import type { DecisionId, Duration, Impact, ImpactAxis, QuarterPlan, Speed } from '../decisions/types'
 import { EVENT_BY_ID } from '../data/events'
+import { SEGMENTS } from '../data/tables'
 import type { CompanyKpis, GameState } from '../types'
 import { attractiveness } from './init'
 import { acquisitionRate, buildPnl, CHANNELS, commissionRate, distributionChannel, START_MIX } from './channels'
-import { bookFactors, CHANNEL_IDS, channelAttraction, channelLRFactors, channelRates, nextChannelMix, playerInertia, renewalRates, serviceStars, shiftSegments, updateCompany } from './v2'
+import { bookFactors, CHANNEL_IDS, RENEWAL_BASELINE, renewalOutlook, renewalShareFactor, rivalRenewal, segLR, channelAttraction, channelLRFactors, channelRates, nextChannelMix, playerInertia, renewalRates, serviceStars, shiftSegments, updateCompany } from './v2'
 import { DIFFICULTY, DURATION_WEIGHTS, P } from './params'
 import { rng } from './rng'
 import type { Boost, Capacity, CompetitorMove, Driver, Firm, GameOutcome, Ops, QuarterReport, QueuedEffect, RivalReport, SimState, Standing } from './types'
@@ -193,6 +194,16 @@ function standings(state: GameState, sim: SimState): Standing[] {
   return all.sort((a, b) => b.score - a.score)
 }
 
+/** The renewal-season card: the expected rate and where it comes from. */
+function renewalDetail(o: NonNullable<SimState['v2']['renewal']>) {
+  const p = (x: number) => `${Math.round(x * 100)}%`
+  return (
+    `กรมธรรม์ที่ขายไปเมื่อปีก่อนครบรอบต่ออายุพร้อมกัน คาดว่าจะต่ออายุ ${p(o.rate)} (ค่ากลางตลาด ${p(o.baseline)}) ` +
+    `จากความพอใจ ${o.satisfaction.toFixed(1)} ดาว · งานล้นเฉลี่ยทั้งปี ${Math.round(o.avgOverload * 100)}% · Service Quality ${Math.round(o.service)} ` +
+    `· แยกช่องทาง: Dealer ${p(o.byChannel.dealer)} · Agent ${p(o.byChannel.agent)} · Direct ${p(o.byChannel.direct)}`
+  )
+}
+
 /** Live ranking for the HUD, scored the same way as the final result. */
 export function currentStandings(state: GameState): Standing[] {
   return standings(state, state.sim)
@@ -370,6 +381,20 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   })
   const total = all.reduce((a, f) => a + f.share, 0)
   all.forEach((f) => (f.share /= total))
+  // renewal season: the whole market renews at once; the player's rate comes from last year
+  let renewalResult: { rate: number; byChannel: Record<string, number>; dShare: number } | null = null
+  if (active.has('renewal-season') && sim.v2.renewal) {
+    const o = sim.v2.renewal
+    let bonus = responseOf(responses, 'renewal-season')?.sim?.renewal ?? 0
+    if (responses['renewal-season'] === 'retentionCalls' && o.contactOverloaded) bonus /= 2
+    const rate = Math.min(0.95, o.rate + bonus)
+    const before = pl.share
+    all.forEach((f) => (f.share *= f === pl ? renewalShareFactor(rate) : renewalShareFactor(rivalRenewal(f.satisfaction))))
+    const t2 = all.reduce((a, f) => a + f.share, 0)
+    all.forEach((f) => (f.share /= t2))
+    renewalResult = { rate, byChannel: Object.fromEntries(Object.entries(o.byChannel).map(([c, v]) => [c, Math.min(0.95, v + bonus)])), dShare: pl.share - before }
+    sim.v2.renewal = null
+  }
   const shareFromPrice = (1 - plInertia) * (target[0] - targetNoPrice[0])
 
   // 5. operations: demand vs capacity
@@ -498,10 +523,24 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   pl.satisfaction = clamp(pl.satisfaction + headroom(P.cxAxisStars * flow.cx - overloadStars + serviceStars(sim.v2.company.service)) + P.satisfactionReversion * (P.satisfactionAnchor - pl.satisfaction), 1, 5)
   sim.highCxStreak = pl.satisfaction >= 4.3 ? sim.highCxStreak + 1 : 0
 
+  // year-long overload feeds the renewal season; at the end of Q4 the outlook is set for next quarter
+  // average excess across the three teams (0.1 = teams ran 10% over capacity on average)
+  sim.v2.year.excess += (excess.contact + excess.claims + excess.repair) / 3
+  sim.v2.year.quarters += 1
+  const renewalNext = q % 4 === 3 && q + 1 < state.config.quarters
+  if (renewalNext) {
+    sim.v2.renewal = renewalOutlook(sim.v2, sim.mix, pl.satisfaction, loads.contact > 1)
+    sim.v2.year = { excess: 0, quarters: 0 }
+  }
+
   // 9. next quarter's events
   const consequences = consequencesFor(loads, sim, plan, q)
   const nextEvents = [...consequences]
   for (const id of externalEvents(q + 1, lotusCut, r)) if (nextEvents.length < 3 && !nextEvents.includes(id)) nextEvents.push(id)
+  if (renewalNext) {
+    nextEvents.unshift('renewal-season')
+    if (nextEvents.length > 3) nextEvents.pop()
+  }
   if (nextEvents.length === 0) nextEvents.push('ev-growth')
 
   // 10. explain: the biggest drivers of this quarter, ranked by rough money impact
@@ -552,6 +591,15 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
         tone: 'bad',
         weight: excess[k] * 900 + (k === 'contact' ? 0 : excess[k] * gwp * (k === 'claims' ? P.overload.claims.lossRatio : P.overload.repair.lossRatio)),
       })
+  if (renewalResult) {
+    const pts = renewalResult.dShare * 100
+    drivers.push({
+      id: 'renewal',
+      text: `ฤดูต่ออายุ: ลูกค้าต่ออายุ ${Math.round(renewalResult.rate * 100)}% (ค่ากลาง ${Math.round(RENEWAL_BASELINE * 100)}%) ส่วนแบ่ง${pts >= 0 ? 'เพิ่ม' : 'ลด'} ${Math.abs(pts).toFixed(1)} จุด`,
+      tone: pts >= 0 ? 'good' : 'bad',
+      weight: Math.abs(renewalResult.dShare) * sim.marketGwp * 0.6 + 10,
+    })
+  }
   if (spend > 40) drivers.push({ id: 'spend', text: `ใช้งบกลยุทธ์และรับมือเหตุการณ์ ${spend} ล้านบาท`, tone: 'bad', weight: spend * 0.5 })
   const reCost = uw.grossResult - uw.netResult
   const cost = (id: DecisionId) => (tacticOf(plan, id)?.cost ?? optionOf(plan, id).cost)
@@ -607,6 +655,44 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   const kpis: CompanyKpis = { capitalMB: Math.round(pl.capital), marketShare: pl.share, combinedRatio: pl.combinedRatio, satisfaction: pl.satisfaction }
   const competitors = state.competitors.map((c, i) => ({ ...c, marketShare: sim.firms[i].share }))
   const rank = 1 + competitors.filter((c) => c.marketShare > pl.share).length
+  // channel and segment snapshot for the channel report and the Product page
+  {
+    const tot = pnl.columns.find((c) => c.id === 'total')!
+    const bookLR = tot.incurredLoss / tot.earnedPremium
+    const adequate = segLR(book.mix)
+    const rr = renewalRates(sim.v2)
+    sim.v2.history = [
+      ...sim.v2.history,
+      {
+        quarter: q,
+        label: `Q${state.quarter.q}/${state.quarter.year}`,
+        channels: Object.fromEntries(
+          CHANNEL_IDS.map((c) => {
+            const col = pnl.columns.find((x) => x.id === c)!
+            return [
+              c,
+              {
+                gwp: col.writtenPremium,
+                ep: col.earnedPremium,
+                lossRatio: col.incurredLoss / col.earnedPremium,
+                combinedRatio: (col.incurredLoss + col.expenseTotal) / col.earnedPremium,
+                commission: col.commission + col.marketing,
+                uwResult: col.uwResult,
+                renewal: renewalResult ? (renewalResult.byChannel[c] ?? rr[c]) : rr[c],
+                mix: sim.mix[c],
+              },
+            ]
+          }),
+        ) as SimState['v2']['history'][number]['channels'],
+        portfolio: { ...book.mix },
+        segLossRatio: Object.fromEntries(SEGMENTS.map((sg) => [sg.id, (bookLR * sg.adequateLR) / adequate])) as SimState['v2']['history'][number]['segLossRatio'],
+        brand: sim.v2.company.brand,
+        service: sim.v2.company.service,
+        marketingSpend,
+        newBusiness: Math.max(0, pl.share - prevShare) * sim.marketGwp,
+      },
+    ]
+  }
   const report: QuarterReport = {
     v2: {
       brand: sim.v2.company.brand,
@@ -618,6 +704,7 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
       channelSeg: Object.fromEntries(CHANNEL_IDS.map((c) => [c, { ...sim.v2.channels[c].seg }])) as QuarterReport['v2']['channelSeg'],
       renewal: renewalRates(sim.v2),
       levers: Object.fromEntries(CHANNEL_IDS.map((c) => [c, sim.v2.channels[c].lever])) as QuarterReport['v2']['levers'],
+      renewalSeason: renewalResult,
     },
     quarter: state.quarter,
     plan,
@@ -652,7 +739,10 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
     kpis,
     kpiHistory: [...state.kpiHistory, kpis],
     competitors,
-    events: nextEvents.map((id) => EVENT_BY_ID[id]).filter((e) => e && SCENARIO_BY_EVENT[e.id]),
+    events: nextEvents
+      .map((id) => EVENT_BY_ID[id])
+      .filter((e) => e && SCENARIO_BY_EVENT[e.id])
+      .map((e) => (e.id === 'renewal-season' && sim.v2.renewal ? { ...e, detail: renewalDetail(sim.v2.renewal) } : e)),
     sim,
     lastReport: report,
     outcome: null,

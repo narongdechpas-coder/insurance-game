@@ -17,4 +17,5 @@ export const EVENT_ART: Record<GameEvent['icon'], SpriteKey | null> = {
   motorShow: 'events/motor-show',
   motorExpo: 'events/motor-expo',
   yearEndPromo: 'events/year-end-promo',
+  renewal: 'characters/call-agent',
 }

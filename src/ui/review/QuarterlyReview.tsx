@@ -9,12 +9,13 @@ import { consequenceLines, floodLine, headline, recommendations } from '../../ga
 import { useGameStore } from '../../store/useGameStore'
 import { Stage } from '../Stage'
 import { mb, pct, signed } from './format'
+import { ChannelReport } from './ChannelReport'
 import { PnlTable } from './PnlTable'
 import { RivalsPanel } from './RivalsPanel'
 import { Sparkline } from './Sparkline'
 import { Glossed } from '../glossary/Term'
 
-type Tab = 'story' | 'rivals' | 'pnl'
+type Tab = 'story' | 'channels' | 'rivals' | 'pnl'
 
 /** Screen C — what happened this quarter, why, and what to do next. */
 /** Rank badge; once portraits exist, the department head who owns the line shows how it went. */
@@ -77,6 +78,7 @@ export function QuarterlyReview() {
               {(
                 [
                   ['story', 'สรุปไตรมาส'],
+                  ['channels', 'ช่องทาง'],
                   ['rivals', 'คู่แข่ง'],
                   ['pnl', 'งบการรับประกัน (U/W)'],
                 ] as [Tab, string][]
@@ -221,6 +223,10 @@ export function QuarterlyReview() {
                   ))}
                 </div>
               </div>
+            </div>
+          ) : tab === 'channels' ? (
+            <div className="flex-1 min-h-0 px-8 pb-4 overflow-auto">
+              <ChannelReport game={game} />
             </div>
           ) : tab === 'rivals' ? (
             <div className="flex-1 min-h-0 px-8 pb-4">
