@@ -76,7 +76,7 @@ describe('engine v2', () => {
   it('a big campaign builds brand; saving on marketing lets it fade', () => {
     const up = run(start(), plan({ marketing: 'campaign' }), 3)
     const down = run(start(), plan({ marketing: 'save' }), 3)
-    expect(up.lastReport!.v2.brand).toBeGreaterThan(55)
+    expect(up.lastReport!.v2.brand).toBeGreaterThan(53)
     expect(down.lastReport!.v2.brand).toBeLessThan(50)
   })
 

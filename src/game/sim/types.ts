@@ -2,6 +2,7 @@ import type { Responses } from '../decisions/scenarios'
 import type { ImpactAxis, QuarterPlan } from '../decisions/types'
 import type { CompanyKpis, QuarterStamp } from '../types'
 import type { ChannelId, Mix, Pnl } from './channels'
+import type { OpsState } from './ops'
 import type { SegMix, V2State } from './v2'
 
 /** Operational capacity, as a multiple of the demand the company had at game start. */
@@ -49,8 +50,12 @@ export interface SimState {
   marketGwp: number // in-game market premium per quarter, million THB
   baseDemand: { policies: number; claims: number } // demand at game start (capacity 1.0 = this)
   player: Firm
-  capacity: Capacity
-  boosts: Boost[]
+  /** engine v3: people, garages, lasting investments and temporary measures (carry over) */
+  ops: OpsState
+  /** the settings the player last played with: every card keeps its value until changed */
+  settings: QuarterPlan
+  /** reinsurance treaty for the current year (changeable only in Q1) */
+  treaty: QuarterPlan['reinsurance']
   queue: QueuedEffect[]
   firms: Firm[] // competitors, same order as GameState.competitors
   /** Quarters in a row the player ran a loose underwriting appetite with a price cut. */
@@ -89,6 +94,17 @@ export interface QuarterLog {
   drivers: { id: string; text: string; tone: 'good' | 'bad'; weight: number }[] // top drivers
   /** underwriting P&L by channel (for quarter-on-quarter comparison and the game total) */
   pnl: Pnl
+}
+
+export interface OpsReport {
+  staff: { claims: number; contact: number; training: number; other: number }
+  garages: number
+  /** work this quarter (units) and capacity (units) */
+  demand: Capacity
+  capacity: Capacity
+  inForce: number
+  policiesWritten: number
+  costs: { salaries: number; otherFixed: number; maintenance: number; hiring: number; severance: number; issuance: number; survey: number; fixed: number; variable: number }
 }
 
 export type FloodOutcome = 'none' | 'hit' | 'missed'
@@ -132,6 +148,8 @@ export interface QuarterReport {
   flood: FloodOutcome
   spend: number
   loads: Capacity // demand ÷ capacity (>1 = overloaded)
+  /** engine v3: operations in real units this quarter */
+  ops: OpsReport
   drivers: Driver[]
   competitorMoves: CompetitorMove[]
   rivals: RivalReport[]

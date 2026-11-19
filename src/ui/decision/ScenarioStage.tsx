@@ -4,7 +4,8 @@ import { spriteUrl } from '../../assets/registry'
 import { SCENARIO_BY_EVENT, scenariosFor } from '../../game/decisions/scenarios'
 import { useGameStore } from '../../store/useGameStore'
 import { EVENT_ART } from '../../world/eventArt'
-import { CostChip, ImpactRow } from './CardStage'
+import { CostChip, ImpactRow, OpsBadge } from './CardStage'
+import { isInvestment, tempActive } from '../../game/sim/ops'
 import { KIND, OPTION_ICONS, SPEED_LABEL } from './visuals'
 import { Glossed } from '../glossary/Term'
 
@@ -13,6 +14,8 @@ export function ScenarioStage() {
   const eventId = useGameStore((s) => s.ui.activeEvent)
   const events = useGameStore((s) => s.game.events)
   const responses = useGameStore((s) => s.responses)
+  const ops = useGameStore((s) => s.game.sim.ops)
+  const q = useGameStore((s) => s.game.quarter.index)
   const respond = useGameStore((s) => s.respond)
   const setActive = useGameStore((s) => s.setActiveEvent)
   const advance = useRef<number | undefined>(undefined)
@@ -79,14 +82,17 @@ export function ScenarioStage() {
                 <span className="font-display font-semibold text-[16.5px] leading-tight text-navy-900"><Glossed text={r.label} /></span>
               </span>
               <span className="text-[13px] leading-snug text-navy-700/85 mt-2.5 flex-1"><Glossed text={r.blurb} /></span>
-              <span className="inline-flex self-start items-center gap-1 rounded-full bg-brand-50 text-brand-600 px-2 py-0.5 text-[11px] mb-2">
-                <Clock size={11} /> {SPEED_LABEL[r.speed]}
+              <span className="flex flex-wrap gap-1 mb-2">
+                <OpsBadge id={r.id} owned={ops.owned} active={tempActive(ops, r.id, q) ? Math.max(...ops.temps.filter((x) => x.source === r.id).map((x) => x.until)) - q + 1 : 0} />
+                <span className="inline-flex self-start items-center gap-1 rounded-full bg-brand-50 text-brand-600 px-2 py-0.5 text-[11px]">
+                  <Clock size={11} /> {SPEED_LABEL[r.speed]}
+                </span>
               </span>
               <span className="flex items-end justify-between pt-2 border-t border-brand-100">
                 <span className="w-[136px]">
                   <ImpactRow impact={r.impact} size={13} />
                 </span>
-                <CostChip cost={r.cost} />
+                <CostChip cost={isInvestment(r.id) && ops.owned[r.id] !== undefined ? 0 : r.cost} />
               </span>
             </button>
           )

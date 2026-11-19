@@ -8,6 +8,7 @@ import { CardList } from './CardList'
 import { CardStage } from './CardStage'
 import { ChannelStage } from './ChannelStage'
 import { PricingStage } from './PricingStage'
+import { StaffStage } from './StaffStage'
 import { ConfirmView } from './ConfirmView'
 import { DecisionAdvisor } from './DecisionAdvisor'
 import { DecisionHeader } from './DecisionHeader'
@@ -26,7 +27,7 @@ export function DecisionRoom() {
   const setStep = useGameStore((s) => s.setStep)
   const toast = useGameStore((s) => s.toast)
   const confirm = useGameStore((s) => s.confirmPlan)
-  const over = useGameStore((s) => budgetLeft(s.plan, s.responses) < 0)
+  const over = useGameStore((s) => budgetLeft(s.plan, s.responses, s.game.sim.ops.owned) < 0)
   const pending = useGameStore((s) => unansweredEvents(s.game, s.responses).length)
   const activeCard = useGameStore((s) => s.ui.activeCard)
 
@@ -53,7 +54,7 @@ export function DecisionRoom() {
         {step === 'strategy' && (
           <>
             <CardList />
-            {activeCard === 'distribution' ? <ChannelStage /> : activeCard === 'pricing' ? <PricingStage /> : <CardStage />}
+            {activeCard === 'staff' ? <StaffStage /> : activeCard === 'distribution' ? <ChannelStage /> : activeCard === 'pricing' ? <PricingStage /> : <CardStage />}
           </>
         )}
         {step === 'confirm' && <ConfirmView />}

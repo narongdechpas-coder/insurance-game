@@ -1,3 +1,5 @@
+import type { StaffTarget } from '../forecast'
+import { OPS, TEAMS } from './ops'
 import { CARD_BY_ID, CARDS, choiceFor, defaultPlan, isUnlocked } from '../decisions/cards'
 import { budgetLeft } from '../decisions/plan'
 import { scenariosFor, type Responses, type ScenarioResponse } from '../decisions/scenarios'
@@ -50,7 +52,30 @@ const score: Record<Exclude<StrategyId, 'passive'>, (r: ScenarioResponse) => num
   smart: (r) => r.impact.growth + 1.3 * r.impact.profit + 1.2 * r.impact.cx - 1.2 * r.impact.risk - r.cost / 30,
 }
 
-export function scriptedTurn(state: GameState, id: StrategyId): { plan: QuarterPlan; responses: Responses } {
+/** Teams sized to the work (engine v3): careful players hire when a team ran near its limit. */
+function staffFor(state: GameState, id: StrategyId): StaffTarget | undefined {
+  if (id !== 'balanced' && id !== 'smart' && id !== 'profit') return undefined
+  const r = state.lastReport?.ops
+  if (!r) return undefined
+  const o = state.sim.ops
+  const want: StaffTarget = {}
+  for (const t of TEAMS) {
+    const load = r.demand[t] / r.capacity[t]
+    const people = o.staff[t] + o.pending.filter((p) => p.team === t).reduce((a, p) => a + p.n, 0)
+    if (load > 0.97 && id !== 'profit') want[t] = Math.ceil((people * load) / 0.92 / OPS.teams[t].step) * OPS.teams[t].step
+    // a cost-focused player trims teams that sit idle as the book shrinks
+    if (load < 0.8 && id === 'profit') want[t] = Math.ceil((people * load) / 0.9 / OPS.teams[t].step) * OPS.teams[t].step
+  }
+  return want
+}
+
+export function scriptedTurn(state: GameState, id: StrategyId): { plan: QuarterPlan; responses: Responses; staff?: StaffTarget } {
+  const staff = staffFor(state, id)
+  const t = scriptedPlan(state, id)
+  return { ...t, staff }
+}
+
+function scriptedPlan(state: GameState, id: StrategyId): { plan: QuarterPlan; responses: Responses } {
   const q = state.quarter.index
   const plan = defaultPlan()
   const responses: Responses = {}
@@ -68,7 +93,7 @@ export function scriptedTurn(state: GameState, id: StrategyId): { plan: QuarterP
     const o = CARD_BY_ID[c.id].options.find((x) => x.id === want[0])!
     const prev = plan[c.id]
     plan[c.id] = want[1] ? { option: o.id, tactic: want[1] } : choiceFor(o)
-    if (budgetLeft(plan, responses) < 0) plan[c.id] = prev
+    if (budgetLeft(plan, responses, state.sim.ops.owned) < 0) plan[c.id] = prev
   }
   return { plan, responses }
 }
@@ -79,7 +104,7 @@ function smartPlan(state: GameState, plan: QuarterPlan, responses: Responses) {
   const set = (id: DecisionId, option: string, tactic?: string) => {
     const prev = plan[id]
     plan[id] = tactic ? { option, tactic } : choiceFor(CARD_BY_ID[id].options.find((o) => o.id === option)!)
-    if (budgetLeft(plan, responses) < 0) plan[id] = prev
+    if (budgetLeft(plan, responses, state.sim.ops.owned) < 0) plan[id] = prev
   }
   const loads = state.lastReport?.loads
   const flood = state.events.some((e) => e.id === 'flood-central')

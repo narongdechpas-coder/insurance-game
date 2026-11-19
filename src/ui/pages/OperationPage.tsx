@@ -1,5 +1,8 @@
 import { CHANNELS, commissionRate } from '../../game/sim/channels'
 import { capacityAt } from '../../game/sim/engine'
+import { INVESTMENT_IDS, OPS as OPS_DATA, unitsAt } from '../../game/sim/ops'
+import { fmtUnits, staffOf } from '../../game/forecast'
+import type { Ops } from '../../game/sim/types'
 import { CARD_BY_ID } from '../../game/decisions/cards'
 import { EVENT_BY_ID } from '../../game/data/events'
 import type { DecisionId } from '../../game/decisions/types'
@@ -13,6 +16,7 @@ const OPS = [
   { id: 'repair', label: 'เครือข่ายอู่ซ่อม', hint: 'งานเพิ่มตามจำนวนรถที่ต้องซ่อม' },
 ] as const
 
+const UNIT: Record<Ops, string> = { claims: 'เคลม/ไตรมาส', contact: 'สาย/ไตรมาส', repair: 'งาน/ไตรมาส' }
 const sourceLabel = (src: string) => CARD_BY_ID[src as DecisionId]?.title ?? EVENT_BY_ID[src]?.title ?? src
 
 /** Operation page: how loaded each service unit is, what capacity is in place, and the channel mix. */
@@ -21,8 +25,17 @@ export function OperationPage() {
   const q = game.quarter.index
   const cap = capacityAt(game.sim, q)
   const loads = game.lastReport?.loads
-  const boosts = game.sim.boosts.filter((b) => b.until >= q)
+  const ops = game.sim.ops
+  // lasting investments (permanent) and temporary measures still running
+  const boosts = [
+    ...INVESTMENT_IDS.filter((id) => ops.owned[id] !== undefined).map((id) => ({ source: OPS_DATA.investments[id].label, ops: OPS_DATA.investments[id].ops as Ops, value: OPS_DATA.investments[id].capacity, from: ops.owned[id]! + (OPS_DATA.investments[id].slow ? 1 : 0), until: Infinity })),
+    ...ops.temps.filter((t) => t.until >= q),
+  ]
   const pending = game.events.filter((e) => e.consequence)
+  const last = game.lastReport?.ops
+  const units = unitsAt(ops, q)
+  const staffNow = staffOf(game)
+  const who: Record<Ops, string> = { claims: `ทีม ${staffNow.claims} คน`, contact: `ทีม ${staffNow.contact} คน`, repair: `${ops.garages} อู่` }
   return (
     <PageShell id="operation" kicker={`การปฏิบัติการ · ปีที่ ${game.quarter.year} ไตรมาส ${game.quarter.q}`} title="กำลังการทำงานและช่องทางขาย">
       <div className="grid grid-cols-3 gap-3">
@@ -40,8 +53,9 @@ export function OperationPage() {
                   <div className={`font-display font-bold text-[28px] leading-tight ${util > 1.08 ? 'text-alert' : 'text-navy-900'}`}>{pct(util, 0)}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[12px] text-navy-700/65">กำลังไตรมาสนี้</div>
-                  <div className="font-semibold text-[16px] text-navy-900">{pct(cap[o.id], 0)} ของปกติ</div>
+                  <div className="text-[12px] text-navy-700/65">{who[o.id]}</div>
+                  <div className="font-semibold text-[16px] text-navy-900 tabular-nums">รับได้ {fmtUnits(units[o.id])} {UNIT[o.id]}</div>
+                  {last && <div className="text-[12px] text-navy-700/65 tabular-nums">งานไตรมาสที่แล้ว {fmtUnits(last.demand[o.id])}</div>}
                 </div>
               </div>
               <div className="relative h-3 rounded-full bg-navy-900/8 mt-2 overflow-hidden">

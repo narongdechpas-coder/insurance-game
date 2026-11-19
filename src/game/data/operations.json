@@ -1,0 +1,43 @@
+{
+  "_note": "Engine v3 operations assumptions. ALL VALUES ARE GAME-DESIGN ASSUMPTIONS (ตัวเลขสมมติของเกม), not market statistics or company data. Money in baht unless the key ends in MB (million baht per quarter).",
+  "avgPremiumPerPolicyYear": 16000,
+  "claimFrequencyYear": 0.4,
+  "garageShareOfClaims": 0.7,
+  "callsPerPolicyQuarter": 0.3,
+  "salaryPerPersonMonth": 30000,
+  "teams": {
+    "claims": { "label": "ทีมสินไหม", "start": 120, "perPersonMonth": 150, "step": 10, "unit": "เคลม" },
+    "contact": { "label": "Call center", "start": 40, "perPersonMonth": 1325, "step": 5, "unit": "สาย" }
+  },
+  "otherStaff": 340,
+  "otherFixedMB": 115,
+  "garages": { "start": 300, "jobsPerGarageQuarter": 130, "step": 40, "maintenanceMBPerGarage": 0.05 },
+  "issuancePerPolicy": 120,
+  "surveyPerClaim": 500,
+  "hireCostMonths": 1,
+  "severanceMonths": 3,
+  "investments": {
+    "upgradeNetwork": { "label": "อัปเกรดอู่ในเครือ + รับรองมาตรฐาน", "ops": "repair", "capacity": 0.12, "maintenanceMB": 3, "service": 8, "slow": true },
+    "ownEvCenter": { "label": "ศูนย์ซ่อม EV ของเราเอง", "ops": "repair", "capacity": 0.08, "maintenanceMB": 6, "service": 3, "slow": true },
+    "ownApp": { "label": "แอปซื้อประกันของเราเอง", "ops": "contact", "capacity": 0.18, "maintenanceMB": 4, "service": 4, "slow": true },
+    "selfService": { "label": "บริการตัวเองผ่านแอปและ LINE", "ops": "contact", "capacity": 0.25, "maintenanceMB": 4, "service": 4, "slow": true },
+    "lineOA": { "label": "LINE OA และแชทบอท", "ops": "contact", "capacity": 0.1, "maintenanceMB": 1.5, "service": 2, "slow": false }
+  },
+  "temporary": {
+    "onSite": { "ops": "contact", "capacity": 0.05, "quarters": 1 },
+    "dealerService": { "ops": "repair", "capacity": 0.15, "quarters": 1 },
+    "evPartner": { "ops": "repair", "capacity": 0.06, "quarters": 2 },
+    "laborRate": { "ops": "repair", "capacity": -0.04, "quarters": 1 },
+    "inspection": { "ops": "contact", "capacity": -0.04, "quarters": 1 },
+    "tempStaff": { "ops": "contact", "capacity": 0.2, "quarters": 2 },
+    "outsourceAdjusters": { "ops": "claims", "capacity": 0.3, "quarters": 2 },
+    "fastTrack": { "ops": "claims", "capacity": 0.25, "quarters": 2 },
+    "preposition": { "ops": "claims", "capacity": 0.45, "quarters": 1 }
+  },
+  "hires": {
+    "hireClaims": { "team": "claims", "people": 20 }
+  },
+  "garageAdds": {
+    "addGarages": 40
+  }
+}

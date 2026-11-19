@@ -22,12 +22,13 @@ export function DecisionAdvisor() {
   const channels = useGameStore((s) => s.channels)
   const segSteps = useGameStore((s) => s.segSteps)
   // forecast overload of the draft plan (calm engine run) joins the plan checks as a warning
-  const cap = useMemo(() => capacityWarning(game, plan, responses, channels, segSteps), [game, plan, responses, channels, segSteps])
+  const staff = useGameStore((s) => s.staff)
+  const cap = useMemo(() => capacityWarning(game, plan, responses, channels, segSteps, staff), [game, plan, responses, channels, segSteps, staff])
   // overload is the costliest surprise, so it leads the warnings
   const notes = [...(cap ? [{ id: 'capacity', tone: 'warning' as const, text: cap, cards: ['pricing', 'distribution', 'repair'] as DecisionId[] }] : []), ...reviewPlan(plan, game, responses)]
   // what the player is looking at decides which note leads
   const focus: string[] =
-    step === 'strategy' ? [activeCard] : step === 'scenario' && activeEvent ? (responseOf(responses, activeEvent)?.related ?? []) : []
+    step === 'strategy' ? [activeCard === 'staff' ? 'repair' : activeCard] : step === 'scenario' && activeEvent ? (responseOf(responses, activeEvent)?.related ?? []) : []
   const warnings = notes.filter((n) => n.tone === 'warning')
   const tips = notes.filter((n) => n.tone === 'tip')
   const about = (n: { cards: string[] }) => n.cards.length === 0 || n.cards.some((c) => focus.includes(c))
@@ -43,7 +44,7 @@ export function DecisionAdvisor() {
         ? pending
           ? `ยังเหลือเหตุการณ์ที่ต้องตอบอีก ${pending} เรื่องค่ะ`
           : 'แผนไม่มีจุดขัดกันเองค่ะ พร้อมยืนยันได้เลย'
-        : (lead?.text ?? `${CARD_BY_ID[activeCard].question} — เลือกได้เลยค่ะ ถ้าแผนขัดกันเองหนูจะเตือน`)
+        : (lead?.text ?? (activeCard === 'staff' ? 'ทีมงานค้างไว้ทุกไตรมาส ดูภาระงานไตรมาสหน้าก่อนรับหรือลดคนนะคะ' : `${CARD_BY_ID[activeCard].question} — เลือกได้เลยค่ะ ถ้าแผนขัดกันเองหนูจะเตือน`))
   return (
     <div className="absolute left-4 bottom-3 flex items-end pointer-events-auto">
       {bust ? (

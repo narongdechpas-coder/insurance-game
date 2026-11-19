@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_CONFIG } from '../config'
 import { CARD_BY_ID, choiceFor, defaultPlan } from '../decisions/cards'
 import type { QuarterPlan } from '../decisions/types'
+import { settingsOf, withChannelSettings } from '../forecast'
 import { createInitialState } from '../initialState'
 import type { Difficulty, GameState } from '../types'
 import { simulateQuarter } from './engine'
@@ -145,7 +146,7 @@ function run(strategy: StrategyId, difficulty: Difficulty, seed: number, quarter
   let floods = 0
   while (!s.outcome) {
     const t = scriptedTurn(s, strategy)
-    s = simulateQuarter(s, t.plan, t.responses)
+    s = simulateQuarter(withChannelSettings(s, settingsOf(s), undefined, t.staff), t.plan, t.responses)
     for (const c of s.lastReport!.consequences) consequences[c] = (consequences[c] ?? 0) + 1
     if (s.lastReport!.flood === 'hit') floods++
   }

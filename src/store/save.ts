@@ -7,7 +7,7 @@ import type { GameState } from '../game/types'
  */
 const KEY = 'insure-universe:save'
 const SETTINGS_KEY = 'insure-universe:settings'
-const VERSION = 5 // older saves cannot be continued (5: P&L per quarter, 4: quarter log, 3: channel history and renewal, 2: engine v2)
+const VERSION = 6 // older saves cannot be continued (6: engine v3 operations and kept settings, 5: P&L per quarter, 4: quarter log, 3: channel history and renewal, 2: engine v2)
 
 export interface SaveInfo {
   game: GameState

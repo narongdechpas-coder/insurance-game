@@ -1,6 +1,7 @@
 import { capitalHealth, capitalWarning } from '../capital'
+import { isInvestment } from '../sim/ops'
 import type { GameState } from '../types'
-import { CARD_BY_ID, CARDS, QUARTER_BUDGET_MB } from './cards'
+import { CARD_BY_ID, CARDS, defaultPlan, QUARTER_BUDGET_MB } from './cards'
 import { responseOf, scenariosFor, SCENARIOS, type Responses } from './scenarios'
 import type { DecisionId, Impact, ImpactAxis, QuarterPlan } from './types'
 
@@ -28,21 +29,29 @@ export function choiceImpact(plan: QuarterPlan, id: DecisionId): Impact {
   return { growth: base.growth + (mod.growth ?? 0), profit: base.profit + (mod.profit ?? 0), risk: base.risk + (mod.risk ?? 0), cx: base.cx + (mod.cx ?? 0) }
 }
 
-export function choiceCost(plan: QuarterPlan, id: DecisionId) {
-  return tacticOf(plan, id)?.cost ?? optionOf(plan, id).cost
+/** What the company already owns (lasting investments): those cost nothing the second time. */
+export type Owned = Partial<Record<string, number>>
+
+export function choiceCost(plan: QuarterPlan, id: DecisionId, owned: Owned = {}) {
+  const t = tacticOf(plan, id)
+  if (t && isInvestment(t.id) && owned[t.id] !== undefined) return 0
+  return t?.cost ?? optionOf(plan, id).cost
 }
 
 /** Spend on event responses (step 1). Shares the quarter budget with the strategy cards. */
-export function responsesCost(responses: Responses = {}) {
-  return SCENARIOS.reduce((s, sc) => s + (responseOf(responses, sc.eventId)?.cost ?? 0), 0)
+export function responsesCost(responses: Responses = {}, owned: Owned = {}) {
+  return SCENARIOS.reduce((s, sc) => {
+    const r = responseOf(responses, sc.eventId)
+    return s + (r && !(isInvestment(r.id) && owned[r.id] !== undefined) ? r.cost : 0)
+  }, 0)
 }
 
-export function planCost(plan: QuarterPlan, responses: Responses = {}) {
-  return CARDS.reduce((s, c) => s + choiceCost(plan, c.id), 0) + responsesCost(responses)
+export function planCost(plan: QuarterPlan, responses: Responses = {}, owned: Owned = {}) {
+  return CARDS.reduce((s, c) => s + choiceCost(plan, c.id, owned), 0) + responsesCost(responses, owned)
 }
 
-export function budgetLeft(plan: QuarterPlan, responses: Responses = {}) {
-  return QUARTER_BUDGET_MB - planCost(plan, responses)
+export function budgetLeft(plan: QuarterPlan, responses: Responses = {}, owned: Owned = {}) {
+  return QUARTER_BUDGET_MB - planCost(plan, responses, owned)
 }
 
 /** Events this quarter that still need a response. */
@@ -50,8 +59,29 @@ export function unansweredEvents(s: GameState, responses: Responses) {
   return scenariosFor(s.events.map((e) => e.id)).filter((sc) => !responses[sc.eventId]).map((sc) => sc.eventId)
 }
 
-export function changedCards(plan: QuarterPlan): DecisionId[] {
-  return CARDS.filter((c) => plan[c.id].option !== c.defaultOption).map((c) => c.id)
+/**
+ * The plan a new quarter opens with: every card keeps what the company is doing now (engine v3).
+ * Price moves and the old distribution push are one-off actions, so they start from "no change".
+ */
+export function keptPlan(s: GameState): QuarterPlan {
+  const base = defaultPlan()
+  const kept = s.sim.settings ?? base
+  return { ...base, ...kept, pricing: base.pricing, distribution: base.distribution }
+}
+
+/** Cards the player changed this quarter, against what the company is doing now (or the game start). */
+/** The settings the company had before the quarter just played (for "what did I change" after the fact). */
+export function keptBefore(s: GameState): QuarterPlan | undefined {
+  const prev = s.sim.log[s.sim.log.length - 2]
+  if (!prev) return undefined
+  return Object.fromEntries(prev.choices.map((c) => [c.card, { option: c.option, tactic: c.tactic }])) as QuarterPlan
+}
+
+export function changedCards(plan: QuarterPlan, kept?: QuarterPlan): DecisionId[] {
+  return CARDS.filter((c) => {
+    const k = kept?.[c.id] ?? { option: c.defaultOption }
+    return plan[c.id].option !== k.option || (kept ? (plan[c.id].tactic ?? null) !== (k.tactic ?? null) && plan[c.id].option !== c.defaultOption : false)
+  }).map((c) => c.id)
 }
 
 const AXES: ImpactAxis[] = ['growth', 'profit', 'risk', 'cx']
