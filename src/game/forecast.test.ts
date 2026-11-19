@@ -37,3 +37,36 @@ describe('forecasts (calm engine runs)', () => {
     expect(capacityWarning(s, p, {}, settingsOf(s))).toMatch(/ล้น/)
   })
 })
+
+describe('pricing by segment', () => {
+  it('cutting one segment grows it inside the book and moves share, premium and loss ratio', async () => {
+    const { forecastSegments, keepPrices } = await import('./forecast')
+    const steps = { ...keepPrices(), budget: 0 } // 2+/3+ −8%
+    const f = forecastSegments(s, defaultPlan(), {}, settingsOf(s), steps)
+    const b = f.find((x) => x.segment === 'budget')!
+    expect(b.dShare).toBeGreaterThan(0)
+    expect(b.dLossRatioFull).toBeGreaterThan(0)
+    expect(f.find((x) => x.segment === 'newCar')!.dShare).toBe(0)
+    // a price-sensitive segment reacts more than a low-sensitivity one for the same cut
+    const ev = forecastSegments(s, defaultPlan(), {}, settingsOf(s), { ...keepPrices(), ev: 0 }).find((x) => x.segment === 'ev')!
+    expect(b.dShare / 0.23).toBeGreaterThan(ev.dShare / 0.0925)
+  })
+  it('raising a segment above the market flags adverse selection', async () => {
+    const { forecastSegments, keepPrices } = await import('./forecast')
+    const f = forecastSegments(s, defaultPlan(), {}, settingsOf(s), { ...keepPrices(), oldCar: 4 })
+    const o = f.find((x) => x.segment === 'oldCar')!
+    expect(o.gapAfter).toBeGreaterThan(0.04)
+    expect(o.dShare).toBeLessThan(0)
+  })
+  it('the engine keeps segment prices across quarters and shifts the book toward the cheaper segment', async () => {
+    const { withChannelSettings, keepPrices } = await import('./forecast')
+    const { simulateQuarter } = await import('./sim/engine')
+    const { START_PORTFOLIO } = await import('./sim/v2')
+    let g = simulateQuarter(withChannelSettings(s, settingsOf(s), { ...keepPrices(), budget: 0 }), defaultPlan(), {}, { calm: true })
+    expect(g.sim.v2.segPrice.budget).toBeCloseTo(0.92, 6)
+    expect(g.sim.v2.segPrice.newCar).toBe(1)
+    g = simulateQuarter({ ...g, events: [] }, defaultPlan(), {}, { calm: true })
+    expect(g.sim.v2.segPrice.budget).toBeCloseTo(0.92, 6)
+    expect(g.lastReport!.v2.portfolio.budget).toBeGreaterThan(START_PORTFOLIO.budget)
+  })
+})

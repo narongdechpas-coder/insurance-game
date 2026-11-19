@@ -4,7 +4,7 @@ import { createInitialState } from '../game/initialState'
 import { CARD_BY_ID, CARDS, choiceFor, defaultPlan, isUnlocked } from '../game/decisions/cards'
 import { scenariosFor, type Responses } from '../game/decisions/scenarios'
 import type { DecisionId, QuarterPlan } from '../game/decisions/types'
-import { settingsOf, withChannelSettings, type ChannelSettings } from '../game/forecast'
+import { keepPrices, settingsOf, withChannelSettings, type ChannelSettings, type SegmentSteps } from '../game/forecast'
 import type { ChannelId } from '../game/sim/channels'
 import { simulateQuarter } from '../game/sim/engine'
 import type { SegmentId } from '../game/sim/v2'
@@ -53,6 +53,8 @@ interface Store {
   responses: Responses
   /** Channel sliders and segment focus being set this quarter (kept across quarters once confirmed). */
   channels: ChannelSettings
+  /** Price move per vehicle segment this quarter (step index, 2 = keep); resets every quarter. */
+  segSteps: SegmentSteps
   settings: Settings
   startGame: (opts: { quarters: GameLength; difficulty: Difficulty; companyName: string; playerName: string }) => void
   openDecisionRoom: (target?: DecisionId | DecisionStep) => void
@@ -78,6 +80,7 @@ interface Store {
   resetPlan: () => void
   setLever: (c: ChannelId, lever: number) => void
   setFocus: (c: ChannelId, focus: SegmentId | null) => void
+  setSegStep: (k: SegmentId, step: number) => void
   hover: (id: LocationId | null) => void
   select: (id: LocationId | null) => void
   focusEvent: (eventId: string | null) => void
@@ -101,6 +104,7 @@ const initialGame = createInitialState(DEFAULT_CONFIG)
 export const useGameStore = create<Store>((set, get) => ({
   game: initialGame,
   channels: settingsOf(initialGame),
+  segSteps: keepPrices(),
   ui: { hovered: null, selected: null, highlightedEvent: null, introDone: false, toasts: [], screen: 'cover', step: 'scenario', activeCard: 'pricing', activeEvent: null, reviewOnly: false, runStart: 0, modal: null, term: null },
   plan: defaultPlan(),
   responses: {},
@@ -114,6 +118,7 @@ export const useGameStore = create<Store>((set, get) => ({
       plan: defaultPlan(),
       responses: {},
       channels: settingsOf(game),
+      segSteps: keepPrices(),
       ui: { ...s.ui, screen: 'command', introDone: false, selected: null, hovered: null, highlightedEvent: null, modal: null, term: null },
     }))
   },
@@ -125,6 +130,7 @@ export const useGameStore = create<Store>((set, get) => ({
       plan: defaultPlan(),
       responses: {},
       channels: settingsOf(save.game),
+      segSteps: keepPrices(),
       ui: { ...s.ui, screen: 'command', step: 'scenario', activeEvent: null, introDone: false, selected: null, hovered: null, highlightedEvent: null, modal: null, term: null },
     }))
   },
@@ -163,7 +169,7 @@ export const useGameStore = create<Store>((set, get) => ({
   respond: (eventId, responseId) => set((s) => ({ responses: { ...s.responses, [eventId]: responseId } })),
   confirmPlan: () => {
     const s = get()
-    const game = simulateQuarter(withChannelSettings(s.game, s.channels), s.plan, s.responses)
+    const game = simulateQuarter(withChannelSettings(s.game, s.channels, s.segSteps), s.plan, s.responses)
     if (game.outcome) clearSave()
     else writeSave(game)
     set({
@@ -176,6 +182,7 @@ export const useGameStore = create<Store>((set, get) => ({
       plan: defaultPlan(),
       responses: {},
       channels: settingsOf(s.game),
+      segSteps: keepPrices(),
       ui: { ...s.ui, screen: s.game.outcome ? 'gameover' : 'command', step: 'scenario', activeEvent: null },
     })),
   finishSimulation: () => set((s) => (s.ui.screen === 'simulating' ? { ui: { ...s.ui, screen: 'review' } } : s)),
@@ -193,7 +200,8 @@ export const useGameStore = create<Store>((set, get) => ({
       return { plan: { ...s.plan, [card]: choiceFor(o) } }
     }),
   chooseTactic: (card, tactic) => set((s) => ({ plan: { ...s.plan, [card]: { ...s.plan[card], tactic } } })),
-  resetPlan: () => set((s) => ({ plan: defaultPlan(), channels: settingsOf(s.game) })),
+  resetPlan: () => set((s) => ({ plan: defaultPlan(), channels: settingsOf(s.game), segSteps: keepPrices() })),
+  setSegStep: (k, step) => set((s) => ({ segSteps: { ...s.segSteps, [k]: step } })),
   setLever: (c, lever) => set((s) => ({ channels: { ...s.channels, [c]: { ...s.channels[c], lever } } })),
   setFocus: (c, focus) => set((s) => ({ channels: { ...s.channels, [c]: { ...s.channels[c], focus } } })),
 

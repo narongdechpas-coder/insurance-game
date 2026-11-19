@@ -1,6 +1,7 @@
 import type { QuarterLog, Standing } from '../sim/types'
 import { RENEWAL_BASELINE } from '../sim/v2'
 import type { GameState } from '../types'
+import { SEGMENTS } from '../data/tables'
 import { STYLE } from './rivals'
 
 /**
@@ -19,7 +20,17 @@ export interface Lesson {
 const p0 = (x: number) => `${(x * 100).toFixed(0)}%`
 const p1 = (x: number) => `${(x * 100).toFixed(1)}%`
 const mb = (x: number) => Math.round(x).toLocaleString('th-TH')
-const choice = (l: QuarterLog, card: string) => l.choices.find((c) => c.card === card)
+const SEG_LABEL = Object.fromEntries(SEGMENTS.map((s) => [s.id, s.label.replace(' (≤ 3 ปี)', '').replace(' (บ้าน/SME + PA)', '')]))
+/** Book-weighted direction of this quarter's price moves (any segment moved counts). */
+const moved = (l: QuarterLog, dir: 1 | -1) => Object.values(l.priceMoves ?? {}).some((v) => v * dir > 0)
+const segsMoved = (l: QuarterLog, dir: 1 | -1) =>
+  Object.entries(l.priceMoves ?? {})
+    .filter(([, v]) => v * dir > 0)
+    .map(([k]) => SEG_LABEL[k] ?? k)
+const segText = (l: QuarterLog, dir: 1 | -1) => {
+  const s = segsMoved(l, dir)
+  return s.length === SEGMENTS.length ? 'ทุกกลุ่ม' : `กลุ่ม ${s.join(', ')}`
+}
 const OPS = { contact: 'สายด่วน', claims: 'ทีมสินไหม', repair: 'อู่ในเครือ' } as const
 
 export function lessons(g: GameState): Lesson[] {
@@ -30,7 +41,7 @@ export function lessons(g: GameState): Lesson[] {
   if (!log.length) return out
 
   // 1. price cuts: share now, margin later
-  const cuts = log.filter((l) => ['cut1', 'cut2'].includes(choice(l, 'pricing')?.option ?? ''))
+  const cuts = log.filter((l) => moved(l, -1))
   if (cuts.length) {
     const q = cuts[0].quarter
     const later = Math.min(q + 3, last)
@@ -41,14 +52,14 @@ export function lessons(g: GameState): Lesson[] {
       tone: crMove > 0.01 ? 'bad' : 'good',
       title: crMove > 0.01 ? 'ลดราคาได้ส่วนแบ่งเร็ว แต่จ่ายคืนด้วยกำไรทีหลัง' : 'ลดราคาแบบคุมได้',
       text:
-        `ลดราคา ${cuts.length} ไตรมาส (ครั้งแรก ${cuts[0].label}) ส่วนแบ่งจาก ${p1(kh[q].marketShare)} เป็น ${p1(kh[Math.min(q + 1, last)].marketShare)} ` +
+        `ลดราคา ${cuts.length} ไตรมาส (ครั้งแรก ${cuts[0].label} ${segText(cuts[0], -1)}) ส่วนแบ่งจาก ${p1(kh[q].marketShare)} เป็น ${p1(kh[Math.min(q + 1, last)].marketShare)} ` +
         `แต่ Combined Ratio จาก ${p0(kh[q].combinedRatio)} เป็น ${p0(kh[later].combinedRatio)} ใน ${later - q} ไตรมาสต่อมา เพราะอัตราเบี้ยใหม่ทยอยมีผลกับกรมธรรม์ที่ต่ออายุ`,
       weight: Math.abs(crMove) * 900 + Math.abs(shareGain) * 600,
     })
   }
 
   // 2. price raises: margin now, customers leave
-  const raises = log.filter((l) => ['raise1', 'raise2'].includes(choice(l, 'pricing')?.option ?? ''))
+  const raises = log.filter((l) => moved(l, 1))
   if (raises.length) {
     const q = raises[0].quarter
     const later = Math.min(q + 3, last)
@@ -57,7 +68,7 @@ export function lessons(g: GameState): Lesson[] {
       tone: kh[later].combinedRatio < kh[q].combinedRatio ? 'good' : 'bad',
       title: 'ขึ้นราคา: กำไรดีขึ้นช้า ลูกค้าออกเร็ว',
       text:
-        `ขึ้นราคา ${raises.length} ไตรมาส (ครั้งแรก ${raises[0].label}) Combined Ratio จาก ${p0(kh[q].combinedRatio)} เป็น ${p0(kh[later].combinedRatio)} ` +
+        `ขึ้นราคา ${raises.length} ไตรมาส (ครั้งแรก ${raises[0].label} ${segText(raises[0], 1)}) Combined Ratio จาก ${p0(kh[q].combinedRatio)} เป็น ${p0(kh[later].combinedRatio)} ` +
         `ส่วนแบ่งจาก ${p1(kh[q].marketShare)} เป็น ${p1(kh[later].marketShare)} ถ้าแพงกว่าตลาดมาก ลูกค้าดีจะออกก่อน เหลือลูกค้าที่เคลมบ่อย`,
       weight: Math.abs(kh[later].combinedRatio - kh[q].combinedRatio) * 900 + Math.abs(kh[later].marketShare - kh[q].marketShare) * 600,
     })

@@ -46,7 +46,8 @@ export function ChannelStage() {
   const set = useGameStore((s) => s.channels)
   const setLever = useGameStore((s) => s.setLever)
   const setFocus = useGameStore((s) => s.setFocus)
-  const fc = useMemo(() => forecastChannels(game, plan, responses, set), [game, plan, responses, set])
+  const segSteps = useGameStore((s) => s.segSteps)
+  const fc = useMemo(() => forecastChannels(game, plan, responses, set, segSteps), [game, plan, responses, set, segSteps])
   const saved = useMemo(() => settingsOf(game), [game])
   const renewal = renewalRates(game.sim.v2)
   const mix = game.sim.mix

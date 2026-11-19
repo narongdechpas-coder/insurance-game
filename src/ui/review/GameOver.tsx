@@ -34,7 +34,7 @@ function TimelineChart({ g, title, values, fmt, line, lineLabel, color, higherIs
   const marks = log.flatMap((l, i) => {
     const m: { i: number; kind: 'flood' | 'cut' | 'renewal' }[] = []
     if (l.flood === 'hit') m.push({ i: i + 1, kind: 'flood' })
-    if (['cut1', 'cut2'].includes(l.choices.find((c) => c.card === 'pricing')?.option ?? '')) m.push({ i: i + 1, kind: 'cut' })
+    if (Object.values(l.priceMoves ?? {}).some((v) => v < 0)) m.push({ i: i + 1, kind: 'cut' })
     if (l.renewal !== null) m.push({ i: i + 1, kind: 'renewal' })
     return m
   })

@@ -72,6 +72,11 @@ export interface V2State {
   year: { excess: number; quarters: number }
   /** set at the end of each Q4, applied in the next quarter's renewal season */
   renewal: RenewalOutlook | null
+  /** price index each segment's customers see (1 = start) and its rate adequacy, newest last */
+  segPrice: SegMix
+  segRate: Record<SegmentId, number[]>
+  /** price moves chosen for this quarter (fractions, e.g. -0.04), consumed by the engine */
+  pendingSteps: Partial<SegMix>
 }
 
 export const BRAND0 = 50
@@ -84,6 +89,9 @@ export function createV2(): V2State {
     history: [],
     year: { excess: 0, quarters: 0 },
     renewal: null,
+    segPrice: Object.fromEntries(SEGMENTS.map((s) => [s.id, 1])) as SegMix,
+    segRate: Object.fromEntries(SEGMENTS.map((s) => [s.id, [1, 1, 1]])) as Record<SegmentId, number[]>,
+    pendingSteps: {},
   }
 }
 
@@ -296,3 +304,77 @@ export function updateCompany(v: V2State, x: CompanyInputs): { brand: number; se
 
 /** Satisfaction pull from service quality (stars per quarter). */
 export const serviceStars = (service: number) => 0.004 * (service - SERVICE0)
+
+/* ---------------- pricing by segment ---------------- */
+
+/** The five price moves a segment row offers (fractions of price). */
+export const SEG_PRICE_STEPS = [-0.08, -0.04, 0, 0.04, 0.08]
+
+/** Old pricing-card tactics, expressed as the segments they target (bots and the forecast use them). */
+const TACTIC_SEGS: Record<string, SegmentId[]> = {
+  lowRisk: ['newCar', 'budget'],
+  dealerPromo: ['newCar', 'ev'],
+  riskyOnly: ['oldCar', 'ev'],
+}
+
+/**
+ * This quarter's price and rate move for every segment: the player's per-segment choice plus
+ * any pricing-card stance (spread over the segments its tactic targets, so the book-level move
+ * is the same as the card always gave).
+ */
+export function segmentMoves(v: V2State, step: number, tactic: string | undefined, pt: { market: number; rate: number }) {
+  const targets = (tactic && TACTIC_SEGS[tactic]) || SEGMENT_IDS
+  const cov = targets.reduce((a, k) => a + START.mix[k], 0)
+  const out = {} as Record<SegmentId, { price: number; rate: number }>
+  for (const k of SEGMENT_IDS) {
+    const own = v.pendingSteps[k] ?? 0
+    const card = targets.includes(k) ? step / cov : 0
+    const clampStep = (x: number) => Math.max(-0.15, Math.min(0.15, x))
+    out[k] = { price: clampStep(own + card * pt.market), rate: clampStep(own + card * pt.rate) }
+  }
+  return out
+}
+
+const earned = (hist: number[], w: readonly number[]) => {
+  const [a, b, c] = hist.slice(-3)
+  return c * w[0] + b * w[1] + a * w[2]
+}
+
+/**
+ * Book loss-ratio multiplier from segment rates: each segment's adequate loss ratio over its earned
+ * rate, weighted by the book. Equals 1 at the start and the old single-rate formula when every
+ * segment moves together.
+ */
+export function segmentRateLR(v: V2State, mix: SegMix, lagWeights: readonly number[], cap: number) {
+  return SEGMENT_IDS.reduce((a, k) => a + (mix[k] * SEG[k].adequateLR) / START.lr / Math.min(cap, earned(v.segRate[k], lagWeights)), 0)
+}
+
+/** Estimated loss ratio by segment, scaled so the book-weighted average equals the book's actual LR. */
+export function segmentLossRatios(v: V2State, mix: SegMix, bookLR: number, lagWeights: readonly number[], cap: number): SegMix {
+  const raw = Object.fromEntries(SEGMENT_IDS.map((k) => [k, SEG[k].adequateLR / Math.min(cap, earned(v.segRate[k], lagWeights))])) as SegMix
+  const avg = SEGMENT_IDS.reduce((a, k) => a + mix[k] * raw[k], 0)
+  return Object.fromEntries(SEGMENT_IDS.map((k) => [k, (raw[k] * bookLR) / avg])) as SegMix
+}
+
+/** Player's price pull: each segment's price, weighted by the book and by how price-sensitive it is. */
+export function segmentPriceTerm(prices: SegMix, mix: SegMix, elasticity: number) {
+  return -elasticity * SEGMENT_IDS.reduce((a, k) => a + mix[k] * (SENS[SEG[k].priceSensitivity] / START.sens) * Math.log(prices[k]), 0)
+}
+
+/** Book-weighted price index (what "our price" means in the market). */
+export const bookPrice = (prices: SegMix, mix: SegMix) => SEGMENT_IDS.reduce((a, k) => a + mix[k] * prices[k], 0)
+
+/** Adverse selection, segment by segment: a segment priced well above the market keeps its worst risks. */
+export function segmentAdverseLR(prices: SegMix, mix: SegMix, market: number, freeGap: number, perGap: number) {
+  return SEGMENT_IDS.reduce((a, k) => a + mix[k] * Math.max(0, prices[k] / market - 1 - freeGap) * perGap, 0)
+}
+
+/** A segment priced below the rest of our book grows inside every channel (and the reverse). */
+export function driftByPrice(v: V2State, k = 0.25) {
+  const avg = SEGMENT_IDS.reduce((a, s) => a + START.mix[s] * v.segPrice[s], 0)
+  for (const c of CHANNEL_IDS) {
+    const m = { ...v.channels[c].seg }
+    for (const s of SEGMENT_IDS) m[s] *= Math.exp(-k * SENS[SEG[s].priceSensitivity] * Math.log(v.segPrice[s] / avg))
+    v.channels[c].seg = normalise(m)
+  }
+}

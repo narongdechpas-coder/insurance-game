@@ -20,8 +20,9 @@ export function DecisionAdvisor() {
   const activeCard = useGameStore((s) => s.ui.activeCard)
   const activeEvent = useGameStore((s) => s.ui.activeEvent)
   const channels = useGameStore((s) => s.channels)
+  const segSteps = useGameStore((s) => s.segSteps)
   // forecast overload of the draft plan (calm engine run) joins the plan checks as a warning
-  const cap = useMemo(() => capacityWarning(game, plan, responses, channels), [game, plan, responses, channels])
+  const cap = useMemo(() => capacityWarning(game, plan, responses, channels, segSteps), [game, plan, responses, channels, segSteps])
   // overload is the costliest surprise, so it leads the warnings
   const notes = [...(cap ? [{ id: 'capacity', tone: 'warning' as const, text: cap, cards: ['pricing', 'distribution', 'repair'] as DecisionId[] }] : []), ...reviewPlan(plan, game, responses)]
   // what the player is looking at decides which note leads
