@@ -7,6 +7,7 @@ import { TopBar } from '../TopBar'
 import { CardList } from './CardList'
 import { CardStage } from './CardStage'
 import { ChannelStage } from './ChannelStage'
+import { PricingStage } from './PricingStage'
 import { ConfirmView } from './ConfirmView'
 import { DecisionAdvisor } from './DecisionAdvisor'
 import { DecisionHeader } from './DecisionHeader'
@@ -52,7 +53,7 @@ export function DecisionRoom() {
         {step === 'strategy' && (
           <>
             <CardList />
-            {activeCard === 'distribution' ? <ChannelStage /> : <CardStage />}
+            {activeCard === 'distribution' ? <ChannelStage /> : activeCard === 'pricing' ? <PricingStage /> : <CardStage />}
           </>
         )}
         {step === 'confirm' && <ConfirmView />}

@@ -27,7 +27,8 @@ describe('end-of-game lessons', () => {
     const l = lessons(playOut(1001, true))
     const cut = l.find((x) => x.id === 'price-cut')
     expect(cut).toBeTruthy()
-    expect(cut!.text).toMatch(/ลดราคา 2 ไตรมาส \(ครั้งแรก Q1\/1\)/)
+    // the card's default tactic (cut for low-risk customers) moves the new-car and 2+/3+ segments
+    expect(cut!.text).toMatch(/ลดราคา 2 ไตรมาส \(ครั้งแรก Q1\/1 กลุ่ม ชั้น 1 รถใหม่, 2\+ \/ 3\+\)/)
     expect(l.length).toBeGreaterThan(0)
     expect(l.length).toBeLessThanOrEqual(5)
   })

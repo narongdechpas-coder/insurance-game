@@ -1,5 +1,7 @@
 import { settingsOf } from '../../game/forecast'
 import { channelsChanged, channelSummary } from './ChannelStage'
+import { priceSummary } from './PricingStage'
+import { stepsChanged } from '../../game/forecast'
 import { AlertTriangle, Pencil, Users } from 'lucide-react'
 import { spriteUrl } from '../../assets/registry'
 import { CARDS, isUnlocked, QUARTER_BUDGET_MB } from '../../game/decisions/cards'
@@ -18,6 +20,7 @@ export function ConfirmView() {
   const game = useGameStore((s) => s.game)
   const plan = useGameStore((s) => s.plan)
   const channels = useGameStore((s) => s.channels)
+  const segSteps = useGameStore((s) => s.segSteps)
   const responses = useGameStore((s) => s.responses)
   const setStep = useGameStore((s) => s.setStep)
   const setActiveEvent = useGameStore((s) => s.setActiveEvent)
@@ -81,7 +84,8 @@ export function ConfirmView() {
               const o = optionOf(plan, c.id)
               const t = tacticOf(plan, c.id)
               const isCh = c.id === 'distribution'
-              const changed = isCh ? channelsChanged(channels, settingsOf(game)) : plan[c.id].option !== c.defaultOption
+              const isPr = c.id === 'pricing'
+              const changed = isCh ? channelsChanged(channels, settingsOf(game)) : isPr ? stepsChanged(segSteps) : plan[c.id].option !== c.defaultOption
               return (
                 <button
                   key={c.id}
@@ -98,7 +102,7 @@ export function ConfirmView() {
                   <span className="min-w-0 flex-1">
                     <span className="block text-[12px] text-navy-700/65 truncate">{c.title}</span>
                     <span className={`block text-[14.5px] truncate ${changed ? 'font-medium text-navy-900' : 'text-navy-700/55'}`}>
-                      {isCh ? `${channelSummary(channels)}${changed ? '' : ' (คงเดิม)'}` : changed ? (t ? `${o.label} · ${t.label}` : o.label) : `${o.label} (คงเดิม)`}
+                      {isCh ? `${channelSummary(channels)}${changed ? '' : ' (คงเดิม)'}` : isPr ? priceSummary(segSteps) : changed ? (t ? `${o.label} · ${t.label}` : o.label) : `${o.label} (คงเดิม)`}
                     </span>
                   </span>
                   <Cost v={choiceCost(plan, c.id)} />

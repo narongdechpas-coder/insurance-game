@@ -79,6 +79,8 @@ export interface QuarterLog {
   levers: Record<string, number>
   after: CompanyKpis
   price: number // player's price index after the quarter (1 = start)
+  /** price move by segment this quarter (fractions; empty when nothing moved) */
+  priceMoves: Record<string, number>
   flood: FloodOutcome
   catGross: number
   catNet: number

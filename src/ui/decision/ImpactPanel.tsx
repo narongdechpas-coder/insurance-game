@@ -1,5 +1,7 @@
 import { RotateCcw } from 'lucide-react'
 import { changedCards, previewImpact } from '../../game/decisions/plan'
+import { settingsOf, stepsChanged } from '../../game/forecast'
+import { channelsChanged } from './ChannelStage'
 import { scenariosFor } from '../../game/decisions/scenarios'
 import { outlook } from '../../game/narrative/rivals'
 import { useGameStore } from '../../store/useGameStore'
@@ -16,7 +18,14 @@ export function ImpactPanel() {
   const events = useGameStore((s) => s.game.events)
   const game = useGameStore((s) => s.game)
   const impact = previewImpact(plan, responses)
-  const changed = changedCards(plan).length
+  const segSteps = useGameStore((s) => s.segSteps)
+  const channels = useGameStore((s) => s.channels)
+  const gameNow = useGameStore((s) => s.game)
+  // pricing and channels have their own screens now: count their changes from those drafts
+  const changed =
+    changedCards(plan).filter((c) => c !== 'pricing' && c !== 'distribution').length +
+    (stepsChanged(segSteps) ? 1 : 0) +
+    (channelsChanged(channels, settingsOf(gameNow)) ? 1 : 0)
   const scen = scenariosFor(events.map((e) => e.id))
   const answered = scen.filter((sc) => responses[sc.eventId]).length
   return (

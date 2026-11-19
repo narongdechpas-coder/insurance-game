@@ -4,11 +4,10 @@ import { choiceImpact, optionOf, planCost, tacticOf } from '../decisions/plan'
 import { responseOf, SCENARIO_BY_EVENT, type Responses, type SimHook } from '../decisions/scenarios'
 import type { DecisionId, Duration, Impact, ImpactAxis, QuarterPlan, Speed } from '../decisions/types'
 import { EVENT_BY_ID } from '../data/events'
-import { SEGMENTS } from '../data/tables'
 import type { CompanyKpis, GameState } from '../types'
 import { attractiveness } from './init'
 import { acquisitionRate, buildPnl, CHANNELS, commissionRate, distributionChannel, START_MIX } from './channels'
-import { bookFactors, CHANNEL_IDS, RENEWAL_BASELINE, renewalOutlook, renewalShareFactor, rivalRenewal, segLR, channelAttraction, channelLRFactors, channelRates, nextChannelMix, playerInertia, renewalRates, serviceStars, shiftSegments, updateCompany } from './v2'
+import { bookFactors, bookPrice, CHANNEL_IDS, driftByPrice, portfolioMix, RENEWAL_BASELINE, renewalOutlook, renewalShareFactor, rivalRenewal, segmentAdverseLR, segmentLossRatios, segmentMoves, segmentPriceTerm, segmentRateLR, SEGMENT_IDS, channelAttraction, channelLRFactors, channelRates, nextChannelMix, playerInertia, renewalRates, serviceStars, shiftSegments, updateCompany } from './v2'
 import { DIFFICULTY, DURATION_WEIGHTS, P } from './params'
 import { rng } from './rng'
 import type { Boost, Capacity, CompetitorMove, Driver, Firm, GameOutcome, Ops, QuarterReport, QueuedEffect, RivalReport, SimState, Standing } from './types'
@@ -324,9 +323,19 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   const pricing = plan.pricing.option
   const pt = PRICE_TACTIC[tacticOf(plan, 'pricing')?.id ?? ''] ?? { market: 1, rate: 1 }
   const step = PRICE_STEP[pricing] ?? 0
+  // prices move segment by segment (the player's per-segment choices + any pricing-card stance)
+  const mixBefore = portfolioMix(sim.v2, sim.mix)
+  const prevSegPrice = { ...sim.v2.segPrice }
+  const segMoves = segmentMoves(sim.v2, step, tacticOf(plan, 'pricing')?.id, pt)
+  for (const k of SEGMENT_IDS) {
+    sim.v2.segPrice[k] *= 1 + segMoves[k].price
+    const h = sim.v2.segRate[k]
+    sim.v2.segRate[k] = [...h.slice(-2), h[h.length - 1] * (1 + segMoves[k].rate)]
+  }
+  sim.v2.pendingSteps = {}
   const prevPrice = pl.price
-  pl.price *= 1 + step * pt.market
-  const rateNow = pl.rateHist[pl.rateHist.length - 1] * (1 + step * pt.rate)
+  pl.price = bookPrice(sim.v2.segPrice, mixBefore)
+  const rateNow = bookPrice(Object.fromEntries(SEGMENT_IDS.map((k) => [k, sim.v2.segRate[k][2]])) as typeof mixBefore, mixBefore)
   pl.rateHist = [...pl.rateHist.slice(-2), rateNow]
 
   const reTactic = tacticOf(plan, 'reinsurance')?.id
@@ -363,17 +372,22 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   const rivalPromo = active.has('year-end-promo') ? YEAR_END_RIVAL_PULL : 0
   const plChannelBonus = CHANNEL_IDS.reduce((a, c) => a + sim.mix[c] * chAttr[c], 0)
   const bookNow = bookFactors(sim.v2, sim.mix)
-  const attr = (f: Firm, price = f.price) =>
+  void bookNow
+  // the player's price pull is built segment by segment (price-sensitive segments react more)
+  const plPriceNow = segmentPriceTerm(sim.v2.segPrice, mixBefore, P.priceElasticity)
+  const plPricePrev = segmentPriceTerm(prevSegPrice, mixBefore, P.priceElasticity)
+  const attr = (f: Firm, usePrev = false) =>
     f === pl
-      ? attractiveness(price, f.satisfaction, flow.growth, f.bonus + plChannelBonus) - P.priceElasticity * (bookNow.elasticity - 1) * Math.log(price)
-      : attractiveness(price, f.satisfaction, 0, f.bonus + rivalPromo)
-  const targetShares = (priceOverride?: number) => {
-    const raw = all.map((f) => f.s0 * Math.exp(attr(f, f === pl && priceOverride ? priceOverride : f.price) - f.a0))
+      ? attractiveness(1, f.satisfaction, flow.growth, f.bonus + plChannelBonus) + (usePrev ? plPricePrev : plPriceNow)
+      : attractiveness(f.price, f.satisfaction, 0, f.bonus + rivalPromo)
+  const targetShares = (usePrev = false) => {
+    const raw = all.map((f) => f.s0 * Math.exp(attr(f, f === pl && usePrev) - f.a0))
     const sum = raw.reduce((a, b) => a + b, 0)
     return raw.map((x) => x / sum)
   }
   const target = targetShares()
-  const targetNoPrice = targetShares(prevPrice)
+  const targetNoPrice = targetShares(true)
+  void prevPrice
   const plInertia = Math.min(0.88, playerInertia(sim.v2, sim.mix, P.shareInertia) + respInertia)
   all.forEach((f, i) => {
     const k = f === pl ? plInertia : P.shareInertia
@@ -423,10 +437,11 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   const prevMix = sim.mix
   sim.mix = nextChannelMix(sim.mix, chAttr)
   const book = bookFactors(sim.v2, sim.mix)
-  const rateLR = (book.lr * P.baseLossRatio * trend) / Math.min(P.rateCap, earnedRate(pl.rateHist))
+  driftByPrice(sim.v2)
+  const rateLR = P.baseLossRatio * trend * segmentRateLR(sim.v2, book.mix, P.rateLagWeights, P.rateCap)
   const marketPrice = sim.firms.reduce((a, f) => a + f.price * f.share, 0) / sim.firms.reduce((a, f) => a + f.share, 0)
   const priceGap = pl.price / marketPrice - 1
-  const adverseLR = Math.max(0, priceGap - P.adverseSelection.freeGap) * P.adverseSelection.lrPerGap
+  const adverseLR = segmentAdverseLR(sim.v2.segPrice, book.mix, marketPrice, P.adverseSelection.freeGap, P.adverseSelection.lrPerGap)
   const attritional = rateLR + respLR - P.profitAxisLR * flow.profit + overloadLR + adverseLR + r.normal() * (P.attritionalNoise * book.volatility + P.riskAxisVolatility * riskUp)
   const catMult = floodActive ? (responseOf(responses, 'flood-central')?.sim?.catLossMult ?? 1) : 1
   const catGross = floodHit ? diff.floodSeverity * P.floodLossOfGwp * gwp * pl.catExposure * book.flood * r.range(P.floodSeverity[0], P.floodSeverity[1]) * (1 + 0.08 * riskUp) * catMult : 0
@@ -659,7 +674,6 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   {
     const tot = pnl.columns.find((c) => c.id === 'total')!
     const bookLR = tot.incurredLoss / tot.earnedPremium
-    const adequate = segLR(book.mix)
     const rr = renewalRates(sim.v2)
     sim.v2.history = [
       ...sim.v2.history,
@@ -685,7 +699,7 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
           }),
         ) as SimState['v2']['history'][number]['channels'],
         portfolio: { ...book.mix },
-        segLossRatio: Object.fromEntries(SEGMENTS.map((sg) => [sg.id, (bookLR * sg.adequateLR) / adequate])) as SimState['v2']['history'][number]['segLossRatio'],
+        segLossRatio: segmentLossRatios(sim.v2, book.mix, bookLR, P.rateLagWeights, P.rateCap),
         brand: sim.v2.company.brand,
         service: sim.v2.company.service,
         marketingSpend,
@@ -704,6 +718,7 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
       levers: Object.fromEntries(CHANNEL_IDS.map((c) => [c, sim.v2.channels[c].lever])),
       after: { capitalMB: Math.round(pl.capital), marketShare: pl.share, combinedRatio: pl.combinedRatio, satisfaction: pl.satisfaction },
       price: pl.price,
+      priceMoves: Object.fromEntries(SEGMENT_IDS.filter((k) => Math.abs(segMoves[k].price) > 0.0005).map((k) => [k, segMoves[k].price])),
       flood: floodHit ? 'hit' : floodActive ? 'missed' : 'none',
       catGross: uw.catGross,
       catNet: uw.catNet,

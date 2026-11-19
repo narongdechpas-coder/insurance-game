@@ -5,6 +5,8 @@ import { optionOf, tacticOf } from '../../game/decisions/plan'
 import { settingsOf } from '../../game/forecast'
 import { useGameStore } from '../../store/useGameStore'
 import { channelsChanged, channelSummary } from './ChannelStage'
+import { priceSummary } from './PricingStage'
+import { stepsChanged } from '../../game/forecast'
 import { BUILDINGS } from '../../world/layout'
 
 /** The 8 strategy cards; each one lives in a building of the city. */
@@ -15,6 +17,7 @@ export function CardList() {
   const setActive = useGameStore((s) => s.setActiveCard)
   const toast = useGameStore((s) => s.toast)
   const channels = useGameStore((s) => s.channels)
+  const segSteps = useGameStore((s) => s.segSteps)
   const game = useGameStore((s) => s.game)
   return (
     <nav className="absolute left-7 top-[172px] w-[calc(300px+max(0px,100%-1600px)*0.15)] glass rounded-[24px] p-2.5 flex flex-col gap-1 pointer-events-auto anim-rise" style={{ animationDelay: '0.05s' }}>
@@ -22,7 +25,8 @@ export function CardList() {
         const open = isUnlocked(c, q)
         const on = c.id === active
         const isCh = c.id === 'distribution'
-        const changed = isCh ? channelsChanged(channels, settingsOf(game)) : plan[c.id].option !== c.defaultOption
+        const isPr = c.id === 'pricing'
+        const changed = isCh ? channelsChanged(channels, settingsOf(game)) : isPr ? stepsChanged(segSteps) : plan[c.id].option !== c.defaultOption
         const t = tacticOf(plan, c.id)
         return (
           <button
@@ -43,7 +47,7 @@ export function CardList() {
             <span className="min-w-0 flex-1">
               <span className="block font-medium text-[14.5px] text-navy-900 leading-tight truncate">{c.title}</span>
               <span className={`block text-[12px] leading-tight truncate ${changed ? 'text-brand-600 font-medium' : 'text-navy-700/60'}`}>
-                {open ? (isCh ? channelSummary(channels) : t ? `${optionOf(plan, c.id).label} · ${t.label}` : optionOf(plan, c.id).label) : `ปลดล็อกไตรมาส ${c.unlockQuarter + 1}`}
+                {open ? (isCh ? channelSummary(channels) : isPr ? priceSummary(segSteps) : t ? `${optionOf(plan, c.id).label} · ${t.label}` : optionOf(plan, c.id).label) : `ปลดล็อกไตรมาส ${c.unlockQuarter + 1}`}
               </span>
             </span>
             {changed && <span className="size-2.5 rounded-full bg-gold-500 ring-2 ring-white" title="ปรับจากเดิมแล้ว" />}
