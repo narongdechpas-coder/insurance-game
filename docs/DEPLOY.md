@@ -1,21 +1,13 @@
-# เผยแพร่เกมบน Cloudflare Pages
+# เผยแพร่เกม (Netlify)
 
-repo เป็น private ได้ · ฟรี · push เข้า `main` แล้ว deploy ให้อัตโนมัติ · **ทุกคนที่มีลิงก์เปิดเกมได้**
+ลิงก์เกม: **https://insurance-bkk.netlify.app/**
 
-## ตั้งค่าครั้งแรก (แจ็คทำเอง ราว 5 นาที)
+เว็บนี้เชื่อมกับ repo อยู่แล้ว ทุกครั้งที่ merge เข้า `main` Netlify จะ build และ deploy ให้อัตโนมัติ (ดูสถานะใน Netlify dashboard → Deploys) · **ทุกคนที่มีลิงก์เปิดเกมได้**
 
-1. สมัคร / เข้าสู่ระบบ https://dash.cloudflare.com
-2. เมนู **Workers & Pages** → **Create** → แท็บ **Pages** → **Connect to Git**
-3. เชื่อมบัญชี GitHub แล้วให้สิทธิ์เฉพาะ repo `insurance-game`
-4. ตั้งค่าการ build:
-   | ช่อง | ค่า |
-   |---|---|
-   | Production branch | `main` |
-   | Framework preset | `Vite` (หรือ None) |
-   | Build command | `npm run build` |
-   | Build output directory | `dist` |
-   | Environment variable | `NODE_VERSION` = `22` (มีไฟล์ `.nvmrc` อยู่แล้ว ใส่ซ้ำเพื่อความชัวร์) |
-5. กด **Save and Deploy** รอราว 1–2 นาที จะได้ลิงก์ `https://<ชื่อโปรเจกต์>.pages.dev`
+การตั้งค่าอยู่ใน `netlify.toml` ไม่ต้องตั้งในหน้าเว็บ Netlify:
+- build: `npm run build` → โฟลเดอร์ `dist` · Node 22
+- หน้าเว็บ, manifest และ service worker ไม่ถูก cache (ผู้เล่นได้เวอร์ชันใหม่ทันทีที่เปิดตอนมีเน็ต)
+- ไฟล์ใน `/assets/` cache 1 วัน (ภาพในเกมใช้ชื่อไฟล์เดิมเวลาเปลี่ยนภาพ จึงห้าม cache นาน)
 
 ## ติดตั้งเป็นแอปบนแท็บเล็ต
 
@@ -23,11 +15,11 @@ repo เป็น private ได้ · ฟรี · push เข้า `main` แ
 - **iPad:** เปิดใน Safari → แตะปุ่ม "ติดตั้งเป็นแอป" เพื่อดูวิธี (แชร์ → เพิ่มไปยังหน้าจอโฮม)
 - เปิดเกมครบหนึ่งครั้งตอนมีเน็ต หลังจากนั้นเล่นออฟไลน์ได้
 
-## หลังจากนี้
+## เมื่อเปลี่ยนภาพในเกม
 
-ทุกครั้งที่ merge PR เข้า `main` Cloudflare จะ build และ deploy ให้เอง แอปที่ติดตั้งไว้จะได้เวอร์ชันใหม่เมื่อเปิดตอนมีเน็ต
+แอปที่ติดตั้งไว้เก็บภาพไว้ในเครื่อง (service worker) ถ้าเปลี่ยนภาพโดยใช้ชื่อไฟล์เดิม ให้เปลี่ยน `VERSION` ใน `public/sw.js` (เช่น `iu-v1` → `iu-v2`) เครื่องที่ติดตั้งไว้จะโหลดภาพใหม่เมื่อเปิดตอนมีเน็ต โค้ดเกมไม่ต้องทำอะไร เพราะชื่อไฟล์เปลี่ยนเองทุก build
 
-## ไฟล์ที่เกี่ยวข้อง
+## ถ้าวันหนึ่งต้องย้าย
 
-- `public/_headers` — ไม่ให้ cache หน้าเว็บและ service worker เวอร์ชันเก่า
-- `.nvmrc` — เวอร์ชัน Node ที่ใช้ build
+- **GitHub Pages:** เว็บจะอยู่ใต้ `/insurance-game/` ต้อง build ด้วย `npm run build -- --base=/insurance-game/` (ทดสอบแล้วว่าเกมและโหมดออฟไลน์ทำงานใต้ path นี้ได้)
+- **Cloudflare Pages:** Build command `npm run build` · Output `dist` · อ่านไฟล์ `public/_headers` เหมือน Netlify
