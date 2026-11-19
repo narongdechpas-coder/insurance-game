@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_CONFIG } from '../config'
 import { SEGMENTS } from '../data/tables'
+import { choiceCost } from '../decisions/plan'
 import { keepPrices, withChannelSettings, type ChannelSettings, type SegmentSteps } from '../forecast'
 import { createInitialState } from '../initialState'
 import type { GameState } from '../types'
@@ -100,6 +101,13 @@ function checkQuarter(prev: GameState, s: GameState, seed: number, issues: Issue
   const boost = r.v2 && prev.events.some((e) => e.id === 'motor-show' || e.id === 'motor-expo') ? 1.06 : 1
   add('GWP = share × market size (× show boost)', r.gwp, s.sim.player.share * s.sim.marketGwp * boost)
 
+  // 12. engine v3: the admin line is the fixed operating cost; people are paid for every head on the books
+  add('admin = fixed operating cost', tot.admin, r.ops.costs.fixed)
+  add('fixed = salaries + other fixed + upkeep + hiring + severance', r.ops.costs.fixed, r.ops.costs.salaries + r.ops.costs.otherFixed + r.ops.costs.maintenance + r.ops.costs.hiring + r.ops.costs.severance)
+  add('salaries = every head × monthly pay × 3', r.ops.costs.salaries, ((r.ops.staff.claims + r.ops.staff.contact + r.ops.staff.training + r.ops.staff.other) * 30000 * 3) / 1e6)
+  const owned = prev.sim.ops.owned
+  add('other U/W = strategy spend − marketing − distribution + issuance + survey', tot.otherUw, r.spend - choiceCost(r.plan, 'marketing', owned) - choiceCost(r.plan, 'distribution', owned) + r.ops.costs.variable)
+
   // 11. the log keeps the same P&L and KPIs as the report
   const log = s.sim.log[s.sim.log.length - 1]
   add('log P&L = report P&L (total U/W)', log.pnl.columns.find((c) => c.id === 'total')!.uwResult, tot.uwResult)
@@ -118,7 +126,9 @@ function play(seed: number, strategy: StrategyId, quarters: 12 | 20, issues: Iss
     ) as ChannelSettings
     const steps = Object.fromEntries(SEGMENT_IDS.map((k) => [k, r.next() < 0.3 ? Math.floor(r.next() * 5) : 2])) as SegmentSteps
     const prev = s
-    s = simulateQuarter(withChannelSettings(s, set, steps), t.plan, t.responses)
+    // random hiring and lay-offs on top (engine v3)
+    const staff = r.next() < 0.3 ? { claims: 90 + Math.floor(r.next() * 80), contact: 25 + Math.floor(r.next() * 30) } : t.staff
+    s = simulateQuarter(withChannelSettings(s, set, steps, staff), t.plan, t.responses)
     checkQuarter(prev, s, seed, issues)
     n++
   }

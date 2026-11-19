@@ -17,7 +17,7 @@ export function DecisionHeader() {
   const game = useGameStore((s) => s.game)
   const toast = useGameStore((s) => s.toast)
   const setStep = useGameStore((s) => s.setStep)
-  const used = planCost(plan, responses)
+  const used = planCost(plan, responses, game.sim.ops.owned)
   const pending = unansweredEvents(game, responses).length
   const pct = Math.min(1, used / QUARTER_BUDGET_MB)
   const over = used > QUARTER_BUDGET_MB

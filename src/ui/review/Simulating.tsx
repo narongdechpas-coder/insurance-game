@@ -1,7 +1,7 @@
 import { ChevronsRight, SkipForward } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { RIVAL_ART, spriteUrl, type SpriteKey } from '../../assets/registry'
-import { changedCards } from '../../game/decisions/plan'
+import { changedCards, keptBefore } from '../../game/decisions/plan'
 import { floodLine, headline } from '../../game/narrative/review'
 import type { GameState } from '../../game/types'
 import { useGameStore } from '../../store/useGameStore'
@@ -98,7 +98,7 @@ export function Simulating() {
   }, [n])
 
   if (!r) return null
-  const page = frontPage(game, changedCards(plan).length)
+  const page = frontPage(game, changedCards(plan, keptBefore(game)).length)
   const ranking = [{ id: 'player', name: game.config.companyName, share: r.after.marketShare, color: '#2f7bff' }, ...game.competitors.map((c) => ({ id: c.id, name: c.name, share: c.marketShare, color: c.color }))].sort((a, b) => b.share - a.share)
   const printed = n >= TOTAL
 

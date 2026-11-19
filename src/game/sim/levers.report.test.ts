@@ -18,6 +18,7 @@ function run(strategy: StrategyId, levers: Record<string, number>, focus: Record
     }
     s = { ...s, sim }
     const t = scriptedTurn(s, strategy)
+    if (t.staff) s = { ...s, sim: { ...s.sim, ops: { ...s.sim.ops, target: t.staff } } }
     s = simulateQuarter(s, t.plan, t.responses)
   }
   const me = s.outcome!.standings.find((x) => x.id === 'player')!

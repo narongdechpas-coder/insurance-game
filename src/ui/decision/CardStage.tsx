@@ -1,10 +1,11 @@
-import { Check, Clock, Coins, Hourglass, Sparkles } from 'lucide-react'
+import { BadgeCheck, Building2, Check, Clock, Coins, Hourglass, Sparkles } from 'lucide-react'
 import { useMemo } from 'react'
 import { forecastPricing } from '../../game/forecast'
 import { moodOfStatus, portraitKey } from '../../assets/portraits'
 import { spriteUrl } from '../../assets/registry'
 import { CARD_BY_ID } from '../../game/decisions/cards'
-import { choiceImpact, tacticOf } from '../../game/decisions/plan'
+import { choiceImpact, keptPlan, tacticOf } from '../../game/decisions/plan'
+import { isInvestment, OPS, tempActive } from '../../game/sim/ops'
 import type { DecisionId, Impact, Tactic } from '../../game/decisions/types'
 import { LOCATION_BY_ID } from '../../game/data/locations'
 import { MODULES } from '../../game/data/modules'
@@ -40,8 +41,10 @@ export function CostChip({ cost }: { cost: number }) {
 }
 
 /** Layer 2: how to carry out the chosen stance. */
-function TacticRow({ card, stanceLabel, tactics, skip }: { card: DecisionId; stanceLabel: string; tactics: Tactic[]; skip: string[] }) {
+function TacticRow({ card, stanceLabel, tactics, skip, locked }: { card: DecisionId; stanceLabel: string; tactics: Tactic[]; skip: string[]; locked: boolean }) {
   const plan = useGameStore((s) => s.plan)
+  const ops = useGameStore((s) => s.game.sim.ops)
+  const q = useGameStore((s) => s.game.quarter.index)
   const chooseTactic = useGameStore((s) => s.chooseTactic)
   const chosen = tacticOf(plan, card)?.id
   return (
@@ -60,8 +63,9 @@ function TacticRow({ card, stanceLabel, tactics, skip }: { card: DecisionId; sta
             <button
               key={t.id}
               data-tactic={t.id}
-              onClick={() => chooseTactic(card, t.id)}
-              className={`relative flex flex-col text-left rounded-[18px] p-3.5 h-[226px] border-2 transition-all duration-300 ease-(--ease-game) ${
+              onClick={() => !locked && chooseTactic(card, t.id)}
+              disabled={locked && !on}
+              className={`relative flex flex-col text-left rounded-[18px] p-3.5 h-[226px] disabled:opacity-50 border-2 transition-all duration-300 ease-(--ease-game) ${
                 on ? 'bg-white border-gold-500 shadow-[0_12px_24px_-12px_rgba(217,138,7,0.65)] -translate-y-1' : 'bg-white/70 border-transparent hover:bg-white hover:-translate-y-0.5 hover:shadow-md'
               }`}
             >
@@ -83,6 +87,7 @@ function TacticRow({ card, stanceLabel, tactics, skip }: { card: DecisionId; sta
                     <Sparkles size={11} /> แนะนำ
                   </span>
                 )}
+                <OpsBadge id={t.id} owned={ops.owned} active={tempActive(ops, t.id, q) ? Math.max(...ops.temps.filter((x) => x.source === t.id).map((x) => x.until)) - q + 1 : 0} />
                 <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 text-brand-600 px-2 py-0.5 text-[11px]">
                   <Clock size={11} /> {SPEED_LABEL[t.speed]}
                 </span>
@@ -94,7 +99,7 @@ function TacticRow({ card, stanceLabel, tactics, skip }: { card: DecisionId; sta
                 <span className="w-[136px]">
                   <ImpactRow impact={impact} size={13} />
                 </span>
-                <CostChip cost={t.cost} />
+                <CostChip cost={isInvestment(t.id) && ops.owned[t.id] !== undefined ? 0 : t.cost} />
               </span>
             </button>
           )
@@ -102,6 +107,29 @@ function TacticRow({ card, stanceLabel, tactics, skip }: { card: DecisionId; sta
       </div>
     </div>
   )
+}
+
+/** Engine v3 status of a tactic: lasting investment (owned or not) or a temporary measure still running. */
+export function OpsBadge({ id, owned, active }: { id: string; owned: Partial<Record<string, number>>; active: number }) {
+  if (isInvestment(id)) {
+    const inv = OPS.investments[id]
+    return owned[id] !== undefined ? (
+      <span data-owned={id} className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[11px] font-medium">
+        <BadgeCheck size={11} /> มีแล้ว · ค่าดูแล {inv.maintenanceMB} ล้าน/ไตรมาส
+      </span>
+    ) : (
+      <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 text-violet-800 px-2 py-0.5 text-[11px]">
+        <Building2 size={11} /> ลงทุนครั้งเดียว · ดูแล {inv.maintenanceMB} ล้าน/ไตรมาส
+      </span>
+    )
+  }
+  if (active > 0)
+    return (
+      <span data-temp-active={id} className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[11px] font-medium">
+        <Hourglass size={11} /> ใช้อยู่ เหลือ {active} ไตรมาส · เลือกซ้ำไม่เพิ่มกำลัง
+      </span>
+    )
+  return null
 }
 
 /** Engine estimate for every price stance vs holding (calm run: no flood, no surprises). */
@@ -150,9 +178,13 @@ function PriceForecastStrip({ cols }: { cols: string }) {
 
 /** The active strategy card: building, question, stances, and (when the stance has them) tactics. */
 export function CardStage() {
-  const id = useGameStore((s) => s.ui.activeCard)
+  const id = useGameStore((s) => s.ui.activeCard) as DecisionId
   const chosen = useGameStore((s) => s.plan[id].option)
-  const choose = useGameStore((s) => s.choose)
+  const chooseRaw = useGameStore((s) => s.choose)
+  const qIndex = useGameStore((s) => s.game.quarter.index)
+  // reinsurance is a yearly treaty: only the first quarter of each year can change it
+  const locked = id === 'reinsurance' && qIndex % 4 !== 0
+  const choose = (card: DecisionId, option: string) => !locked && chooseRaw(card, option)
   const card = CARD_BY_ID[id]
   const loc = LOCATION_BY_ID[card.location]
   // a term already explained in the card title gets no second "?" below it
@@ -160,6 +192,10 @@ export function CardStage() {
   const game = useGameStore((s) => s.game)
   const head = portraitKey(card.location, moodOfStatus(locationStatus(game, card.location)))
   const chosenOption = card.options.find((o) => o.id === chosen)
+  const keptChoice = keptPlan(game)[id]
+  const keptOpt = card.options.find((o) => o.id === keptChoice.option)
+  const keptTac = keptOpt?.tactics?.find((t) => t.id === keptChoice.tactic)
+  const keptLabel = keptTac ? `${keptOpt!.label} · ${keptTac.label}` : (keptOpt?.label ?? '')
   const tactics = chosenOption?.tactics
   const compact = !!tactics
   const cols = card.options.length >= 5 ? 'grid-cols-5' : card.options.length === 4 ? 'grid-cols-4' : 'grid-cols-3'
@@ -199,7 +235,12 @@ export function CardStage() {
           />
         )}
       </header>
-      <div className={`grid ${cols} gap-3 px-5 ${compact ? 'pt-4 pb-3' : 'p-5'}`}>
+      <div data-kept-note className={`mx-5 mt-3 rounded-xl px-3 py-1.5 text-[12.5px] ${locked ? 'bg-amber-50 text-amber-900' : 'bg-brand-50 text-brand-700'}`}>
+        {locked
+          ? `สัญญาประกันภัยต่อเป็นรายปี ปีนี้ใช้ "${keptLabel}" · เปลี่ยนได้ในห้องตัดสินใจไตรมาส 1 ของปีหน้า`
+          : `ค่าที่เลือกใช้ต่อทุกไตรมาสจนกว่าจะเปลี่ยน · ตอนนี้บริษัทใช้ "${keptLabel}"`}
+      </div>
+      <div className={`grid ${cols} gap-3 px-5 ${compact ? 'pt-3 pb-3' : 'p-5 pt-3'}`}>
         {card.options.map((o) => {
           const on = o.id === chosen
           const Icon = OPTION_ICONS[o.icon]
@@ -210,7 +251,8 @@ export function CardStage() {
               key={o.id}
               data-option={o.id}
               onClick={() => choose(id, o.id)}
-              className={`group relative flex flex-col text-left rounded-[20px] border-2 transition-all duration-300 ease-(--ease-game) ${compact ? 'h-[100px] p-3' : 'h-[300px] p-3.5'} ${
+              disabled={locked && !on}
+              className={`group relative flex flex-col text-left rounded-[20px] border-2 disabled:opacity-50 transition-all duration-300 ease-(--ease-game) ${compact ? 'h-[100px] p-3' : 'h-[300px] p-3.5'} ${
                 on
                   ? 'bg-white border-brand-500 shadow-[0_14px_28px_-12px_rgba(29,95,224,0.6)] -translate-y-1'
                   : 'bg-white/70 border-transparent hover:bg-white hover:-translate-y-1 hover:shadow-lg'
@@ -250,7 +292,7 @@ export function CardStage() {
         })}
       </div>
       {id === 'pricing' && <PriceForecastStrip cols={cols} />}
-      {tactics && chosenOption && <TacticRow card={id} stanceLabel={chosenOption.label} tactics={tactics} skip={inTitle} />}
+      {tactics && chosenOption && <TacticRow card={id} stanceLabel={chosenOption.label} tactics={tactics} skip={inTitle} locked={locked} />}
     </section>
   )
 }

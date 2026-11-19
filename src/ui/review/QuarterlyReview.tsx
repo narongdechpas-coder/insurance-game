@@ -235,6 +235,20 @@ export function QuarterlyReview() {
           ) : (
             <div className="flex-1 min-h-0 px-8 pb-4 overflow-auto">
               <PnlTable pnl={r.pnl} prev={game.sim.log?.[game.sim.log.length - 2]?.pnl ?? null} prevLabel={`ไตรมาสก่อน (${game.sim.log?.[game.sim.log.length - 2]?.label ?? ''})`} />
+              {r.ops && (
+                <div data-ops-costs className="mt-3 grid grid-cols-2 gap-3 text-[12.5px] text-navy-800">
+                  <div className="rounded-xl bg-brand-50/70 px-4 py-2.5">
+                    <div className="font-semibold text-navy-900 mb-0.5">Admin Expense = ต้นทุนคงที่ {mb(r.ops.costs.fixed)} ล้าน</div>
+                    <div>เงินเดือน {r.ops.staff.claims + r.ops.staff.contact + r.ops.staff.training + r.ops.staff.other} คน {mb(r.ops.costs.salaries)} · ค่าเช่า IT และอื่นๆ {mb(r.ops.costs.otherFixed)}{r.ops.costs.maintenance ? ` · ค่าดูแลการลงทุน ${mb(r.ops.costs.maintenance)}` : ''}{r.ops.costs.hiring ? ` · ค่าอบรมคนใหม่ ${mb(r.ops.costs.hiring)}` : ''}{r.ops.costs.severance ? ` · ค่าชดเชย ${mb(r.ops.costs.severance)}` : ''}</div>
+                    <div className="text-navy-700/60">ไม่ลดลงเองเมื่อยอดขายลด</div>
+                  </div>
+                  <div className="rounded-xl bg-brand-50/70 px-4 py-2.5">
+                    <div className="font-semibold text-navy-900 mb-0.5">ต้นทุนผันแปรใน Other U/W {mb(r.ops.costs.variable)} ล้าน</div>
+                    <div>ออกกรมธรรม์ ~{Math.round(r.ops.policiesWritten).toLocaleString('th-TH')} ฉบับ {mb(r.ops.costs.issuance)} · ค่าสำรวจภัย ~{Math.round(r.ops.demand.claims).toLocaleString('th-TH')} เคลม {mb(r.ops.costs.survey)}</div>
+                    <div className="text-navy-700/60">ที่เหลือใน Other U/W คืองบกลยุทธ์ที่ไม่ใช่การตลาด</div>
+                  </div>
+                </div>
+              )}
               <p className="mt-2 text-[12px] text-navy-700/60 flex items-center gap-1.5">
                 <BookOpen size={13} /> ตัวเลขจำลองจากค่าประมาณการเพื่อเกม หน่วยล้านบาท · ทุกอัตราส่วนคิดบนเบี้ยประกันภัยที่ถือเป็นรายได้ (Earned Premium) · ค่าการตลาดของช่อง Direct รวมค่าโฆษณาและค่าแพลตฟอร์ม
               </p>

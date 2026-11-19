@@ -3,8 +3,10 @@ import { DEFAULT_CONFIG } from '../game/config'
 import { createInitialState } from '../game/initialState'
 import { CARD_BY_ID, CARDS, choiceFor, defaultPlan, isUnlocked } from '../game/decisions/cards'
 import { scenariosFor, type Responses } from '../game/decisions/scenarios'
+import { keptPlan } from '../game/decisions/plan'
 import type { DecisionId, QuarterPlan } from '../game/decisions/types'
-import { keepPrices, settingsOf, withChannelSettings, type ChannelSettings, type SegmentSteps } from '../game/forecast'
+import { keepPrices, settingsOf, staffOf, withChannelSettings, type ChannelSettings, type SegmentSteps, type StaffTarget } from '../game/forecast'
+import type { Team } from '../game/sim/ops'
 import type { ChannelId } from '../game/sim/channels'
 import { simulateQuarter } from '../game/sim/engine'
 import type { SegmentId } from '../game/sim/v2'
@@ -34,7 +36,8 @@ interface UiState {
   toasts: Toast[]
   screen: Screen
   step: DecisionStep
-  activeCard: DecisionId
+  /** strategy card on screen, or the team screen (engine v3) */
+  activeCard: DecisionId | 'staff'
   activeEvent: string | null
   /** Review opened from the Report tab: closing it returns to the current quarter instead of advancing. */
   reviewOnly: boolean
@@ -55,6 +58,9 @@ interface Store {
   channels: ChannelSettings
   /** Price move per vehicle segment this quarter (step index, 2 = keep); resets every quarter. */
   segSteps: SegmentSteps
+  /** headcount per team the player wants (engine v3: kept until changed) */
+  staff: StaffTarget
+  setStaff: (team: Team, n: number) => void
   settings: Settings
   startGame: (opts: { quarters: GameLength; difficulty: Difficulty; companyName: string; playerName: string }) => void
   openDecisionRoom: (target?: DecisionId | DecisionStep) => void
@@ -74,7 +80,7 @@ interface Store {
   finishSimulation: () => void
   closeReport: () => void
   closeDecisionRoom: () => void
-  setActiveCard: (id: DecisionId) => void
+  setActiveCard: (id: DecisionId | 'staff') => void
   choose: (card: DecisionId, option: string) => void
   chooseTactic: (card: DecisionId, tactic: string) => void
   resetPlan: () => void
@@ -105,6 +111,7 @@ export const useGameStore = create<Store>((set, get) => ({
   game: initialGame,
   channels: settingsOf(initialGame),
   segSteps: keepPrices(),
+  staff: staffOf(initialGame),
   ui: { hovered: null, selected: null, highlightedEvent: null, introDone: false, toasts: [], screen: 'cover', step: 'scenario', activeCard: 'pricing', activeEvent: null, reviewOnly: false, runStart: 0, modal: null, term: null },
   plan: defaultPlan(),
   responses: {},
@@ -115,10 +122,11 @@ export const useGameStore = create<Store>((set, get) => ({
     writeSave(game)
     set((s) => ({
       game,
-      plan: defaultPlan(),
+      plan: keptPlan(game),
       responses: {},
       channels: settingsOf(game),
       segSteps: keepPrices(),
+      staff: staffOf(game),
       ui: { ...s.ui, screen: 'command', introDone: false, selected: null, hovered: null, highlightedEvent: null, modal: null, term: null },
     }))
   },
@@ -127,10 +135,11 @@ export const useGameStore = create<Store>((set, get) => ({
     if (!save) return
     set((s) => ({
       game: save.game,
-      plan: defaultPlan(),
+      plan: keptPlan(save.game),
       responses: {},
       channels: settingsOf(save.game),
       segSteps: keepPrices(),
+      staff: staffOf(save.game),
       ui: { ...s.ui, screen: 'command', step: 'scenario', activeEvent: null, introDone: false, selected: null, hovered: null, highlightedEvent: null, modal: null, term: null },
     }))
   },
@@ -160,7 +169,7 @@ export const useGameStore = create<Store>((set, get) => ({
       const isStep = target === 'scenario' || target === 'strategy' || target === 'confirm'
       // a building's card → strategy; otherwise start at step 1 (events come first)
       const step: DecisionStep = card ? 'strategy' : isStep ? (target as DecisionStep) : 'scenario'
-      const activeCard = card && isUnlocked(card, q) ? card.id : s.ui.activeCard && isUnlocked(CARDS.find((c) => c.id === s.ui.activeCard)!, q) ? s.ui.activeCard : first
+      const activeCard = card && isUnlocked(card, q) ? card.id : s.ui.activeCard === 'staff' || (s.ui.activeCard && isUnlocked(CARDS.find((c) => c.id === s.ui.activeCard)!, q)) ? s.ui.activeCard : first
       const activeEvent = s.ui.activeEvent ?? scenariosFor(s.game.events.map((e) => e.id))[0]?.eventId ?? null
       return { ui: { ...s.ui, screen: 'decision', step, activeCard, activeEvent, selected: null, hovered: null } }
     }),
@@ -169,7 +178,7 @@ export const useGameStore = create<Store>((set, get) => ({
   respond: (eventId, responseId) => set((s) => ({ responses: { ...s.responses, [eventId]: responseId } })),
   confirmPlan: () => {
     const s = get()
-    const game = simulateQuarter(withChannelSettings(s.game, s.channels, s.segSteps), s.plan, s.responses)
+    const game = simulateQuarter(withChannelSettings(s.game, s.channels, s.segSteps, s.staff), s.plan, s.responses)
     if (game.outcome) clearSave()
     else writeSave(game)
     set({
@@ -179,10 +188,11 @@ export const useGameStore = create<Store>((set, get) => ({
   },
   nextQuarter: () =>
     set((s) => ({
-      plan: defaultPlan(),
+      plan: keptPlan(s.game),
       responses: {},
       channels: settingsOf(s.game),
       segSteps: keepPrices(),
+      staff: staffOf(s.game),
       ui: { ...s.ui, screen: s.game.outcome ? 'gameover' : 'command', step: 'scenario', activeEvent: null },
     })),
   finishSimulation: () => set((s) => (s.ui.screen === 'simulating' ? { ui: { ...s.ui, screen: 'review' } } : s)),
@@ -200,7 +210,8 @@ export const useGameStore = create<Store>((set, get) => ({
       return { plan: { ...s.plan, [card]: choiceFor(o) } }
     }),
   chooseTactic: (card, tactic) => set((s) => ({ plan: { ...s.plan, [card]: { ...s.plan[card], tactic } } })),
-  resetPlan: () => set((s) => ({ plan: defaultPlan(), channels: settingsOf(s.game), segSteps: keepPrices() })),
+  resetPlan: () => set((s) => ({ plan: keptPlan(s.game), channels: settingsOf(s.game), segSteps: keepPrices(), staff: staffOf(s.game) })),
+  setStaff: (team, n) => set((s) => ({ staff: { ...s.staff, [team]: Math.max(0, n) } })),
   setSegStep: (k, step) => set((s) => ({ segSteps: { ...s.segSteps, [k]: step } })),
   setLever: (c, lever) => set((s) => ({ channels: { ...s.channels, [c]: { ...s.channels[c], lever } } })),
   setFocus: (c, focus) => set((s) => ({ channels: { ...s.channels, [c]: { ...s.channels[c], focus } } })),

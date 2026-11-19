@@ -1,3 +1,4 @@
+import type { Team } from './sim/ops'
 import { CARD_BY_ID, choiceFor } from './decisions/cards'
 import type { Responses } from './decisions/scenarios'
 import type { QuarterPlan } from './decisions/types'
@@ -28,8 +29,12 @@ export type SegmentSteps = Record<SegmentId, number>
 export const keepPrices = (): SegmentSteps => Object.fromEntries(SEGMENT_IDS.map((k) => [k, 2])) as SegmentSteps
 export const stepsChanged = (st: SegmentSteps) => SEGMENT_IDS.some((k) => st[k] !== 2)
 
-export function withChannelSettings(s: GameState, set: ChannelSettings, steps?: SegmentSteps): GameState {
+/** Headcount the player wants per team (engine v3); missing teams keep their size. */
+export type StaffTarget = Partial<Record<Team, number>>
+
+export function withChannelSettings(s: GameState, set: ChannelSettings, steps?: SegmentSteps, staff?: StaffTarget): GameState {
   const sim = structuredClone(s.sim)
+  if (staff) sim.ops.target = { ...staff }
   for (const c of CHANNEL_IDS) {
     sim.v2.channels[c].lever = set[c].lever
     sim.v2.channels[c].focus = set[c].focus
@@ -41,8 +46,8 @@ export function withChannelSettings(s: GameState, set: ChannelSettings, steps?: 
 const calm = (s: GameState, plan: QuarterPlan, responses: Responses) => simulateQuarter(s, plan, responses, { calm: true })
 
 /** Next quarter under the draft plan, if nothing unexpected happens. */
-export function forecastQuarter(s: GameState, plan: QuarterPlan, responses: Responses, set: ChannelSettings, steps?: SegmentSteps): QuarterReport {
-  return calm(withChannelSettings(s, set, steps), plan, responses).lastReport!
+export function forecastQuarter(s: GameState, plan: QuarterPlan, responses: Responses, set: ChannelSettings, steps?: SegmentSteps, staff?: StaffTarget): QuarterReport {
+  return calm(withChannelSettings(s, set, steps, staff), plan, responses).lastReport!
 }
 
 export interface ChannelForecast {
@@ -54,9 +59,9 @@ export interface ChannelForecast {
   dCommission: number
 }
 
-export function forecastChannels(s: GameState, plan: QuarterPlan, responses: Responses, set: ChannelSettings, steps?: SegmentSteps): Record<ChannelId, ChannelForecast> {
-  const now = forecastQuarter(s, plan, responses, set, steps)
-  const base = forecastQuarter(s, plan, responses, settingsOf(s), steps)
+export function forecastChannels(s: GameState, plan: QuarterPlan, responses: Responses, set: ChannelSettings, steps?: SegmentSteps, staff?: StaffTarget): Record<ChannelId, ChannelForecast> {
+  const now = forecastQuarter(s, plan, responses, set, steps, staff)
+  const base = forecastQuarter(s, plan, responses, settingsOf(s), steps, staff)
   const col = (r: QuarterReport, c: ChannelId) => r.pnl.columns.find((x) => x.id === c)!
   return Object.fromEntries(
     CHANNEL_IDS.map((c) => {
@@ -114,15 +119,30 @@ export function forecastPricing(s: GameState, plan: QuarterPlan, responses: Resp
   })
 }
 
-const OPS_TH = { contact: 'สายด่วน', claims: 'ทีมสินไหม', repair: 'อู่ในเครือ' } as const
+const OPS_TH = {
+  contact: { name: 'Call center', unit: 'สาย', fix: 'รับคนเพิ่มที่ "ทีมงาน"' },
+  claims: { name: 'ทีมสินไหม', unit: 'เคลม', fix: 'รับคนเพิ่มที่ "ทีมงาน"' },
+  repair: { name: 'อู่ในเครือ', unit: 'งานซ่อม', fix: 'เพิ่มกำลังอู่ที่การ์ด "เครือข่ายอู่"' },
+} as const
 
-/** Plan-time warning: which teams the draft plan is expected to overload next quarter. */
-export function capacityWarning(s: GameState, plan: QuarterPlan, responses: Responses, set: ChannelSettings, steps?: SegmentSteps): string | null {
-  const r = forecastQuarter(s, plan, responses, set, steps)
+export const fmtUnits = (n: number) => (n >= 10000 ? `${(Math.round(n / 100) / 10).toLocaleString('th-TH')} พัน` : Math.round(n).toLocaleString('th-TH'))
+
+/** Plan-time warning: which teams the draft plan is expected to overload next quarter, in real work units. */
+export function capacityWarning(s: GameState, plan: QuarterPlan, responses: Responses, set: ChannelSettings, steps?: SegmentSteps, staff?: StaffTarget): string | null {
+  const r = forecastQuarter(s, plan, responses, set, steps, staff)
   const over = (Object.keys(OPS_TH) as (keyof typeof OPS_TH)[]).filter((k) => r.loads[k] > 1.05).sort((a, b) => r.loads[b] - r.loads[a])
   if (!over.length) return null
-  const list = over.map((k) => `${OPS_TH[k]} (เกินกำลังราว ${Math.round((r.loads[k] - 1) * 100)}%)`).join(', ')
-  return `ถ้าใช้แผนนี้ คาดว่างานจะล้น ${list} ความพอใจจะตกและต้นทุนเคลมสูงขึ้น ลองเพิ่มกำลังทีมหรือลดความเร่งของยอดขายค่ะ`
+  const list = over
+    .map((k) => `${OPS_TH[k].name}: งานเข้า ~${fmtUnits(r.ops.demand[k])} ${OPS_TH[k].unit} แต่รับได้ ${fmtUnits(r.ops.capacity[k])} (เกิน ${Math.round((r.loads[k] - 1) * 100)}%) · ${OPS_TH[k].fix}`)
+    .join(' / ')
+  return `ถ้าใช้แผนนี้ ไตรมาสหน้า${list} งานล้นทำให้ความพอใจตกและต้นทุนเคลมสูงขึ้นค่ะ`
+}
+
+/** Current headcount per team, counting people still in training. */
+export function staffOf(s: GameState): Record<Team, number> {
+  const o = s.sim.ops
+  const n = (t: Team) => o.staff[t] + o.pending.filter((p) => p.team === t).reduce((a, p) => a + p.n, 0)
+  return { claims: n('claims'), contact: n('contact') }
 }
 
 export interface SegmentForecast {

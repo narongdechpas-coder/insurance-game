@@ -249,7 +249,11 @@ export function shiftSegments(v: V2State, plan: QuarterPlan) {
   for (const c of CHANNEL_IDS) {
     const ch = v.channels[c]
     let m = { ...ch.seg }
-    for (const t of tactics) for (const [k, d] of Object.entries(SEG_SHIFT[t] ?? {})) m[k as SegmentId] += d as number
+    // a kept setting moves the mix up to 3 quarters' worth, then holds (no endless drift)
+    const start = CH[c].segmentMix as SegMix
+    for (const t of tactics)
+      for (const [k, d] of Object.entries(SEG_SHIFT[t] ?? {}) as [SegmentId, number][])
+        if ((d > 0 && m[k] < start[k] + 3 * d) || (d < 0 && m[k] > Math.max(0, start[k] + 3 * d))) m[k] += d
     if (ch.focus) {
       const start = (CH[c].segmentMix as SegMix)[ch.focus]
       m[ch.focus] = Math.min(start + FOCUS_CAP, m[ch.focus] + FOCUS_STEP)
@@ -262,24 +266,31 @@ export function shiftSegments(v: V2State, plan: QuarterPlan) {
 /* ---------------- company level ---------------- */
 
 /** Brand points per quarter from the marketing card (on top of a slow fade toward 40). */
+// engine v3: the marketing level is kept until changed, so each level has a brand it settles at
+// (fade 12%/quarter toward 40): maintain → 50, save → 30, cut the team → 25, campaign → 65–75
 const BRAND_MOVE: Record<string, number> = {
-  save: -1, onlineOnly: -0.5, stopEvents: -1, cutTeam: -2,
-  maintain: 0.3,
-  campaign: 6, inHouse: 5, ambassador: 8, sponsor: 6,
+  save: -1.2, onlineOnly: -0.6, stopEvents: -1.2, cutTeam: -1.8,
+  maintain: 1.2,
+  campaign: 3.6, inHouse: 3, ambassador: 4.2, sponsor: 3.6,
 }
+const BRAND_FADE = 0.12
 /** Service points per quarter from decisions that build or erode service capability. */
+// engine v3: repair settings are kept until changed (fade 5%/quarter → each settles ±20× its move);
+// lasting investments raise the level service settles at instead (serviceBonus)
 const SERVICE_MOVE: Record<string, number> = {
-  premium: 2, dealerService: 2, upgradeNetwork: 3,
-  costCut: -2, nonOEM: -3, laborRate: -1, repairFirst: 0,
-  ownApp: 1.5, lineOA: 1,
-  tempStaff: 1, selfService: 2, outsourceAdjusters: 1, hireClaims: 2, fastTrack: 0.5,
+  premium: 0.5, dealerService: 0.5,
+  costCut: -0.5, nonOEM: -0.75, laborRate: -0.25, repairFirst: 0,
 }
+/** one-off service lift from an event response (that quarter only) */
+const SERVICE_ONCE: Record<string, number> = { tempStaff: 1, outsourceAdjusters: 1, hireClaims: 2, fastTrack: 0.5 }
 
 export interface CompanyInputs {
   plan: QuarterPlan
   responseIds: string[]
   /** Excess load over capacity this quarter (0 = coping). */
   excess: { contact: number; claims: number; repair: number }
+  /** service the company settles at above the start, from lasting investments (engine v3) */
+  serviceBonus?: number
   wordOfMouth: boolean
   complaints: boolean
 }
@@ -289,14 +300,12 @@ export function updateCompany(v: V2State, x: CompanyInputs): { brand: number; se
   const before = { ...c }
   const mk = x.plan.marketing
   const brandMove = (mk.tactic && BRAND_MOVE[mk.tactic] !== undefined ? BRAND_MOVE[mk.tactic] : BRAND_MOVE[mk.option]) ?? 0
-  c.brand += brandMove - 0.03 * (c.brand - 40) + (x.wordOfMouth ? 3 : 0) - (x.complaints ? 3 : 0)
+  c.brand += brandMove - BRAND_FADE * (c.brand - 40) + (x.wordOfMouth ? 3 : 0) - (x.complaints ? 3 : 0)
   const rp = x.plan.repair
   let svc = (rp.tactic && SERVICE_MOVE[rp.tactic] !== undefined ? SERVICE_MOVE[rp.tactic] : SERVICE_MOVE[rp.option]) ?? 0
-  const dt = x.plan.distribution.tactic
-  if (dt && SERVICE_MOVE[dt]) svc += SERVICE_MOVE[dt]
-  for (const id of x.responseIds) svc += SERVICE_MOVE[id] ?? 0
+  for (const id of x.responseIds) svc += SERVICE_ONCE[id] ?? 0
   svc -= 15 * (x.excess.contact + x.excess.claims + x.excess.repair)
-  c.service += svc - 0.05 * (c.service - SERVICE0)
+  c.service += svc - 0.05 * (c.service - SERVICE0 - (x.serviceBonus ?? 0))
   c.brand = Math.max(0, Math.min(100, c.brand))
   c.service = Math.max(0, Math.min(100, c.service))
   return { brand: c.brand - before.brand, service: c.service - before.service }

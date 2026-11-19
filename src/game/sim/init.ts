@@ -1,6 +1,8 @@
 import { START_MIX } from './channels'
 import { P } from './params'
 import { createV2 } from './v2'
+import { createOps } from './ops'
+import { defaultPlan } from '../decisions/cards'
 import type { Firm, SimState } from './types'
 import type { Competitor, GameConfig } from '../types'
 
@@ -37,8 +39,9 @@ export function createSimState(config: GameConfig, competitors: Competitor[], pl
     marketGwp: P.marketGwp0,
     baseDemand: { policies, claims: policies * P.claimsPerPolicy },
     player: firm('player', playerShare, P.satisfactionAnchor, config.startingCapitalMB, 1.0),
-    capacity: { ...P.startCapacity },
-    boosts: [],
+    ops: createOps(),
+    settings: defaultPlan(),
+    treaty: defaultPlan().reinsurance,
     queue: [],
     firms: competitors.map((c) => firm(c.id, c.marketShare, SAT0[c.personality], c.marketShare * capitalPerShare, EXPOSURE0[c.personality])),
     looseStreak: 0,

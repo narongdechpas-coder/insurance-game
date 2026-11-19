@@ -28,7 +28,7 @@ export function ConfirmView() {
   const q = game.quarter
   const scen = scenariosFor(game.events.map((e) => e.id))
   const cards = CARDS.filter((c) => isUnlocked(c, q.index))
-  const used = planCost(plan, responses)
+  const used = planCost(plan, responses, game.sim.ops.owned)
   const warnings = reviewPlan(plan, game, responses).filter((n) => n.tone === 'warning')
 
   return (
@@ -105,7 +105,7 @@ export function ConfirmView() {
                       {isCh ? `${channelSummary(channels)}${changed ? '' : ' (คงเดิม)'}` : isPr ? priceSummary(segSteps) : changed ? (t ? `${o.label} · ${t.label}` : o.label) : `${o.label} (คงเดิม)`}
                     </span>
                   </span>
-                  <Cost v={choiceCost(plan, c.id)} />
+                  <Cost v={choiceCost(plan, c.id, game.sim.ops.owned)} />
                   <Pencil size={14} className="text-navy-700/30 group-hover:text-brand-600" />
                 </button>
               )
