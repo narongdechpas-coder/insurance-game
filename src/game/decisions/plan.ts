@@ -1,3 +1,4 @@
+import { capitalHealth, capitalWarning } from '../capital'
 import type { GameState } from '../types'
 import { CARD_BY_ID, CARDS, QUARTER_BUDGET_MB } from './cards'
 import { responseOf, scenariosFor, SCENARIOS, type Responses } from './scenarios'
@@ -129,5 +130,16 @@ export function reviewPlan(plan: QuarterPlan, s: GameState, responses: Responses
     notes.push({ id: 'ev-synergy', tone: 'tip', text: 'ออกความคุ้มครองแบตเตอรี่คู่กับลงทุนอู่ EV สอดคล้องกันดีค่ะ คุมค่าซ่อมได้เอง', cards: ['repair'] })
   if (r('rival-promo') === 'valueAdd' && p.repair === 'costCut')
     notes.push({ id: 'value-vs-cut', tone: 'warning', text: 'สัญญาบริการเสริมกับลูกค้า แต่ไปลดคุณภาพอู่ ลูกค้าจะรู้สึกว่าเราพูดไม่ตรงกับที่ทำค่ะ', cards: ['repair'] })
+  // capital last: notes about the card on screen lead, the capital warning covers everything else
+  const health = capitalHealth(s)
+  if (health.level !== 'safe') {
+    const spend = planCost(plan, responses)
+    notes.push({
+      id: 'capital',
+      tone: health.level === 'danger' ? 'warning' : 'tip',
+      text: `${capitalWarning(health)} แผนนี้ใช้งบ ${spend} ล้านบาท${health.level === 'danger' ? ' ควรเลือกทางที่ลดขาดทุนและลดความเสี่ยงก่อน' : ''}`,
+      cards: [],
+    })
+  }
   return notes
 }

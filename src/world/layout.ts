@@ -81,7 +81,7 @@ const DS = 0.42 // decor buildings are smaller so the seven business units stay 
  * (public/assets/rivals-city/*), it takes one of these slots, so rivals appear in the city
  * without code changes.
  */
-const BACK_STRIP: Placement[] = [
+export const BACK_STRIP: Placement[] = [
   { sprite: 'buildings/office-row', u: COLS[0][0] + 10, v: FILLER_ROW[1] - 16, scale: 0.5 },
   { sprite: 'buildings/office-tower', u: COLS[0][1] - 40, v: FILLER_ROW[1] - 40, scale: 0.55 },
   { sprite: 'buildings/office-low', u: COLS[1][0] + 30, v: FILLER_ROW[1] - 16, scale: 0.55 },

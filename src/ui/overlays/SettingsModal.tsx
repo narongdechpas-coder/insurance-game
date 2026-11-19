@@ -1,4 +1,4 @@
-import { Home, Save, Trash2 } from 'lucide-react'
+import { Box, Building2, Home, Save, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useGameStore } from '../../store/useGameStore'
 import { InstallButton } from '../InstallButton'
@@ -10,7 +10,14 @@ const SPEEDS = [
   { v: 0, label: 'ข้าม', note: 'ไปหนังสือพิมพ์ทันที' },
 ] as const
 
+const CITY_STYLES = [
+  { v: 'walkup', label: 'ตึกแถว Walk-up', note: 'ตึกขาวเตี้ยๆ เต็มเมือง ดูมีชีวิต', icon: Building2 },
+  { v: 'massing', label: 'โมเดลโปร่ง', note: 'กล่องขาวโปร่ง เน้นตึกหลักให้เด่น', icon: Box },
+] as const
+
 export function SettingsModal() {
+  const cityStyle = useGameStore((s) => s.settings.cityStyle)
+  const setCityStyle = useGameStore((s) => s.setCityStyle)
   const speed = useGameStore((s) => s.settings.runSpeed)
   const setSpeed = useGameStore((s) => s.setRunSpeed)
   const toCover = useGameStore((s) => s.toCover)
@@ -32,6 +39,28 @@ export function SettingsModal() {
             <div className={`text-[12px] ${speed === s.v ? 'text-white/85' : 'text-navy-700/65'}`}>{s.note}</div>
           </button>
         ))}
+      </div>
+
+      <div className="text-[14px] text-navy-700/80 mt-5 mb-2">รูปแบบตึกรอบเมือง</div>
+      <div className="grid grid-cols-2 gap-2.5">
+        {CITY_STYLES.map((c) => {
+          const Icon = c.icon
+          const on = cityStyle === c.v
+          return (
+            <button
+              key={c.v}
+              data-city-style={c.v}
+              onClick={() => setCityStyle(c.v)}
+              className={`rounded-2xl px-3 py-2.5 text-left flex items-center gap-3 transition-all ${on ? 'bg-gradient-to-b from-brand-400 to-brand-600 text-white shadow' : 'bg-white/80 text-navy-800 hover:bg-white'}`}
+            >
+              <Icon size={22} className="shrink-0" />
+              <span>
+                <span className="block font-display font-semibold text-[16px]">{c.label}</span>
+                <span className={`block text-[12px] ${on ? 'text-white/85' : 'text-navy-700/65'}`}>{c.note}</span>
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       <div className="mt-5 rounded-2xl bg-white/80 px-4 py-3 flex items-center gap-3 text-[14px] text-navy-800">

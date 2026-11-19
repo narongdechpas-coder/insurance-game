@@ -81,6 +81,7 @@ interface Store {
   openModal: (m: Modal | null) => void
   showTerm: (t: TermPopover | null) => void
   setRunSpeed: (v: Settings['runSpeed']) => void
+  setCityStyle: (v: Settings['cityStyle']) => void
   /** Back to the cover; the game stays saved and can be continued. */
   toCover: () => void
   deleteSave: () => void
@@ -119,6 +120,11 @@ export const useGameStore = create<Store>((set, get) => ({
   showTerm: (t) => set((s) => ({ ui: { ...s.ui, term: t } })),
   setRunSpeed: (runSpeed) => {
     const settings = { ...get().settings, runSpeed }
+    writeSettings(settings)
+    set({ settings })
+  },
+  setCityStyle: (cityStyle) => {
+    const settings = { ...get().settings, cityStyle }
     writeSettings(settings)
     set({ settings })
   },

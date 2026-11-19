@@ -1,8 +1,7 @@
 import { memo } from 'react'
-import { world as C } from '../design/tokens'
 import { BLOCKS, FOUNTAIN, ISLAND, PLAZA, RIVER, ROADS } from './layout'
-import { RoadNet } from './Roads'
-import { SurroundingsGround } from './Surroundings'
+import { mergeSegs, RoadNet } from './Roads'
+import { outerRoads, SurroundingsGround } from './Surroundings'
 import { GROUND_MATRIX, project, quad, U, WORLD } from './projection'
 
 const tex = (name: string) => `${import.meta.env.BASE_URL}assets/textures/${name}.jpg`
@@ -50,18 +49,13 @@ function Crosswalk({ u, v, along }: { u: number; v: number; along: 'u' | 'v' }) 
 }
 
 /**
- * Ground of the island diorama: river + far bank behind, a floating paved island with a
- * thick plinth edge, raised paved blocks with hedge verges, roads with kerbs and crossings,
+ * Ground of the island district: river + far bank behind, a paved island level with the city around it,
+ * raised paved blocks with hedge verges, roads with kerbs and crossings,
  * HQ's plaza and fountain. Drawn once (memo).
  */
 export const Ground = memo(function Ground() {
   const { u0, v0, u1, v1 } = ISLAND
   const FAR = { u0: u0 - 3600, u1: u1 + 3600 }
-  const drop = 46 // island plinth thickness (px)
-  const a = project(u0, v0)
-  const b = project(u0, v1) // front corner
-  const c = project(u1, v1)
-  const face = (p: { x: number; y: number }, q: { x: number; y: number }) => `${p.x},${p.y} ${q.x},${q.y} ${q.x},${q.y + drop} ${p.x},${p.y + drop}`
   return (
     <svg className="absolute inset-0" width={WORLD.w} height={WORLD.h} style={{ zIndex: 0 }}>
       <defs>
@@ -74,18 +68,6 @@ export const Ground = memo(function Ground() {
           <stop offset="0.45" stopColor="#0b3d6e" stopOpacity="0" />
           <stop offset="1" stopColor="#0b3d6e" stopOpacity="0.28" />
         </linearGradient>
-        <linearGradient id="plinthL" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#d6dbe4" />
-          <stop offset="1" stopColor="#a9b2c2" />
-        </linearGradient>
-        <linearGradient id="plinthR" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#bcc4d1" />
-          <stop offset="1" stopColor="#8e98aa" />
-        </linearGradient>
-        <radialGradient id="islandShadow" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0.6" stopColor="#2a3d5c" stopOpacity="0.28" />
-          <stop offset="1" stopColor="#2a3d5c" stopOpacity="0" />
-        </radialGradient>
         <GroundTexture id="asphalt" name="asphalt" size={240} />
         <GroundTexture id="grass" name="grass" size={300} />
         <GroundTexture id="paving" name="paving" size={150} />
@@ -130,25 +112,7 @@ export const Ground = memo(function Ground() {
 
       <SurroundingsGround />
 
-      {/* island: soft shadow, plinth faces, top */}
-      <ellipse cx={(a.x + c.x) / 2} cy={b.y + drop + 10} rx={(c.x - a.x) / 2} ry={70} fill="url(#islandShadow)" />
-      <polygon points={face(a, b)} fill="url(#plinthL)" />
-      <polygon points={face(b, c)} fill="url(#plinthR)" />
-      <polyline points={`${a.x},${a.y} ${b.x},${b.y} ${c.x},${c.y}`} fill="none" stroke="#ffffff" strokeWidth={4} />
-      {/* where a street leaves the island, carry it down the plinth wall so it joins the outer street without a cut */}
-      {[
-        ...ROADS.u.map(({ v, w }) => [project(u0, v - w / 2), project(u0, v + w / 2), w] as const),
-        ...ROADS.v.map(({ u, w }) => [project(u - w / 2, v1), project(u + w / 2, v1), w] as const),
-      ].map(([p, q, w], i) => {
-        const k = 12 / w // kerb width as a share of the road width
-        const lerp = (t: number) => ({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t })
-        return (
-          <g key={`ramp${i}`}>
-            <polygon points={face(lerp(-k), lerp(1 + k))} fill={C.roadEdge} />
-            <polygon points={face(p, q)} fill="url(#asphalt)" />
-          </g>
-        )
-      })}
+      {/* the island sits level with the city around it: its streets run straight on into the outer streets */}
       <polygon points={quad(u0, v0, u1, v1)} fill="url(#paving)" />
       <polygon points={quad(u0, v0, u1, v1)} fill="#ffffff" opacity={0.12} />
 
@@ -163,7 +127,14 @@ export const Ground = memo(function Ground() {
       ))}
 
       {/* roads */}
-      <RoadNet segs={[...ROADS.u.map(({ v, w }) => ({ along: 'u' as const, at: v, w, from: u0, to: u1 })), ...ROADS.v.map(({ u, w }) => ({ along: 'v' as const, at: u, w, from: v0, to: v1 }))]} />
+      {/* every street in the city as one network: island streets and their outer continuations are single strips */}
+      <RoadNet
+        segs={mergeSegs([
+          ...ROADS.u.map(({ v, w }) => ({ along: 'u' as const, at: v, w, from: u0, to: u1 })),
+          ...ROADS.v.map(({ u, w }) => ({ along: 'v' as const, at: u, w, from: v0, to: v1 })),
+          ...outerRoads(),
+        ])}
+      />
       {ROADS.v.map(({ u, w }) =>
         ROADS.u.map(({ v, w: w2 }) => (
           <g key={`x${u}-${v}`}>

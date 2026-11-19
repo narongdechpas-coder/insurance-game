@@ -134,6 +134,32 @@ Fully transparent background, no floor, no shadow, no frame, no text, no letters
 Output: 1536×640, each figure about 420 px wide.
 ```
 
+## 8. Agent channel — agency manager → `raw-assets/round10/agent.png`
+```
+Match the art style of the reference image exactly: semi-realistic stylized 3D game character, soft studio light from the top-left,
+smooth skin shading, clean crisp edges, friendly premium mobile-game look, same proportions and rendering quality.
+Character: a Thai woman in her mid 40s, the manager of the insurance agent network. Warm, motherly but sharp; neat shoulder-length hair
+with a side part, gold-rimmed glasses on a beaded chain, burgundy blazer over a cream blouse, holding a leather planner with a pen.
+Character sheet: the SAME person shown 3 times side by side in one row, evenly spaced with wide empty gaps between them (they must not touch).
+Each is a half portrait (head and shoulders down to mid-chest), facing the viewer at a slight 3/4 angle, same size, same crop height, same outfit.
+Left: neutral, calm professional expression. Middle: happy, big confident smile, eyes bright. Right: shocked, eyes wide, eyebrows up, mouth open, one hand near the cheek.
+Fully transparent background, no floor, no shadow, no frame, no text, no letters, no numbers, no logos, no watermark.
+Output: 1536×640, each figure about 420 px wide.
+```
+
+## 9. Direct channel — digital sales lead → `raw-assets/round10/direct.png`
+```
+Match the art style of the reference image exactly: semi-realistic stylized 3D game character, soft studio light from the top-left,
+smooth skin shading, clean crisp edges, friendly premium mobile-game look, same proportions and rendering quality.
+Character: a Thai man in his late 20s, the lead of online and direct sales. Modern short undercut hair, light stubble,
+teal hoodie under a light-grey casual blazer, wireless earbuds, holding a smartphone that shows a blank glowing screen.
+Character sheet: the SAME person shown 3 times side by side in one row, evenly spaced with wide empty gaps between them (they must not touch).
+Each is a half portrait (head and shoulders down to mid-chest), facing the viewer at a slight 3/4 angle, same size, same crop height, same outfit.
+Left: neutral, calm professional expression. Middle: happy, big confident smile, eyes bright. Right: shocked, eyes wide, eyebrows up, mouth open, one hand near the cheek.
+Fully transparent background, no floor, no shadow, no frame, no text, no letters, no numbers, no logos, no watermark.
+Output: 1536×640, each figure about 420 px wide.
+```
+
 ---
 
 **After generating:** Claude runs `detect` on each sheet (it should find exactly 3 blobs), then exports them as `portraits/<dept>-normal|happy|shocked` at 420 px. The code switches to the portraits automatically. Until a file exists, each spot keeps its current art.
