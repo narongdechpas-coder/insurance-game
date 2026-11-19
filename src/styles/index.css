@@ -197,3 +197,16 @@ html {
 .vignette {
   background: radial-gradient(ellipse 72% 68% at 50% 54%, transparent 48%, rgb(8 26 66 / 0.2) 72%, rgb(8 26 66 / 0.5) 100%);
 }
+
+/* ---------- Print: the end-of-game debrief as an A4 document ---------- */
+.print-only { display: none; }
+@media print {
+  @page { size: A4; margin: 10mm; }
+  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  #root { display: none !important; }
+  .print-only { display: block !important; color: #0b1f4b; }
+  .print-only [data-term], .print-only [data-print-hide] { display: none !important; } /* controls have no use on paper */
+  .print-only .grid { break-inside: avoid; }
+  .print-only [data-lesson], .print-only [data-turning-point], .print-only [data-winner-note], .print-only [data-chart], .print-only [data-debrief-pnl] { break-inside: avoid; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

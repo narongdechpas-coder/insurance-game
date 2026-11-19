@@ -30,9 +30,10 @@ export function LocationPanel() {
   const Icon = LOCATION_ICONS[loc.icon]
   const head = portraitKey(id, moodOfStatus(status))
 
+  // the panel ends above the "เข้าห้องตัดสินใจ" button; long event lists scroll inside
   return (
-    <aside key={id} className="absolute right-7 top-[104px] w-[400px] glass rounded-[28px] overflow-hidden pointer-events-auto anim-slide-right">
-      <div className="relative h-[170px] bg-gradient-to-b from-brand-100 to-white grid place-items-center">
+    <aside key={id} data-location-panel className="absolute right-7 top-[104px] w-[400px] max-h-[calc(100%-104px-132px)] flex flex-col glass rounded-[28px] overflow-hidden pointer-events-auto anim-slide-right">
+      <div className="relative shrink-0 h-[170px] bg-gradient-to-b from-brand-100 to-white grid place-items-center">
         <img
           src={spriteUrl(PANEL_ART[id] ?? BUILDINGS[id].sprite)}
           alt=""
@@ -52,7 +53,7 @@ export function LocationPanel() {
           <X size={18} />
         </button>
       </div>
-      <div className="px-6 pb-5 -mt-3 relative">
+      <div className="px-6 -mt-3 relative min-h-0 flex-1 overflow-y-auto">
         <div className="flex items-center gap-3">
           <span className="grid place-items-center size-11 rounded-2xl bg-gradient-to-b from-brand-400 to-brand-600 text-white shadow">
             <Icon size={22} />
@@ -80,9 +81,11 @@ export function LocationPanel() {
             </div>
           ))}
         </div>
+      </div>
+      <div className="shrink-0 px-6 pb-5">
         <button
           onClick={() => openRoom(CARDS.find((c) => c.location === id)?.id)}
-          className="mt-4 w-full h-12 rounded-2xl bg-gradient-to-b from-brand-400 to-brand-600 text-white font-display font-semibold text-[16px] flex items-center justify-center gap-2 hover:brightness-110 shadow-[0_10px_20px_-8px_rgba(29,95,224,0.8)]"
+          className="mt-3 w-full h-12 rounded-2xl bg-gradient-to-b from-brand-400 to-brand-600 text-white font-display font-semibold text-[16px] flex items-center justify-center gap-2 hover:brightness-110 shadow-[0_10px_20px_-8px_rgba(29,95,224,0.8)]"
         >
           วางกลยุทธ์ของหน่วยงานนี้ <ArrowRight size={18} />
         </button>

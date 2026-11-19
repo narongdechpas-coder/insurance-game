@@ -693,6 +693,26 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
       },
     ]
   }
+  sim.log = [
+    ...(sim.log ?? []),
+    {
+      quarter: q,
+      label: `Q${state.quarter.q}/${state.quarter.year}`,
+      choices: Object.entries(plan).map(([card, c]) => ({ card, option: c.option, tactic: c.tactic })),
+      responses: { ...responses },
+      events: [...active],
+      levers: Object.fromEntries(CHANNEL_IDS.map((c) => [c, sim.v2.channels[c].lever])),
+      after: { capitalMB: Math.round(pl.capital), marketShare: pl.share, combinedRatio: pl.combinedRatio, satisfaction: pl.satisfaction },
+      price: pl.price,
+      flood: floodHit ? 'hit' : floodActive ? 'missed' : 'none',
+      catGross: uw.catGross,
+      catNet: uw.catNet,
+      loads: { ...loads },
+      renewal: renewalResult?.rate ?? null,
+      drivers: [...drivers].sort((a, b) => b.weight - a.weight).slice(0, 5).map((d) => ({ id: d.id, text: d.text, tone: d.tone, weight: d.weight })),
+      pnl,
+    },
+  ]
   const report: QuarterReport = {
     v2: {
       brand: sim.v2.company.brand,
