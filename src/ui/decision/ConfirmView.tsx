@@ -1,3 +1,5 @@
+import { settingsOf } from '../../game/forecast'
+import { channelsChanged, channelSummary } from './ChannelStage'
 import { AlertTriangle, Pencil, Users } from 'lucide-react'
 import { spriteUrl } from '../../assets/registry'
 import { CARDS, isUnlocked, QUARTER_BUDGET_MB } from '../../game/decisions/cards'
@@ -15,6 +17,7 @@ function Cost({ v }: { v: number }) {
 export function ConfirmView() {
   const game = useGameStore((s) => s.game)
   const plan = useGameStore((s) => s.plan)
+  const channels = useGameStore((s) => s.channels)
   const responses = useGameStore((s) => s.responses)
   const setStep = useGameStore((s) => s.setStep)
   const setActiveEvent = useGameStore((s) => s.setActiveEvent)
@@ -77,7 +80,8 @@ export function ConfirmView() {
             {cards.map((c) => {
               const o = optionOf(plan, c.id)
               const t = tacticOf(plan, c.id)
-              const changed = plan[c.id].option !== c.defaultOption
+              const isCh = c.id === 'distribution'
+              const changed = isCh ? channelsChanged(channels, settingsOf(game)) : plan[c.id].option !== c.defaultOption
               return (
                 <button
                   key={c.id}
@@ -94,7 +98,7 @@ export function ConfirmView() {
                   <span className="min-w-0 flex-1">
                     <span className="block text-[12px] text-navy-700/65 truncate">{c.title}</span>
                     <span className={`block text-[14.5px] truncate ${changed ? 'font-medium text-navy-900' : 'text-navy-700/55'}`}>
-                      {changed ? (t ? `${o.label} · ${t.label}` : o.label) : `${o.label} (คงเดิม)`}
+                      {isCh ? `${channelSummary(channels)}${changed ? '' : ' (คงเดิม)'}` : changed ? (t ? `${o.label} · ${t.label}` : o.label) : `${o.label} (คงเดิม)`}
                     </span>
                   </span>
                   <Cost v={choiceCost(plan, c.id)} />

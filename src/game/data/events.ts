@@ -52,6 +52,37 @@ export const EVENT_DECK: GameEvent[] = [
     locations: ['claims', 'customers'],
     modules: ['claims', 'cx'],
   },
+  // ---- high season (fixed in the calendar; see externalEvents in the engine) ----
+  {
+    id: 'motor-show',
+    kind: 'opportunity',
+    title: 'ช่วงงาน Motor Show',
+    detail:
+      'ช่วงงานแสดงรถยนต์กลางปี คนจองรถใหม่พร้อมกันจำนวนมาก ประกันงานใหม่ของทั้งตลาดเร่งขึ้น โดยเฉพาะผ่านดีลเลอร์ รถใหม่และ EV งานเข้ามากขึ้นทั้งสายด่วน สินไหม และงานออกกรมธรรม์',
+    icon: 'motorShow',
+    locations: ['dealer'],
+    modules: ['distribution', 'pricing'],
+  },
+  {
+    id: 'motor-expo',
+    kind: 'opportunity',
+    title: 'ช่วงงาน Motor Expo',
+    detail:
+      'งานแสดงรถยนต์ปลายปี ค่ายรถอัดโปรโมชันปิดยอดทั้งปี ประกันงานใหม่ผ่านดีลเลอร์เร่งแรง แต่ก็เป็นช่วงที่คู่แข่งแย่งงานเดียวกันหนักที่สุด',
+    icon: 'motorExpo',
+    locations: ['dealer'],
+    modules: ['distribution', 'pricing'],
+  },
+  {
+    id: 'year-end-promo',
+    kind: 'competitor',
+    title: 'ทุกบริษัทอัดโปรโมชันปิดยอดปลายปี',
+    detail:
+      'ไตรมาสสุดท้ายของปี บริษัทประกันทุกรายเร่งยอดให้ถึงเป้าทั้งปี ด้วยส่วนลด ของแถม และคอมพิเศษให้ตัวกลาง ถ้าเราไม่ทำอะไร ลูกค้าใหม่จะไหลไปคู่แข่ง ถ้าทำตาม ยอดขึ้นแต่กำไรต่อกรมธรรม์ลดลง',
+    icon: 'yearEndPromo',
+    locations: ['marketing', 'dealer'],
+    modules: ['market', 'pricing', 'distribution'],
+  },
 ]
 
 /**

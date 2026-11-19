@@ -51,9 +51,10 @@ export const P = {
   claimsPerPolicy: 1, // normalised
   floodClaimsSurge: 0.75, // extra claims (× normal) when a flood hits at exposure 1.0
   overload: {
-    contact: { stars: 0.8, growth: -1.2 }, // per unit of excess load
-    claims: { stars: 1.0, lossRatio: 0.06 },
-    repair: { stars: 0.6, lossRatio: 0.03 },
+    // halved in engine v2 (2b): overload hurts, but growth that is staffed for can pay
+    contact: { stars: 0.4, growth: -0.6 }, // per unit of excess load
+    claims: { stars: 0.5, lossRatio: 0.03 },
+    repair: { stars: 0.3, lossRatio: 0.015 },
   },
   consequenceThreshold: 1.12, // load above this raises a consequence event
 

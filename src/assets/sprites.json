@@ -335,6 +335,20 @@
   "ay": 0.998,
   "ext": "webp"
  },
+ "events/motor-expo": {
+  "w": 640,
+  "h": 565,
+  "ax": 0.504,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "events/motor-show": {
+  "w": 640,
+  "h": 593,
+  "ax": 0.525,
+  "ay": 0.998,
+  "ext": "webp"
+ },
  "events/regulation": {
   "w": 640,
   "h": 637,
@@ -355,6 +369,13 @@
   "ax": 0.466,
   "ay": 0.977,
   "ext": "png"
+ },
+ "events/year-end-promo": {
+  "w": 640,
+  "h": 565,
+  "ax": 0.55,
+  "ay": 1.0,
+  "ext": "webp"
  },
  "icons/clipboard": {
   "w": 108,

@@ -1,4 +1,6 @@
 import { Check, Clock, Coins, Hourglass, Sparkles } from 'lucide-react'
+import { useMemo } from 'react'
+import { forecastPricing } from '../../game/forecast'
 import { moodOfStatus, portraitKey } from '../../assets/portraits'
 import { spriteUrl } from '../../assets/registry'
 import { CARD_BY_ID } from '../../game/decisions/cards'
@@ -102,6 +104,50 @@ function TacticRow({ card, stanceLabel, tactics, skip }: { card: DecisionId; sta
   )
 }
 
+/** Engine estimate for every price stance vs holding (calm run: no flood, no surprises). */
+function PriceForecastStrip({ cols }: { cols: string }) {
+  const game = useGameStore((s) => s.game)
+  const plan = useGameStore((s) => s.plan)
+  const responses = useGameStore((s) => s.responses)
+  const channels = useGameStore((s) => s.channels)
+  const fc = useMemo(() => forecastPricing(game, plan, responses, channels), [game, plan, responses, channels])
+  const pts = (v: number) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${Math.abs(v * 100).toFixed(1)}`
+  const tone = (v: number, good: number) => (Math.abs(v) < 0.0005 ? 'text-navy-700/55' : v * good > 0 ? 'text-emerald-700' : 'text-red-700')
+  return (
+    <div className="px-5 pb-3" data-price-forecast>
+      <div className="text-[11.5px] text-brand-600 font-medium mb-1">ประมาณการเทียบกับคงราคา (ไม่นับเหตุการณ์ไม่คาดคิด)</div>
+      <div className={`grid ${cols} gap-3`}>
+        {fc.map((f) => (
+          <div key={f.option} data-forecast-option={f.option} className="rounded-xl bg-brand-50/80 px-2.5 py-1.5 text-[11.5px] leading-snug text-navy-800">
+            {f.option === 'hold' ? (
+              <div className="text-navy-700/60">จุดอ้างอิง</div>
+            ) : (
+              <>
+                <div className="flex justify-between gap-1">
+                  <span>ส่วนแบ่ง</span>
+                  <span className={`tabular-nums font-medium ${tone(f.dShare, 1)}`}>{pts(f.dShare)} จุด</span>
+                </div>
+                <div className="flex justify-between gap-1">
+                  <span>เบี้ย/ไตรมาส</span>
+                  <span className={`tabular-nums font-medium ${tone(f.dGwp, 1)}`}>
+                    {f.dGwp >= 0 ? '+' : '−'}
+                    {Math.abs(Math.round(f.dGwp)).toLocaleString('th-TH')} ล้าน
+                  </span>
+                </div>
+                <div className="flex justify-between gap-1" title="Loss Ratio หลังอัตราใหม่มีผลเต็มที่ ราว 3 ไตรมาส">
+                  <span>LR เต็มผล</span>
+                  <span className={`tabular-nums font-medium ${tone(f.dLossRatioFull, -1)}`}>{pts(f.dLossRatioFull)} จุด</span>
+                </div>
+              </>
+            )}
+            {f.gapAfter > 0.04 && <div className="mt-0.5 text-[11px] text-amber-800">แพงกว่าตลาด {Math.round(f.gapAfter * 100)}% ลูกค้าดีอาจย้ายออก</div>}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /** The active strategy card: building, question, stances, and (when the stance has them) tactics. */
 export function CardStage() {
   const id = useGameStore((s) => s.ui.activeCard)
@@ -120,7 +166,7 @@ export function CardStage() {
   const tight = compact && card.options.length >= 5 // five compact tiles: smaller icon, shorter cost chip
 
   return (
-    <section key={id} className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-hidden pointer-events-auto anim-rise">
+    <section key={id} className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise">
       <header className={`relative bg-gradient-to-br from-brand-100 via-white to-brand-50 flex items-center px-8 gap-6 transition-[height] duration-300 ${compact ? 'h-[128px]' : 'h-[178px]'}`}>
         <img
           src={spriteUrl(PANEL_ART[card.location] ?? BUILDINGS[card.location].sprite)}
@@ -203,6 +249,7 @@ export function CardStage() {
           )
         })}
       </div>
+      {id === 'pricing' && <PriceForecastStrip cols={cols} />}
       {tactics && chosenOption && <TacticRow card={id} stanceLabel={chosenOption.label} tactics={tactics} skip={inTitle} />}
     </section>
   )

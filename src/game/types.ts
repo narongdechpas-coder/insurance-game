@@ -49,7 +49,7 @@ export interface GameEvent {
   kind: EventKind
   title: string // short, shown on event card
   detail: string // narrative explanation
-  icon: 'ev' | 'flood' | 'competitor' | 'regulation' | 'economy' | 'service' | 'claims' | 'repair' | 'complaint' | 'adverse' | 'referral'
+  icon: 'ev' | 'flood' | 'competitor' | 'regulation' | 'economy' | 'service' | 'claims' | 'repair' | 'complaint' | 'adverse' | 'referral' | 'motorShow' | 'motorExpo' | 'yearEndPromo'
   /** true = raised by the player's own earlier decisions (a consequence), not by the outside world */
   consequence?: boolean
   locations: LocationId[] // where in the world this event lands
