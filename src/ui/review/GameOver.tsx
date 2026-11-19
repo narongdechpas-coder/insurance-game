@@ -4,7 +4,7 @@ import { portraitKey } from '../../assets/portraits'
 import { spriteUrl } from '../../assets/registry'
 import { lessons, turningPoints, winnerNote, type Lesson, type TurningPoint, type WinnerNote } from '../../game/narrative/lessons'
 import { sumPnl } from '../../game/sim/channels'
-import { P } from '../../game/sim/params'
+import { capitalLine, gwpNow } from '../../game/capital'
 import type { GameState } from '../../game/types'
 import { useGameStore } from '../../store/useGameStore'
 import { Glossed } from '../glossary/Term'
@@ -91,7 +91,7 @@ function Debrief({ g, ls, tps, wn }: { g: GameState; ls: Lesson[]; tps: TurningP
   const top = o.standings[0]
   const name = (id: string) => (id === 'player' ? g.config.companyName : (g.competitors.find((c) => c.id === id)?.name ?? id))
   const kh = g.kpiHistory
-  const line = g.config.startingCapitalMB * P.bankruptcyFraction
+  const line = capitalLine(gwpNow(g))
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-[380px_1fr] gap-3">
@@ -162,7 +162,7 @@ function Debrief({ g, ls, tps, wn }: { g: GameState; ls: Lesson[]; tps: TurningP
           </span>
         </div>
         <div className="grid grid-cols-3 gap-3">
-          <TimelineChart g={g} title="เงินทุน (ล้านบาท)" values={kh.map((k) => k.capitalMB)} fmt={(v) => mb(v)} line={line} lineLabel="เส้นหยุดรับประกัน" color="#d98a07" />
+          <TimelineChart g={g} title="เงินทุน (ล้านบาท)" values={kh.map((k) => k.capitalMB)} fmt={(v) => mb(v)} line={line} lineLabel="ทุนขั้นต่ำ (ตามเบี้ยล่าสุด)" color="#d98a07" />
           <TimelineChart g={g} title="ส่วนแบ่งตลาด" values={kh.map((k) => k.marketShare)} fmt={(v) => pct(v)} color="#2f7bff" />
           <TimelineChart g={g} title="Combined Ratio" values={kh.map((k) => k.combinedRatio)} fmt={(v) => pct(v, 0)} line={1} lineLabel="100% = เท่าทุน" color="#22a06b" higherIsBetter={false} />
         </div>
@@ -267,7 +267,7 @@ export function GameOver() {
   const tps = turningPoints(game)
   const wn = winnerNote(game)
   const title = o.reason === 'bankrupt' ? 'บริษัทต้องหยุดรับประกัน' : won ? 'ยินดีด้วย คุณคือผู้นำตลาด' : `จบที่อันดับ ${o.playerRank} จาก ${o.standings.length}`
-  const kicker = o.reason === 'bankrupt' ? `เงินทุนต่ำกว่าครึ่งของทุนเริ่มต้น เกมจบที่ไตรมาส ${game.sim.log?.length ?? ''}` : `จบเกม ${game.config.quarters} ไตรมาส`
+  const kicker = o.reason === 'bankrupt' ? `เงินทุนต่ำกว่าทุนขั้นต่ำ (12.5% ของเบี้ยทั้งปี) เกมจบที่ไตรมาส ${game.sim.log?.length ?? ''}` : `จบเกม ${game.config.quarters} ไตรมาส`
   return (
     <>
       <div className="fixed inset-0" style={{ backdropFilter: 'blur(8px)', background: 'rgba(7,21,55,0.6)' }} />

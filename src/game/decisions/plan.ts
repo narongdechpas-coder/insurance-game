@@ -1,5 +1,6 @@
 import { capitalHealth, capitalWarning } from '../capital'
 import { isInvestment } from '../sim/ops'
+import { P } from '../sim/params'
 import type { GameState } from '../types'
 import { CARD_BY_ID, CARDS, defaultPlan, QUARTER_BUDGET_MB } from './cards'
 import { responseOf, scenariosFor, SCENARIOS, type Responses } from './scenarios'
@@ -50,8 +51,14 @@ export function planCost(plan: QuarterPlan, responses: Responses = {}, owned: Ow
   return CARDS.reduce((s, c) => s + choiceCost(plan, c.id, owned), 0) + responsesCost(responses, owned)
 }
 
-export function budgetLeft(plan: QuarterPlan, responses: Responses = {}, owned: Owned = {}) {
-  return QUARTER_BUDGET_MB - planCost(plan, responses, owned)
+/** Strategy budget this quarter (engine v3): 7.5% of last quarter's earned premium, in steps of 5 MB. */
+export function budgetOf(s: GameState) {
+  const ep = s.lastReport?.earnedPremium ?? s.kpis.marketShare * s.sim.marketGwp
+  return Math.max(50, Math.round((P.budgetOfEarnedPremium * ep) / 5) * 5)
+}
+
+export function budgetLeft(plan: QuarterPlan, responses: Responses = {}, owned: Owned = {}, budget: number = QUARTER_BUDGET_MB) {
+  return budget - planCost(plan, responses, owned)
 }
 
 /** Events this quarter that still need a response. */
@@ -118,14 +125,28 @@ export function reviewPlan(plan: QuarterPlan, s: GameState, responses: Responses
   const p = Object.fromEntries(Object.entries(plan).map(([k, v]) => [k, v.option])) as Record<DecisionId, string>
   const t = (id: DecisionId) => tacticOf(plan, id)?.id
 
-  const left = budgetLeft(plan, responses)
+  const left = budgetLeft(plan, responses, s.sim.ops.owned, budgetOf(s))
   const r = (eventId: string) => responses[eventId]
+  // engine v3: fixed cost does not shrink with the book; flag it once it eats more than 12% of premium
+  const lr = s.lastReport
+  if (lr?.ops) {
+    const share = lr.ops.costs.fixed / lr.earnedPremium
+    if (share > 0.12) {
+      const idle = (['claims', 'contact'] as const).filter((t) => lr.ops.demand[t] / lr.ops.capacity[t] < 0.8)
+      notes.push({
+        id: 'fixed-cost',
+        tone: 'warning',
+        text: `ต้นทุนคงที่กิน ${Math.round(share * 100)}% ของเบี้ยแล้ว (${Math.round(lr.ops.costs.fixed)} ล้านต่อไตรมาส) เพราะพอร์ตเล็กลงแต่ค่าคนและค่าสำนักงานยังเท่าเดิม${idle.length ? ` ทีม${idle.map((t) => (t === 'claims' ? 'สินไหม' : ' call center')).join(' และ')}ใช้กำลังไม่ถึง 80% ลองลดคนที่หน้าทีมงาน` : ''} หรือเร่งยอดขายให้กลับมาค่ะ`,
+        cards: [],
+      })
+    }
+  }
   if (left < 0) notes.push({ id: 'budget', tone: 'warning', text: `แผนนี้ใช้งบเกินไป ${-left} ล้านบาท ต้องลดบางรายการก่อนยืนยันค่ะ` , cards: [] })
   if ((p.pricing === 'cut2' || p.pricing === 'cut1') && p.underwriting === 'broad')
     notes.push({ id: 'cut+broad', tone: 'warning', text: 'ลดราคาพร้อมเปิดรับลูกค้ากว้าง จะได้ลูกค้าเสี่ยงสูงในราคาถูก Loss Ratio อาจพุ่งค่ะ' , cards: ['pricing', 'underwriting'] })
   if (has('flood-central') && (p.reinsurance === 'retain' || p.catExposure === 'grow'))
     notes.push({ id: 'flood', tone: 'warning', text: 'ไตรมาสนี้มีความเสี่ยงน้ำท่วมภาคกลาง การรับความเสี่ยงเองหรือขยายพื้นที่เสี่ยงตอนนี้อันตรายมากค่ะ' , cards: ['reinsurance', 'catExposure'] })
-  if (has('flood-central') && p.reinsurance === 'keep' && p.catExposure !== 'reduce')
+  if (has('flood-central') && p.reinsurance === 'keep' && p.catExposure !== 'reduce' && s.quarter.index % 4 === 0)
     notes.push({ id: 'flood-tip', tone: 'tip', text: 'มีสัญญาณน้ำท่วม ลองพิจารณาซื้อ reinsurance เพิ่มดูนะคะ' , cards: ['reinsurance', 'catExposure'] })
   if (has('rival-promo') && p.pricing === 'cut2')
     notes.push({ id: 'pricewar', tone: 'warning', text: 'ลดราคาเชิงรุกสู้ Lotus Guard อาจกลายเป็นสงครามราคา ทั้งตลาดเสียกำไรค่ะ' , cards: ['pricing'] })

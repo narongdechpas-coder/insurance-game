@@ -1,6 +1,5 @@
 import { Check, Lock, Wallet } from 'lucide-react'
-import { QUARTER_BUDGET_MB } from '../../game/decisions/cards'
-import { planCost, unansweredEvents } from '../../game/decisions/plan'
+import { budgetOf, planCost, unansweredEvents } from '../../game/decisions/plan'
 import { useGameStore, type DecisionStep } from '../../store/useGameStore'
 
 const STEPS: { id: DecisionStep; label: string }[] = [
@@ -19,8 +18,9 @@ export function DecisionHeader() {
   const setStep = useGameStore((s) => s.setStep)
   const used = planCost(plan, responses, game.sim.ops.owned)
   const pending = unansweredEvents(game, responses).length
-  const pct = Math.min(1, used / QUARTER_BUDGET_MB)
-  const over = used > QUARTER_BUDGET_MB
+  const budget = budgetOf(game)
+  const pct = Math.min(1, used / budget)
+  const over = used > budget
   return (
     <div className="absolute left-7 right-7 top-[100px] h-[56px] flex items-center gap-4 pointer-events-auto anim-rise">
       <div className="glass rounded-full p-1.5 flex items-center gap-1">
@@ -53,7 +53,7 @@ export function DecisionHeader() {
           <div className="flex justify-between text-[12.5px] leading-none mb-1.5">
             <span className="text-navy-700/70">งบกลยุทธ์ไตรมาสนี้</span>
             <span className={`font-semibold ${over ? 'text-alert' : 'text-navy-900'}`}>
-              {used} / {QUARTER_BUDGET_MB} ล้านบาท
+              {used} / {budget} ล้านบาท
             </span>
           </div>
           <div className="h-2.5 rounded-full bg-navy-900/10 overflow-hidden">

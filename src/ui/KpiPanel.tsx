@@ -42,7 +42,7 @@ export function KpiPanel() {
             <div className={`text-[11px] leading-none truncate ${i === 0 && health.level !== 'safe' ? 'font-medium ' + (health.level === 'danger' ? 'text-red-700' : 'text-amber-700') : 'text-navy-700/60'}`}>{unit}</div>
             {i === 0 && health.level !== 'safe' && (
               // room left before the stop line: full bar at the starting capital, empty at the line
-              <div className="mt-1 h-1.5 w-[120px] rounded-full bg-navy-900/10 overflow-hidden" title="ระยะห่างจากเส้นหยุดรับประกัน (ครึ่งหนึ่งของทุนเริ่มต้น)">
+              <div className="mt-1 h-1.5 w-[120px] rounded-full bg-navy-900/10 overflow-hidden" title="ระยะห่างจากทุนขั้นต่ำ (12.5% ของเบี้ยทั้งปี)">
                 <div className={`h-full rounded-full ${health.level === 'danger' ? 'bg-alert' : 'bg-watch'}`} style={{ width: `${health.room * 100}%` }} />
               </div>
             )}

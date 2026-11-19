@@ -10,7 +10,8 @@ import { acquisitionRate, buildPnl, CHANNELS, commissionRate, distributionChanne
 import { bookFactors, bookPrice, CHANNEL_IDS, driftByPrice, portfolioMix, RENEWAL_BASELINE, renewalOutlook, renewalShareFactor, rivalRenewal, segmentAdverseLR, segmentLossRatios, segmentMoves, segmentPriceTerm, segmentRateLR, SEGMENT_IDS, channelAttraction, channelLRFactors, channelRates, nextChannelMix, playerInertia, renewalRates, serviceStars, shiftSegments, updateCompany } from './v2'
 import { DIFFICULTY, DURATION_WEIGHTS, P } from './params'
 import { rng } from './rng'
-import { capacityMultiple, isInvestment, OPS, runOps, serviceBonus, startUnits, variableCosts, type Team } from './ops'
+import { capitalLine } from '../capital'
+import { capacityMultiple, isInvestment, OPS, rivalStartOps, runOps, serviceBonus, startUnits, TEAMS, variableCosts, type Team } from './ops'
 import type { Capacity, CompetitorMove, Driver, Firm, GameOutcome, Ops, QuarterReport, QueuedEffect, RivalReport, SimState, Standing } from './types'
 
 /**
@@ -109,6 +110,8 @@ function competitorMoves(firms: Firm[], personalities: string[], names: string[]
         } else moves.push({ id: f.id, text: `${name} คงราคา รอดูตลาด` })
         break
       case 'premium':
+        // a profitable, well-liked rival spends to grow (engine v3: rivals also invest when they can)
+        if (f.combinedRatio < 0.97 && f.satisfaction > 3.7) f.bonus = 0.16 * aggression
         if (f.price > 1.08) {
           f.satisfaction += 0.04
           moves.push({ id: f.id, text: `${name} คงราคา ลงทุนบริการพรีเมียมต่อ` })
@@ -133,6 +136,7 @@ function competitorMoves(firms: Firm[], personalities: string[], names: string[]
         }
         break
       default:
+        if (f.combinedRatio < 0.94) f.bonus = 0.02 * aggression
         if (f.combinedRatio > 0.98) {
           f.price *= 1.03
           moves.push({ id: f.id, text: `${name} ขึ้นราคาเพื่อรักษากำไร` })
@@ -170,7 +174,7 @@ function standings(state: GameState, sim: SimState): Standing[] {
       satisfaction: f.satisfaction,
       parts: scoreParts({ capital: f.capital, share: f.share, avgCR, satisfaction: f.satisfaction }, startCapital),
       // a company that fell below the bankruptcy line cannot outrank a solvent one
-      score: Math.round(scoreOf({ capital: f.capital, share: f.share, avgCR, satisfaction: f.satisfaction }, startCapital) * (f.capital < startCapital * P.bankruptcyFraction ? 0.3 : 1)),
+      score: Math.round(scoreOf({ capital: f.capital, share: f.share, avgCR, satisfaction: f.satisfaction }, startCapital) * (f.capital < capitalLine(f.share * sim.marketGwp) ? 0.3 : 1)),
     }
   })
   return all.sort((a, b) => b.score - a.score)
@@ -253,6 +257,57 @@ export interface SimulateOptions {
   seed?: number
   /** Forecast mode: no randomness and no flood, so two plans can be compared like for like. */
   calm?: boolean
+}
+
+/**
+ * How each rival personality sizes its teams (engine v3): hire when last quarter's load passed
+ * `hireAt`, back to `aim`; trim teams that sit below `trimAt`. Game-design assumptions.
+ */
+const RIVAL_STAFFING: Record<Personality, { hireAt: number; aim: number; trimAt: number; marketing: number; promoMarketing: number }> = {
+  aggressive: { hireAt: 1.15, aim: 1.0, trimAt: 0.7, marketing: 25, promoMarketing: 20 },
+  premium: { hireAt: 0.9, aim: 0.85, trimAt: 0.65, marketing: 30, promoMarketing: 0 },
+  digital: { hireAt: 1.0, aim: 0.95, trimAt: 0.75, marketing: 25, promoMarketing: 10 },
+  conservative: { hireAt: 0.95, aim: 0.9, trimAt: 0.75, marketing: 20, promoMarketing: 0 },
+}
+
+/** One rival's operations this quarter: staffing, overload, and operating cost (million THB). */
+function rivalOps(f: Firm, pers: Personality, prev: Firm, q: number, scale: number, floodHit: boolean, playerS0: number, prepared: boolean) {
+  const o = f.ops ?? (f.ops = rivalStartOps(f.s0 / playerS0, pers))
+  const k = f.s0 / playerS0
+  const st = RIVAL_STAFFING[pers]
+  // size the teams from last quarter's load
+  if (f.lastLoads)
+    for (const t of TEAMS) {
+      const l = f.lastLoads[t]
+      const people = o.staff[t] + o.pending.filter((p) => p.team === t).reduce((a, p) => a + p.n, 0)
+      if (l > st.hireAt || l < st.trimAt) o.target[t] = Math.max(Math.round(OPS.teams[t].start * k * 0.4), Math.round((people * l) / st.aim))
+    }
+  // partner garages are signed up the same way (they are never dropped)
+  const extraGarages = f.lastLoads && f.lastLoads.repair > st.hireAt ? Math.round(o.garages * (f.lastLoads.repair / st.aim - 1)) : 0
+  // rivals that prepare for a flood bring in extra adjusters for that quarter, like the player's response
+  const temps = prepared ? [{ source: 'preposition', ops: 'claims' as Ops, value: 0.45, quarters: 1 }] : []
+  const cost = runOps(o, q, { investments: [], temps, extraHires: {}, extraGarages })
+  const gwp0 = f.s0 * P.marketGwp0
+  const cap = capacityMultiple(o, q, gwp0)
+  const policies = (f.share * scale) / f.price
+  const newBiz = Math.max(0, f.share - prev.share) * scale
+  const claims = policies * P.claimsPerPolicy + (floodHit ? policies * P.floodClaimsSurge * f.catExposure : 0)
+  const loads: Capacity = {
+    contact: (policies + P.newBusinessCallWeight * newBiz) / (f.s0 * cap.contact),
+    claims: claims / (f.s0 * cap.claims),
+    repair: (claims - (floodHit ? policies * P.floodClaimsSurge * f.catExposure * 0.7 : 0)) / (f.s0 * cap.repair),
+  }
+  f.lastLoads = loads
+  const excess = { contact: Math.max(0, loads.contact - 1), claims: Math.max(0, loads.claims - 1), repair: Math.max(0, loads.repair - 1) }
+  const su = startUnits(gwp0)
+  const v = variableCosts(((policies / f.s0) * su.inForce) / 4, loads.claims * cap.claims * su.claims)
+  const marketing = (st.marketing + (f.bonus > 0 ? st.promoMarketing : 0)) * k
+  return {
+    cost: cost.salaries + cost.otherFixed + cost.maintenance + cost.hiring + cost.severance + v.issuance + v.survey + marketing,
+    overloadStars: excess.contact * P.overload.contact.stars + excess.claims * P.overload.claims.stars + excess.repair * P.overload.repair.stars,
+    overloadLR: excess.claims * P.overload.claims.lossRatio + excess.repair * P.overload.repair.lossRatio,
+    loads,
+  }
 }
 
 /** New business across the whole market is this much higher during a motor show (game assumption). */
@@ -495,10 +550,12 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
     const eventActions: string[] = []
     const impacts: { label: string; amount: number }[] = []
     const g = f.share * sim.marketGwp * showBoost
-    const lr = (P.baseLossRatio * trend) / Math.min(P.rateCap, earnedRate(f.rateHist)) + r.normal() * P.attritionalNoise
     const cat = floodHit || (floodActive && r.next() < diff.floodChance) ? diff.floodSeverity * P.floodLossOfGwp * g * f.catExposure * r.range(P.floodSeverity[0], P.floodSeverity[1]) : 0
-    // rivals carry the same cost structure as the player at the starting channel mix (incl. routine spend)
-    const res = underwrite(g, lr, P.adminRatio + commissionRate(START_MIX) + acquisitionRate(START_MIX), cat, P.quotaShare.keep, { retention: P.xl.retention * (g / 2000), cost: P.xl.cost })
+    // engine v3: rivals run the same operating model as the player: teams that can overload,
+    // fixed costs in money, variable costs per policy and claim, and their own marketing spend
+    const rv = rivalOps(f, pers, prev, q, scale, cat > 0, sim.baseDemand.policies, !!(floodActive && RIVAL_EVENT_PLAY['flood-central'][pers].prepared))
+    const lr = (P.baseLossRatio * trend) / Math.min(P.rateCap, earnedRate(f.rateHist)) + rv.overloadLR + r.normal() * P.attritionalNoise
+    const res = underwrite(g, lr, commissionRate(START_MIX) + acquisitionRate(START_MIX) + rv.cost / g, cat, P.quotaShare.keep, { retention: P.xl.retention * (g / 2000), cost: P.xl.cost })
     f.capital += res.netResult + f.capital * yieldNow
     f.combinedRatio = res.lossRatio + res.expenseRatio
     f.crSum += f.combinedRatio
@@ -529,7 +586,7 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
       }
     }
     const floodHurt = cat ? (floodPlay?.prepared ? 0.1 : 0.3) : 0
-    f.satisfaction = clamp(f.satisfaction + diff.rivalService + P.satisfactionReversion * 0.5 * (P.satisfactionAnchor + 0.3 * diff.rivalService / 0.05 - f.satisfaction) - floodHurt - (fine ? 0.1 : 0), 1, 5)
+    f.satisfaction = clamp(f.satisfaction + diff.rivalService + P.satisfactionReversion * 0.5 * (P.satisfactionAnchor + 0.3 * diff.rivalService / 0.05 - f.satisfaction) - floodHurt - (fine ? 0.1 : 0) - (rv.overloadStars * Math.max(0, f.satisfaction - 1)) / 2.8, 1, 5)
     rivals.push({
       id: f.id,
       move: moves[i].text,
@@ -807,7 +864,8 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
     lastReport: report,
     outcome: null,
   }
-  const bankrupt = pl.capital < state.config.startingCapitalMB * P.bankruptcyFraction
+  // engine v3: the stop line is a minimum capital that grows with the premium written (game rule)
+  const bankrupt = pl.capital < capitalLine(gwp)
   if (bankrupt || q + 1 >= state.config.quarters) {
     const st = standings(next, sim)
     next.outcome = { reason: bankrupt ? 'bankrupt' : 'completed', standings: st, playerRank: 1 + st.findIndex((s) => s.id === 'player') } satisfies GameOutcome

@@ -1,7 +1,7 @@
 import type { StaffTarget } from '../forecast'
 import { OPS, TEAMS } from './ops'
 import { CARD_BY_ID, CARDS, choiceFor, defaultPlan, isUnlocked } from '../decisions/cards'
-import { budgetLeft } from '../decisions/plan'
+import { budgetLeft, budgetOf } from '../decisions/plan'
 import { scenariosFor, type Responses, type ScenarioResponse } from '../decisions/scenarios'
 import type { DecisionId, QuarterPlan } from '../decisions/types'
 import type { GameState } from '../types'
@@ -93,7 +93,7 @@ function scriptedPlan(state: GameState, id: StrategyId): { plan: QuarterPlan; re
     const o = CARD_BY_ID[c.id].options.find((x) => x.id === want[0])!
     const prev = plan[c.id]
     plan[c.id] = want[1] ? { option: o.id, tactic: want[1] } : choiceFor(o)
-    if (budgetLeft(plan, responses, state.sim.ops.owned) < 0) plan[c.id] = prev
+    if (budgetLeft(plan, responses, state.sim.ops.owned, budgetOf(state)) < 0) plan[c.id] = prev
   }
   return { plan, responses }
 }
@@ -104,7 +104,7 @@ function smartPlan(state: GameState, plan: QuarterPlan, responses: Responses) {
   const set = (id: DecisionId, option: string, tactic?: string) => {
     const prev = plan[id]
     plan[id] = tactic ? { option, tactic } : choiceFor(CARD_BY_ID[id].options.find((o) => o.id === option)!)
-    if (budgetLeft(plan, responses, state.sim.ops.owned) < 0) plan[id] = prev
+    if (budgetLeft(plan, responses, state.sim.ops.owned, budgetOf(state)) < 0) plan[id] = prev
   }
   const loads = state.lastReport?.loads
   const flood = state.events.some((e) => e.id === 'flood-central')
