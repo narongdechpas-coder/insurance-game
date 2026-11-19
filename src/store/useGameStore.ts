@@ -101,6 +101,7 @@ interface Store {
   showTerm: (t: TermPopover | null) => void
   setRunSpeed: (v: Settings['runSpeed']) => void
   setCityStyle: (v: Settings['cityStyle']) => void
+  setSound: (patch: Partial<Pick<Settings, 'soundOn' | 'sfxVolume' | 'musicVolume'>>) => void
   /** Back to the cover; the game stays saved and can be continued. */
   toCover: () => void
   deleteSave: () => void
@@ -158,6 +159,11 @@ export const useGameStore = create<Store>((set, get) => ({
   },
   setCityStyle: (cityStyle) => {
     const settings = { ...get().settings, cityStyle }
+    writeSettings(settings)
+    set({ settings })
+  },
+  setSound: (patch) => {
+    const settings = { ...get().settings, ...patch }
     writeSettings(settings)
     set({ settings })
   },

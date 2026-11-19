@@ -48,9 +48,13 @@ export interface Settings {
   runSpeed: 0 | 1 | 2
   /** How the outer city is drawn: white walk-up buildings, or translucent massing (architect's model). */
   cityStyle: 'walkup' | 'massing'
+  /** Sound on/off and volumes (0..1) for effects and music. */
+  soundOn: boolean
+  sfxVolume: number
+  musicVolume: number
 }
 
-export const DEFAULT_SETTINGS: Settings = { runSpeed: 1, cityStyle: 'walkup' }
+export const DEFAULT_SETTINGS: Settings = { runSpeed: 1, cityStyle: 'walkup', soundOn: true, sfxVolume: 0.7, musicVolume: 0.5 }
 
 export function readSettings(): Settings {
   try {

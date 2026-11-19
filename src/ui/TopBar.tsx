@@ -1,4 +1,4 @@
-import { BookOpen, Building2, CarFront, ClipboardList, Cog, LineChart, Settings, Target, Trophy } from 'lucide-react'
+import { BookOpen, Building2, CarFront, ClipboardList, Cog, LineChart, Settings, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
 import { brandUrl } from '../assets/registry'
 import { useGameStore } from '../store/useGameStore'
 
@@ -20,6 +20,8 @@ export function TopBar() {
   const openPage = useGameStore((s) => s.openPage)
   const hasReport = useGameStore((s) => !!s.game.lastReport)
   const openModal = useGameStore((s) => s.openModal)
+  const soundOn = useGameStore((s) => s.settings.soundOn)
+  const setSound = useGameStore((s) => s.setSound)
   return (
     <header className="absolute inset-x-0 top-0 h-[92px] flex items-center px-7 gap-6 pointer-events-auto">
       <div className="flex items-center gap-3 min-w-[330px]">
@@ -58,6 +60,15 @@ export function TopBar() {
         })}
       </nav>
       <div className="flex gap-3 min-w-[330px] justify-end">
+        <button
+          title={soundOn ? 'ปิดเสียง' : 'เปิดเสียง'}
+          aria-label={soundOn ? 'ปิดเสียง' : 'เปิดเสียง'}
+          data-sound-button
+          onClick={() => setSound({ soundOn: !soundOn })}
+          className={`grid place-items-center size-12 rounded-full glass-dark hover:brightness-125 ${soundOn ? 'text-white' : 'text-white/50'}`}
+        >
+          {soundOn ? <Volume2 size={22} /> : <VolumeX size={22} />}
+        </button>
         {[
           { icon: Trophy, tip: 'อันดับบริษัท', cls: 'text-gold-400', modal: 'ranking' as const },
           { icon: BookOpen, tip: 'คู่มือ CEO', cls: 'text-white', modal: 'guide' as const },
