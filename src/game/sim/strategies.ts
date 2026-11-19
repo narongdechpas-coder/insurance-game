@@ -1,5 +1,6 @@
 import type { StaffTarget } from '../forecast'
 import { OPS, TEAMS } from './ops'
+import { buildingCount, nextVersion, type SystemId } from './systems'
 import { CARD_BY_ID, CARDS, choiceFor, defaultPlan, isUnlocked } from '../decisions/cards'
 import { budgetLeft, budgetOf } from '../decisions/plan'
 import { scenariosFor, type Responses, type ScenarioResponse } from '../decisions/scenarios'
@@ -69,10 +70,26 @@ function staffFor(state: GameState, id: StrategyId): StaffTarget | undefined {
   return want
 }
 
-export function scriptedTurn(state: GameState, id: StrategyId): { plan: QuarterPlan; responses: Responses; staff?: StaffTarget } {
+/** Systems each scripted player builds, in order (phase 3a); a version 2 follows once version 1 is live. */
+const SYSTEM_PLAN: Partial<Record<StrategyId, SystemId[]>> = {
+  balanced: ['claimsApp', 'chatbot', 'autoRenew', 'garageOnline', 'dealerPortal', 'agentApp'],
+  smart: ['claimsApp', 'dealerPortal', 'autoRenew', 'chatbot', 'garageOnline', 'agentApp'],
+  profit: ['claimsApp', 'garageOnline'],
+}
+function ordersFor(state: GameState, id: StrategyId): string[] {
+  const want = SYSTEM_PLAN[id]
+  if (!want) return []
+  const sys = state.sim.ops.systems ?? {}
+  let slots = OPS.itSlots - buildingCount(sys)
+  const out: string[] = []
+  for (const s of want) if (slots > 0 && nextVersion(sys[s])) (out.push(s), slots--)
+  return out
+}
+
+export function scriptedTurn(state: GameState, id: StrategyId): { plan: QuarterPlan; responses: Responses; staff?: StaffTarget; orders: string[] } {
   const staff = staffFor(state, id)
   const t = scriptedPlan(state, id)
-  return { ...t, staff }
+  return { ...t, staff, orders: ordersFor(state, id) }
 }
 
 function scriptedPlan(state: GameState, id: StrategyId): { plan: QuarterPlan; responses: Responses } {

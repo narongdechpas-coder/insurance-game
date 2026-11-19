@@ -146,7 +146,7 @@ function run(strategy: StrategyId, difficulty: Difficulty, seed: number, quarter
   let floods = 0
   while (!s.outcome) {
     const t = scriptedTurn(s, strategy)
-    s = simulateQuarter(withChannelSettings(s, settingsOf(s), undefined, t.staff), t.plan, t.responses)
+    s = simulateQuarter(withChannelSettings(s, settingsOf(s), undefined, t.staff, t.orders), t.plan, t.responses)
     for (const c of s.lastReport!.consequences) consequences[c] = (consequences[c] ?? 0) + 1
     if (s.lastReport!.flood === 'hit') floods++
   }

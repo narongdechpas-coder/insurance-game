@@ -137,7 +137,7 @@ export const SCENARIOS: Scenario[] = [
     question: 'สายด่วนรับไม่ทัน ลูกค้ารอนาน จะแก้อย่างไร',
     responses: [
       { id: 'tempStaff', label: 'จ้างพนักงานชั่วคราวเพิ่ม', blurb: 'แก้ได้ทันที แต่เป็นทางแก้ระยะสั้น พ้น 2 ไตรมาสต้องจ้างใหม่', cost: 20, speed: 'fast', icon: 'users', impact: { growth: 0, profit: 0, risk: 0, cx: 1 }, sim: { contact: 0.2, quarters: 2 } },
-      { id: 'selfService', label: 'เปิดบริการตัวเองผ่านแอปและ LINE', blurb: 'ลงทุนครั้งเดียว ลูกค้าเช็คสถานะเองได้ ลดสายเข้าได้ถาวร แต่ใช้เวลาเห็นผล', cost: 35, speed: 'slow', icon: 'smartphone', impact: { growth: 0, profit: 0, risk: 0, cx: 0 }, sim: { contact: 0.25 } },
+      { id: 'selfService', label: 'เปิดบริการตัวเองผ่านแอปและ LINE', blurb: 'สั่งทีม IT พัฒนาแชทบอทตอบลูกค้า (ค่าพัฒนา 2 ล้านคิดในหน้าระบบ) ลูกค้าเช็คสถานะเองได้ ลดสายเข้าได้ถาวร แต่ต้องรอพัฒนาและลูกค้าค่อยๆ ย้ายมาใช้', cost: 0, speed: 'slow', icon: 'smartphone', impact: { growth: 0, profit: 0, risk: 0, cx: 0 }, sim: { contact: 0.25 } },
       { id: 'acceptWait', label: 'ปล่อยไว้ก่อน', blurb: 'ไม่ใช้งบ แต่ลูกค้าจะรอนานต่อไป ความพอใจและการต่ออายุจะตกต่อ', cost: 0, speed: 'fast', icon: 'hold', impact: { growth: -1, profit: 0, risk: 0, cx: -1 } },
     ],
   },

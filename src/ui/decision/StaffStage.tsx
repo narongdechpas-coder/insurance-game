@@ -1,11 +1,12 @@
 import { Minus, Plus } from 'lucide-react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { SystemsPanel } from './SystemsPanel'
 import { portraitKey } from '../../assets/portraits'
 import { spriteUrl } from '../../assets/registry'
 import { CARD_BY_ID } from '../../game/decisions/cards'
 import { EVENT_BY_ID } from '../../game/data/events'
 import { forecastQuarter, fmtUnits, staffOf } from '../../game/forecast'
-import { boostAt, INVESTMENT_IDS, OPS, TEAMS, type Team } from '../../game/sim/ops'
+import { boostAt, hireCap, INVESTMENT_IDS, OPS, TEAMS, type Team } from '../../game/sim/ops'
 import type { DecisionId } from '../../game/decisions/types'
 import { useGameStore } from '../../store/useGameStore'
 
@@ -35,6 +36,7 @@ export function StaffStage() {
   const q = game.quarter.index
   const o = game.sim.ops
   const pay = OPS.salaryPerPersonMonth
+  const [tab, setTab] = useState<'people' | 'systems'>('people')
 
   const teamCard = (t: Team) => {
     const cfg = OPS.teams[t]
@@ -43,6 +45,8 @@ export function StaffStage() {
     const training = o.pending.filter((p) => p.team === t).reduce((a, p) => a + p.n, 0)
     const boost = boostAt(o, q + 1)[t]
     const afterTraining = want * cfg.perPersonMonth * 3 * (1 + boost)
+    // recruiting and training take in at most 15% of the team a quarter
+    const cap = hireCap(o, t)
     const demand = fc.ops.demand[t]
     const head = portraitKey(TEAM_UI[t].loc as never, fc.loads[t] > 1.05 ? 'shocked' : 'normal')
     return (
@@ -63,10 +67,10 @@ export function StaffStage() {
               {want} <span className="text-[14px] font-medium">คน</span>
             </div>
             <div data-staff-note={t} className={`text-[12px] mt-0.5 ${diff ? 'text-brand-600 font-medium' : 'text-navy-700/60'}`}>
-              {diff > 0 ? `รับเพิ่ม ${diff}` : diff < 0 ? `ลด ${-diff}` : training ? `อบรมอยู่ ${training}` : 'เท่าเดิม'} · ทีละ {cfg.step}
+              {diff > 0 ? `รับเพิ่ม ${diff}` : diff < 0 ? `ลด ${-diff}` : training ? `อบรมอยู่ ${training}` : 'เท่าเดิม'} · รับได้สูงสุด {cap} คน/ไตรมาส
             </div>
           </div>
-          <button aria-label={`เพิ่ม ${cfg.label}`} data-staff-plus={t} onClick={() => setStaff(t, want + cfg.step)} className="grid place-items-center size-10 rounded-full bg-white text-navy-800 shadow-sm hover:brightness-95">
+          <button aria-label={`เพิ่ม ${cfg.label}`} data-staff-plus={t} disabled={diff >= cap} onClick={() => setStaff(t, Math.min(now[t] + cap, want + cfg.step))} className="grid place-items-center size-10 rounded-full bg-white text-navy-800 shadow-sm hover:brightness-95 disabled:opacity-35">
             <Plus size={18} />
           </button>
         </div>
@@ -130,12 +134,26 @@ export function StaffStage() {
       className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise"
     >
       <header className="px-7 pt-5 pb-3 bg-gradient-to-br from-brand-100 via-white to-brand-50">
-        <div className="text-[13px] text-brand-600 font-medium">Operations · ทีมงาน</div>
-        <h2 className="font-display font-bold text-[28px] leading-tight text-navy-900">คนและกำลังงาน</h2>
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <div className="text-[13px] text-brand-600 font-medium">Operations · ทีมงานและระบบ</div>
+            <h2 className="font-display font-bold text-[28px] leading-tight text-navy-900">{tab === 'people' ? 'คนและกำลังงาน' : 'ระบบและดิจิทัล'}</h2>
+          </div>
+          <div className="glass rounded-full p-1 flex gap-1 shrink-0" role="tablist">
+            {(['people', 'systems'] as const).map((k) => (
+              <button key={k} role="tab" data-tab={k} aria-selected={tab === k} onClick={() => setTab(k)} className={`h-9 px-4 rounded-full text-[14px] font-medium ${tab === k ? 'bg-brand-500 text-white' : 'text-navy-800 hover:bg-white/70'}`}>
+                {k === 'people' ? 'คน' : 'ระบบ'}
+              </button>
+            ))}
+          </div>
+        </div>
         <p className="text-[13.5px] text-navy-700/80 mt-0.5">
-          จำนวนคนค้างไว้ทุกไตรมาสจนกว่าจะเปลี่ยน · รับเพิ่มจ่ายเงินเดือนทันที ได้กำลังหลังอบรมไตรมาสถัดไป · ลดคนกำลังหายทันทีและจ่ายค่าชดเชย · ตัวเลขเป็นค่าสมมติของเกม
+          {tab === 'people'
+            ? 'จำนวนคนค้างไว้ทุกไตรมาสจนกว่าจะเปลี่ยน · รับเพิ่มจ่ายเงินเดือนทันที ได้กำลังหลังอบรมไตรมาสถัดไป (ไม่เกิน 15% ของทีมต่อไตรมาส) · ลดคนกำลังหายทันทีและจ่ายค่าชดเชย · ตัวเลขเป็นค่าสมมติของเกม'
+            : 'คนแก้ปัญหาได้เร็ว ระบบช้ากว่าแต่ต้นทุนระยะยาวต่ำ · ทีม IT พัฒนาได้พร้อมกัน 2 ระบบ · ลูกค้าและคู่ค้าค่อยๆ ย้ายมาใช้ · ตัวเลขเป็นค่าสมมติของเกม'}
         </p>
       </header>
+      {tab === 'systems' ? <SystemsPanel /> : <>
       <div className="grid grid-cols-3 gap-3 px-5 pt-4">
         {TEAMS.map(teamCard)}
         <div data-team="repair" className="rounded-[20px] bg-white/85 border border-brand-100 p-4 flex flex-col gap-2">
@@ -198,6 +216,7 @@ export function StaffStage() {
           ))}
         </div>
       </div>
+      </>}
     </section>
   )
 }

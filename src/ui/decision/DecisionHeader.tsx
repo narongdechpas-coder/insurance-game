@@ -1,5 +1,5 @@
 import { Check, Lock, Wallet } from 'lucide-react'
-import { budgetOf, planCost, unansweredEvents } from '../../game/decisions/plan'
+import { budgetOf, budgetUsed, unansweredEvents } from '../../game/decisions/plan'
 import { useGameStore, type DecisionStep } from '../../store/useGameStore'
 
 const STEPS: { id: DecisionStep; label: string }[] = [
@@ -16,7 +16,8 @@ export function DecisionHeader() {
   const game = useGameStore((s) => s.game)
   const toast = useGameStore((s) => s.toast)
   const setStep = useGameStore((s) => s.setStep)
-  const used = planCost(plan, responses, game.sim.ops.owned)
+  const sysOrders = useGameStore((s) => s.sysOrders)
+  const used = budgetUsed(game, plan, responses, sysOrders)
   const pending = unansweredEvents(game, responses).length
   const budget = budgetOf(game)
   const pct = Math.min(1, used / budget)

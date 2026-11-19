@@ -6,38 +6,323 @@
   "callsPerPolicyQuarter": 0.3,
   "salaryPerPersonMonth": 30000,
   "teams": {
-    "claims": { "label": "ทีมสินไหม", "start": 120, "perPersonMonth": 150, "step": 10, "unit": "เคลม" },
-    "contact": { "label": "Call center", "start": 40, "perPersonMonth": 1325, "step": 5, "unit": "สาย" }
+    "claims": {
+      "label": "ทีมสินไหม",
+      "start": 120,
+      "perPersonMonth": 150,
+      "step": 10,
+      "unit": "เคลม"
+    },
+    "contact": {
+      "label": "Call center",
+      "start": 40,
+      "perPersonMonth": 1325,
+      "step": 5,
+      "unit": "สาย"
+    }
   },
   "otherStaff": 340,
   "otherFixedMB": 115,
-  "garages": { "start": 300, "jobsPerGarageQuarter": 130, "step": 40, "maintenanceMBPerGarage": 0.05 },
+  "garages": {
+    "start": 300,
+    "jobsPerGarageQuarter": 130,
+    "step": 40,
+    "maintenanceMBPerGarage": 0.05
+  },
   "issuancePerPolicy": 120,
   "surveyPerClaim": 500,
   "hireCostMonths": 1,
   "severanceMonths": 3,
   "investments": {
-    "upgradeNetwork": { "label": "อัปเกรดอู่ในเครือ + รับรองมาตรฐาน", "ops": "repair", "capacity": 0.12, "maintenanceMB": 3, "service": 8, "slow": true },
-    "ownEvCenter": { "label": "ศูนย์ซ่อม EV ของเราเอง", "ops": "repair", "capacity": 0.08, "maintenanceMB": 6, "service": 3, "slow": true },
-    "ownApp": { "label": "แอปซื้อประกันของเราเอง", "ops": "contact", "capacity": 0.18, "maintenanceMB": 4, "service": 4, "slow": true },
-    "selfService": { "label": "บริการตัวเองผ่านแอปและ LINE", "ops": "contact", "capacity": 0.25, "maintenanceMB": 4, "service": 4, "slow": true },
-    "lineOA": { "label": "LINE OA และแชทบอท", "ops": "contact", "capacity": 0.1, "maintenanceMB": 1.5, "service": 2, "slow": false }
+    "upgradeNetwork": {
+      "label": "อัปเกรดอู่ในเครือ + รับรองมาตรฐาน",
+      "ops": "repair",
+      "capacity": 0.12,
+      "maintenanceMB": 3,
+      "service": 8,
+      "slow": true
+    },
+    "ownEvCenter": {
+      "label": "ศูนย์ซ่อม EV ของเราเอง",
+      "ops": "repair",
+      "capacity": 0.08,
+      "maintenanceMB": 6,
+      "service": 3,
+      "slow": true
+    },
+    "ownApp": {
+      "label": "แอปซื้อประกันของเราเอง",
+      "ops": "contact",
+      "capacity": 0.18,
+      "maintenanceMB": 4,
+      "service": 4,
+      "slow": true
+    },
+    "selfService": {
+      "label": "บริการตัวเองผ่านแอปและ LINE",
+      "ops": "contact",
+      "capacity": 0.25,
+      "maintenanceMB": 4,
+      "service": 4,
+      "slow": true
+    },
+    "lineOA": {
+      "label": "LINE OA และแชทบอท",
+      "ops": "contact",
+      "capacity": 0.1,
+      "maintenanceMB": 1.5,
+      "service": 2,
+      "slow": false
+    }
   },
   "temporary": {
-    "onSite": { "ops": "contact", "capacity": 0.05, "quarters": 1 },
-    "dealerService": { "ops": "repair", "capacity": 0.15, "quarters": 1 },
-    "evPartner": { "ops": "repair", "capacity": 0.06, "quarters": 2 },
-    "laborRate": { "ops": "repair", "capacity": -0.04, "quarters": 1 },
-    "inspection": { "ops": "contact", "capacity": -0.04, "quarters": 1 },
-    "tempStaff": { "ops": "contact", "capacity": 0.2, "quarters": 2 },
-    "outsourceAdjusters": { "ops": "claims", "capacity": 0.3, "quarters": 2 },
-    "fastTrack": { "ops": "claims", "capacity": 0.25, "quarters": 2 },
-    "preposition": { "ops": "claims", "capacity": 0.45, "quarters": 1 }
+    "onSite": {
+      "ops": "contact",
+      "capacity": 0.05,
+      "quarters": 1
+    },
+    "dealerService": {
+      "ops": "repair",
+      "capacity": 0.15,
+      "quarters": 1
+    },
+    "evPartner": {
+      "ops": "repair",
+      "capacity": 0.06,
+      "quarters": 2
+    },
+    "laborRate": {
+      "ops": "repair",
+      "capacity": -0.04,
+      "quarters": 1
+    },
+    "inspection": {
+      "ops": "contact",
+      "capacity": -0.04,
+      "quarters": 1
+    },
+    "tempStaff": {
+      "ops": "contact",
+      "capacity": 0.2,
+      "quarters": 2
+    },
+    "outsourceAdjusters": {
+      "ops": "claims",
+      "capacity": 0.3,
+      "quarters": 2
+    },
+    "fastTrack": {
+      "ops": "claims",
+      "capacity": 0.25,
+      "quarters": 2
+    },
+    "preposition": {
+      "ops": "claims",
+      "capacity": 0.45,
+      "quarters": 1
+    }
   },
   "hires": {
-    "hireClaims": { "team": "claims", "people": 20 }
+    "hireClaims": {
+      "team": "claims",
+      "people": 20
+    }
   },
   "garageAdds": {
     "addGarages": 40
+  },
+  "hireCapOfTeam": 0.15,
+  "systemsNote": "Engine v3 phase 3a systems. Effects at full adoption; game-design assumptions.",
+  "itSlots": 2,
+  "systemRisk": {
+    "delay": 0.25,
+    "partial": 0.2,
+    "partialFactor": 0.7
+  },
+  "adoption": {
+    "customer": {
+      "start": {
+        "direct": 0.5,
+        "dealer": 0.3,
+        "agent": 0.2
+      },
+      "step": {
+        "direct": 0.25,
+        "dealer": 0.2,
+        "agent": 0.15
+      },
+      "brandPer10": 0.05
+    },
+    "partner": {
+      "start": 0.4,
+      "step": 0.3
+    }
+  },
+  "systems": {
+    "chatbot": {
+      "label": "LINE OA + แชทบอท",
+      "side": "customer",
+      "icon": "bot",
+      "v1": {
+        "label": "LINE OA + แชทบอท",
+        "dev": 1,
+        "cost": 2,
+        "maint": 0.1,
+        "effects": {
+          "calls": -0.1,
+          "service": 2
+        }
+      },
+      "v2": {
+        "label": "AI chatbot ตอบสถานะเคลมได้",
+        "dev": 2,
+        "cost": 3,
+        "maint": 0.2,
+        "effects": {
+          "calls": -0.25,
+          "service": 4
+        }
+      }
+    },
+    "claimsApp": {
+      "label": "แอปแจ้งเคลมและติดตามเอง",
+      "side": "customer",
+      "icon": "camera",
+      "v1": {
+        "label": "แอปแจ้งเคลมและติดตามเอง",
+        "dev": 2,
+        "cost": 4,
+        "maint": 0.3,
+        "effects": {
+          "calls": -0.15,
+          "claimsWork": -0.1,
+          "service": 3
+        }
+      },
+      "v2": {
+        "label": "AI ประเมินความเสียหายจากรูป",
+        "dev": 2,
+        "cost": 5,
+        "maint": 0.4,
+        "effects": {
+          "calls": -0.15,
+          "claimsWork": -0.2,
+          "survey": -0.35,
+          "service": 4
+        }
+      }
+    },
+    "autoRenew": {
+      "label": "ต่ออายุอัตโนมัติ",
+      "side": "customer",
+      "icon": "repeat",
+      "v1": {
+        "label": "ต่ออายุอัตโนมัติ",
+        "dev": 1,
+        "cost": 2,
+        "maint": 0.1,
+        "effects": {
+          "renewal": 0.02,
+          "issuance": -0.15,
+          "calls": -0.05
+        }
+      },
+      "v2": {
+        "label": "ชำระอัตโนมัติ + ข้อเสนอรายคน",
+        "dev": 2,
+        "cost": 3,
+        "maint": 0.2,
+        "effects": {
+          "renewal": 0.04,
+          "issuance": -0.2,
+          "calls": -0.05
+        }
+      }
+    },
+    "dealerPortal": {
+      "label": "Partner Portal",
+      "side": "partner",
+      "channel": "dealer",
+      "icon": "store",
+      "v1": {
+        "label": "ดีลเลอร์ออกกรมธรรม์เอง",
+        "dev": 2,
+        "cost": 4,
+        "maint": 0.3,
+        "effects": {
+          "issuanceChannel": -0.4,
+          "pull": 0.2
+        }
+      },
+      "v2": {
+        "label": "เชื่อม API ค่ายรถ",
+        "dev": 2,
+        "cost": 5,
+        "maint": 0.4,
+        "effects": {
+          "issuanceChannel": -0.4,
+          "pull": 0.4
+        }
+      }
+    },
+    "agentApp": {
+      "label": "แอปตัวแทน",
+      "side": "partner",
+      "channel": "agent",
+      "icon": "smartphone",
+      "v1": {
+        "label": "ตัวแทนเสนอราคาและออกกรมธรรม์บนมือถือ",
+        "dev": 2,
+        "cost": 3,
+        "maint": 0.2,
+        "effects": {
+          "issuanceChannel": -0.3,
+          "pull": 0.2,
+          "calls": -0.05
+        }
+      },
+      "v2": {
+        "label": "เสนอราคาด้วย AI",
+        "dev": 2,
+        "cost": 4,
+        "maint": 0.3,
+        "effects": {
+          "issuanceChannel": -0.3,
+          "pull": 0.4,
+          "calls": -0.05
+        }
+      }
+    },
+    "garageOnline": {
+      "label": "ระบบอู่ออนไลน์",
+      "side": "partner",
+      "icon": "wrench",
+      "v1": {
+        "label": "อู่ส่งรูปและใบเสนอราคาเอง",
+        "dev": 1,
+        "cost": 3,
+        "maint": 0.2,
+        "effects": {
+          "survey": -0.2,
+          "repair": 0.08
+        }
+      },
+      "v2": {
+        "label": "สั่งอะไหล่ออนไลน์",
+        "dev": 2,
+        "cost": 4,
+        "maint": 0.3,
+        "effects": {
+          "survey": -0.2,
+          "repair": 0.15,
+          "lr": -0.005
+        }
+      }
+    }
+  },
+  "systemAlias": {
+    "ownApp": "claimsApp",
+    "selfService": "chatbot",
+    "lineOA": "chatbot"
   }
 }

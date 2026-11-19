@@ -77,6 +77,8 @@ export interface V2State {
   segRate: Record<SegmentId, number[]>
   /** price moves chosen for this quarter (fractions, e.g. -0.04), consumed by the engine */
   pendingSteps: Partial<SegMix>
+  /** phase 3a: renewal points per channel from auto-renewal systems (set by the engine each quarter) */
+  sysRenewal?: Record<ChannelId, number>
 }
 
 export const BRAND0 = 50
@@ -194,7 +196,8 @@ export function nextChannelMix(mix: Mix, attr: Record<ChannelId, number>, inerti
 /** Mix-weighted renewal rate (base by channel + lever + service quality). */
 export function renewalRates(v: V2State): Record<ChannelId, number> {
   const svc = 0.003 * (v.company.service - SERVICE0)
-  return Object.fromEntries(CHANNEL_IDS.map((c) => [c, Math.max(0.5, Math.min(0.97, CH[c].baseRenewal + leverRenewal(c, v.channels[c].lever) + svc))])) as Record<ChannelId, number>
+  // phase 3a: auto-renewal systems add points per channel, by how many customers use them
+  return Object.fromEntries(CHANNEL_IDS.map((c) => [c, Math.max(0.5, Math.min(0.97, CH[c].baseRenewal + leverRenewal(c, v.channels[c].lever) + svc + (v.sysRenewal?.[c] ?? 0)))])) as Record<ChannelId, number>
 }
 const RENEWAL0 = CHANNEL_IDS.reduce((a, c) => a + START_CHANNEL_MIX[c] * CH[c].baseRenewal, 0)
 

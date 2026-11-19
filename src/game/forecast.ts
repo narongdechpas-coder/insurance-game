@@ -32,9 +32,10 @@ export const stepsChanged = (st: SegmentSteps) => SEGMENT_IDS.some((k) => st[k] 
 /** Headcount the player wants per team (engine v3); missing teams keep their size. */
 export type StaffTarget = Partial<Record<Team, number>>
 
-export function withChannelSettings(s: GameState, set: ChannelSettings, steps?: SegmentSteps, staff?: StaffTarget): GameState {
+export function withChannelSettings(s: GameState, set: ChannelSettings, steps?: SegmentSteps, staff?: StaffTarget, orders?: string[]): GameState {
   const sim = structuredClone(s.sim)
   if (staff) sim.ops.target = { ...staff }
+  if (orders) sim.ops.orders = [...orders]
   for (const c of CHANNEL_IDS) {
     sim.v2.channels[c].lever = set[c].lever
     sim.v2.channels[c].focus = set[c].focus

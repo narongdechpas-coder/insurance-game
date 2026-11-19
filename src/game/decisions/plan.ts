@@ -1,5 +1,6 @@
 import { capitalHealth, capitalWarning } from '../capital'
 import { isInvestment } from '../sim/ops'
+import { systemSpendPreview } from '../sim/systems'
 import { P } from '../sim/params'
 import type { GameState } from '../types'
 import { CARD_BY_ID, CARDS, defaultPlan, QUARTER_BUDGET_MB } from './cards'
@@ -57,8 +58,13 @@ export function budgetOf(s: GameState) {
   return Math.max(50, Math.round((P.budgetOfEarnedPremium * ep) / 5) * 5)
 }
 
-export function budgetLeft(plan: QuarterPlan, responses: Responses = {}, owned: Owned = {}, budget: number = QUARTER_BUDGET_MB) {
-  return budget - planCost(plan, responses, owned)
+export function budgetLeft(plan: QuarterPlan, responses: Responses = {}, owned: Owned = {}, budget: number = QUARTER_BUDGET_MB, extra = 0) {
+  return budget - planCost(plan, responses, owned) - extra
+}
+
+/** Everything this quarter's plan spends from the budget: cards, responses, and system build installments. */
+export function budgetUsed(s: GameState, plan: QuarterPlan, responses: Responses = {}, orders: string[] = []) {
+  return Math.round((planCost(plan, responses, s.sim.ops.owned) + systemSpendPreview(s.sim.ops.systems, orders)) * 10) / 10
 }
 
 /** Events this quarter that still need a response. */
@@ -125,7 +131,7 @@ export function reviewPlan(plan: QuarterPlan, s: GameState, responses: Responses
   const p = Object.fromEntries(Object.entries(plan).map(([k, v]) => [k, v.option])) as Record<DecisionId, string>
   const t = (id: DecisionId) => tacticOf(plan, id)?.id
 
-  const left = budgetLeft(plan, responses, s.sim.ops.owned, budgetOf(s))
+  const left = budgetLeft(plan, responses, s.sim.ops.owned, budgetOf(s), systemSpendPreview(s.sim.ops.systems))
   const r = (eventId: string) => responses[eventId]
   // engine v3: fixed cost does not shrink with the book; flag it once it eats more than 12% of premium
   const lr = s.lastReport

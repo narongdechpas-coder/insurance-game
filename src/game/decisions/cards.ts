@@ -68,9 +68,9 @@ export const CARDS: DecisionCard[] = [
       },
       { id: 'digital', label: 'ทุ่มดิจิทัล', blurb: 'ต้นทุนต่อกรมธรรม์ต่ำ ต้องลงทุนระบบก่อน', cost: 40, icon: 'globe', impact: { growth: 1, profit: 1, risk: 0, cx: 1 },
         tactics: [
-          { id: 'ownApp', label: 'พัฒนาแอปซื้อประกันเอง', blurb: 'ใช้งบและเวลามาก แต่เป็นช่องทางของเราเองในระยะยาว', cost: 60, icon: 'smartphone', impact: { cx: 1 }, speed: 'slow', duration: 'long' },
+          { id: 'ownApp', label: 'พัฒนาแอปซื้อประกันเอง', blurb: 'ใช้งบและเวลามาก แต่เป็นช่องทางของเราเองในระยะยาว', cost: 0, icon: 'smartphone', impact: { cx: 1 }, speed: 'slow', duration: 'long' },
           { id: 'aggregator', label: 'ขายผ่านเว็บเปรียบเทียบราคา', blurb: 'ได้ลูกค้าเร็ว แต่ต้องแข่งราคากับทุกค่ายบนหน้าจอเดียว', cost: 30, icon: 'globe', impact: { profit: -1 }, speed: 'fast', duration: 'normal', recommended: true },
-          { id: 'lineOA', label: 'LINE OA และแชทบอท', blurb: 'งบต่ำ ดูแลลูกค้าเดิมได้ดี แต่หาลูกค้าใหม่ได้น้อย', cost: 20, icon: 'mic', impact: { growth: -1 }, speed: 'normal', duration: 'normal' },
+          { id: 'lineOA', label: 'LINE OA และแชทบอท', blurb: 'งบต่ำ ดูแลลูกค้าเดิมได้ดี แต่หาลูกค้าใหม่ได้น้อย', cost: 0, icon: 'mic', impact: { growth: -1 }, speed: 'normal', duration: 'normal' },
         ],
       },
     ],

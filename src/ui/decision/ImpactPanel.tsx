@@ -24,12 +24,14 @@ export function ImpactPanel() {
   const channels = useGameStore((s) => s.channels)
   const gameNow = useGameStore((s) => s.game)
   const staff = useGameStore((s) => s.staff)
+  const sysOrders = useGameStore((s) => s.sysOrders)
   // pricing and channels have their own screens now: count their changes from those drafts
   const changed =
     changedCards(plan, keptPlan(gameNow)).filter((c) => c !== 'pricing' && c !== 'distribution').length +
     (stepsChanged(segSteps) ? 1 : 0) +
     (channelsChanged(channels, settingsOf(gameNow)) ? 1 : 0) +
-    (TEAMS.some((t) => (staff[t] ?? 0) !== staffOf(gameNow)[t]) ? 1 : 0)
+    (TEAMS.some((t) => (staff[t] ?? 0) !== staffOf(gameNow)[t]) ? 1 : 0) +
+    sysOrders.length
   const scen = scenariosFor(events.map((e) => e.id))
   const answered = scen.filter((sc) => responses[sc.eventId]).length
   return (
