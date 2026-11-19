@@ -18,6 +18,6 @@ balanced, focus nonMotor everywhere        score 72 rank 1.9 win 50% bk 0% cap 2
 passive, levers neutral                    score 60 rank 3.2 win 5% bk 0% cap 2935 share 16.5 CR 94.8 sat 3.22 mix 44/31/26
 passive, all -4                            score 64 rank 2.6 win 23% bk 0% cap 3479 share 5.8 CR 85.9 sat 3.73 mix 34/23/43
 growth, levers neutral                     score 8 rank 5.0 win 0% bk 100% cap 611 share 36.6 CR 118.0 sat 2.05 mix 48/28/24
-profit, levers neutral                     score 57 rank 3.3 win 10% bk 0% cap 2621 share 11.0 CR 91.4 sat 3.29 mix 44/31/25
-smart, levers neutral                      score 46 rank 4.4 win 0% bk 0% cap 1610 share 25.0 CR 100.5 sat 3.88 mix 47/28/25
+profit, levers neutral                     score 57 rank 3.3 win 10% bk 0% cap 2642 share 11.0 CR 91.2 sat 3.29 mix 44/31/25
+smart, levers neutral                      score 46 rank 4.4 win 0% bk 0% cap 1611 share 25.0 CR 100.5 sat 3.88 mix 47/28/25
 ```

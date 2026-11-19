@@ -436,8 +436,10 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   const trend = (1 + P.claimsTrend) ** q
   const prevMix = sim.mix
   sim.mix = nextChannelMix(sim.mix, chAttr)
-  const book = bookFactors(sim.v2, sim.mix)
+  // segments priced below the rest of the book grow before the book is measured, so every
+  // number this quarter (loss ratio, flood, the Product page, channel segments) uses the same mix
   driftByPrice(sim.v2)
+  const book = bookFactors(sim.v2, sim.mix)
   const rateLR = P.baseLossRatio * trend * segmentRateLR(sim.v2, book.mix, P.rateLagWeights, P.rateCap)
   const marketPrice = sim.firms.reduce((a, f) => a + f.price * f.share, 0) / sim.firms.reduce((a, f) => a + f.share, 0)
   const priceGap = pl.price / marketPrice - 1
