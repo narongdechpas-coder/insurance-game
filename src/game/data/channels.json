@@ -1,0 +1,17 @@
+{
+  "_note": "ช่องทางขาย (ตาราง 4.1 และ 4.2 ใน docs/ENGINE_V2.md) · ค่าทั้งหมดเป็นสมมติฐานของเกม ไม่ใช่สถิติตลาด · แก้ค่าที่ไฟล์นี้ได้โดยตรง แล้วรันเทส (npx vitest run src/game/data) เพื่อเช็คว่าผลรวมยังถูก",
+  "_fields": {
+    "marketShare": "สัดส่วนของตลาดรวมที่ขายผ่านช่องทางนี้ (รวมทุกช่องทาง = 1)",
+    "segmentMix": "ส่วนผสมกลุ่มรถที่ช่องทางนี้ขาย (รวม = 1 ต่อช่องทาง) อ้าง id จาก segments.json",
+    "baseRenewal": "อัตราต่ออายุพื้นฐานต่อปี",
+    "lever": "slider ของช่องทาง: commission = ค่าคอมเทียบตลาด (จุด), adSpend = งบโฆษณาออนไลน์เทียบคู่แข่ง (%)",
+    "marketRate": "ค่ากลางของตลาด (คอมมิชชัน หรืองบโฆษณา เป็นสัดส่วนของเบี้ย)",
+    "steps": "ขั้นของ slider (5 ขั้น)",
+    "brandSensitivity": "ลูกค้าใหม่ไวต่อ Brand Awareness แค่ไหน (1 = เฉลี่ย)"
+  },
+  "channels": [
+    { "id": "dealer", "label": "Dealer", "marketShare": 0.45, "segmentMix": { "newCar": 0.60, "oldCar": 0.10, "budget": 0.10, "ev": 0.15, "nonMotor": 0.05 }, "baseRenewal": 0.70, "lever": "commission", "marketRate": 0.19, "steps": [-0.04, -0.02, 0, 0.02, 0.04], "brandSensitivity": 0.5 },
+    { "id": "agent", "label": "Agent", "marketShare": 0.30, "segmentMix": { "newCar": 0.20, "oldCar": 0.40, "budget": 0.20, "ev": 0.00, "nonMotor": 0.20 }, "baseRenewal": 0.88, "lever": "commission", "marketRate": 0.27, "steps": [-0.04, -0.02, 0, 0.02, 0.04], "brandSensitivity": 1.0 },
+    { "id": "direct", "label": "Direct", "marketShare": 0.25, "segmentMix": { "newCar": 0.15, "oldCar": 0.20, "budget": 0.50, "ev": 0.10, "nonMotor": 0.05 }, "baseRenewal": 0.75, "lever": "adSpend", "marketRate": 0.15, "steps": [-0.5, -0.25, 0, 0.25, 0.5], "brandSensitivity": 2.0 }
+  ]
+}

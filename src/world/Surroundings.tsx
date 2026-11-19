@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react'
-import { spriteUrl, SPRITES, type SpriteKey } from '../assets/registry'
+import { hasSprite, RIVAL_CITY_ART, spriteUrl, SPRITES, type SpriteKey } from '../assets/registry'
 import { useGameStore } from '../store/useGameStore'
 import { Sprite } from './Sprite'
 import { BACK_STRIP, ISLAND, RIVER, ROADS, type Placement } from './layout'
@@ -50,6 +50,8 @@ const insideRing = (u: number, v: number) => u > u0 - RING && u < u1 + RING && v
  */
 const MAIN_U = new Set([u0 - RING, u1 + RING, ...ROADS.v.map((r) => r.u)])
 const MAIN_V = new Set([v1 + RING, ...ROADS.u.map((r) => r.v)])
+/** The outer block right of the island on the river row is kept for BlueWave's headquarters. */
+const RIVAL_CELL = `${uCuts.indexOf(u1 + RING)},0`
 const mergeRight = new Set<string>() // cell i,j absorbs i+1,j
 const mergeDown = new Set<string>() // cell i,j absorbs i,j+1
 {
@@ -58,7 +60,7 @@ const mergeDown = new Set<string>() // cell i,j absorbs i,j+1
   const outside = (i: number, j: number) => !insideRing((uCuts[i] + uCuts[i + 1]) / 2, (vCuts[j] + vCuts[j + 1]) / 2)
   for (let i = 0; i < uCuts.length - 1; i++)
     for (let j = 0; j < vCuts.length - 1; j++) {
-      if (used.has(`${i},${j}`) || !outside(i, j)) continue
+      if (used.has(`${i},${j}`) || !outside(i, j) || `${i},${j}` === RIVAL_CELL || `${i + 1},${j}` === RIVAL_CELL || `${i},${j + 1}` === RIVAL_CELL) continue
       const roll = r()
       if (roll < 0.16 && i + 1 < uCuts.length - 1 && !MAIN_U.has(uCuts[i + 1]) && outside(i + 1, j) && !used.has(`${i + 1},${j}`)) {
         mergeRight.add(`${i},${j}`)
@@ -149,6 +151,16 @@ function cuts(r: () => number, n: number, gap: number): [number, number][] {
   })
 }
 
+/** BlueWave's HQ, centred on its reserved block and scaled to fit it (null until the art exists). */
+function rivalPlacement(lot: [number, number, number, number] | null): Walkup | null {
+  const key = RIVAL_CITY_ART.bluewave
+  if (!lot || !hasSprite(key)) return null
+  const [bu0, bv0, bu1, bv1] = lot
+  const f = footprint(key)
+  const scale = Math.min(0.46, ((bu1 - bu0) * 0.9) / f.du, ((bv1 - bv0) * 0.9) / f.dv)
+  return { sprite: key, u: bu0 + (bu1 - bu0 - f.du * scale) / 2, v: bv1 - (bv1 - bv0 - f.dv * scale) / 2, scale }
+}
+
 /** Lots, massing boxes, walk-ups and street trees for every outer block. Deterministic. */
 export function cityBlocks() {
   const r = rng(91)
@@ -157,6 +169,7 @@ export function cityBlocks() {
   const trees: [number, number][] = []
   const pads: [number, number, number, number][] = []
   const parks = new Set<string>()
+  let rivalLot: [number, number, number, number] | null = null
   for (let i = 0; i < uCuts.length - 1; i++)
     for (let j = 0; j < vCuts.length - 1; j++) {
       if (absorbed(i, j)) continue
@@ -167,6 +180,11 @@ export function cityBlocks() {
       if (bu1 - bu0 < 120 || bv1 - bv0 < 120) continue
       if (insideRing((bu0 + bu1) / 2, (bv0 + bv1) / 2)) continue
       pads.push([bu0, bv0, bu1, bv1])
+      if (`${i},${j}` === RIVAL_CELL) {
+        rivalLot = [bu0, bv0, bu1, bv1]
+        for (let u = bu0 + 30; u < bu1 - 20; u += 95) trees.push([u, bv1 - 14])
+        continue
+      }
       // street trees along the two road-facing edges you see (front and left)
       const streetTrees = () => {
         for (let u = bu0 + 30; u < bu1 - 20; u += 95) trees.push([u, bv1 - 14])
@@ -227,7 +245,7 @@ export function cityBlocks() {
       }
       streetTrees()
     }
-  return { boxes, walkups, trees, pads }
+  return { boxes, walkups, trees, pads, rival: rivalPlacement(rivalLot) }
 }
 
 /** Outer streets, drawn by Ground in one network with the island's own streets. */
@@ -301,7 +319,7 @@ function MassBox({ b }: { b: Box }) {
 
 /** Massing blocks and street trees (live in the depth-sorted sprite layer). */
 export const Surroundings = memo(function Surroundings() {
-  const { boxes, walkups, trees } = useMemo(() => cityBlocks(), [])
+  const { boxes, walkups, trees, rival } = useMemo(() => cityBlocks(), [])
   const style = useGameStore((s) => s.settings.cityStyle)
   return (
     <>
@@ -312,6 +330,10 @@ export const Surroundings = memo(function Surroundings() {
             const m = SPRITES[w.sprite]
             return <Sprite key={`w${i}`} sprite={w.sprite} u={w.u} v={w.v} scale={w.scale} anchor={[m.ax, m.ay]} />
           })}
+      {rival && (
+        // a rival landmark: real art in both city styles
+        <Sprite sprite={rival.sprite} u={rival.u} v={rival.v} scale={rival.scale} anchor={[SPRITES[rival.sprite].ax, SPRITES[rival.sprite].ay]} style={{ filter: 'drop-shadow(0 8px 10px rgba(30,50,90,0.15))' }} />
+      )}
       {trees.map(([u, v], i) => {
         const p = project(u, v)
         return (

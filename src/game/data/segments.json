@@ -1,0 +1,18 @@
+{
+  "_note": "กลุ่มรถ (ตาราง 3 ใน docs/ENGINE_V2.md) · ค่าทั้งหมดเป็นสมมติฐานของเกม ไม่ใช่สถิติตลาด · แก้ค่าที่ไฟล์นี้ได้โดยตรง แล้วรันเทส (npx vitest run src/game/data) เพื่อเช็คว่าผลรวมยังถูก",
+  "_fields": {
+    "startShare": "สัดส่วนของพอร์ตตอนเริ่มเกม (รวมทุกกลุ่ม = 1)",
+    "premiumIndex": "เบี้ยเฉลี่ยต่อกรมธรรม์ เทียบดัชนี (ชั้น 1 รถอายุมาก = 100)",
+    "adequateLR": "Loss Ratio เมื่อราคาพอดีกับความเสี่ยง",
+    "priceSensitivity": "ความไวต่อราคา: low / mid / high",
+    "volatility": "ความผันผวนของเคลม: low / mid / high",
+    "floodExposure": "ความเสียหายเมื่อน้ำท่วม เทียบค่าเฉลี่ยพอร์ต (1 = เฉลี่ย)"
+  },
+  "segments": [
+    { "id": "newCar", "label": "ชั้น 1 รถใหม่ (≤ 3 ปี)", "startShare": 0.39, "premiumIndex": 130, "adequateLR": 0.57, "priceSensitivity": "mid", "volatility": "low", "floodExposure": 1.0 },
+    { "id": "oldCar", "label": "ชั้น 1 รถอายุมาก", "startShare": 0.21, "premiumIndex": 100, "adequateLR": 0.64, "priceSensitivity": "mid", "volatility": "mid", "floodExposure": 1.0 },
+    { "id": "budget", "label": "2+ / 3+", "startShare": 0.22, "premiumIndex": 45, "adequateLR": 0.52, "priceSensitivity": "high", "volatility": "low", "floodExposure": 0.6 },
+    { "id": "ev", "label": "EV", "startShare": 0.09, "premiumIndex": 150, "adequateLR": 0.66, "priceSensitivity": "low", "volatility": "high", "floodExposure": 1.2 },
+    { "id": "nonMotor", "label": "Non-motor (บ้าน/SME + PA)", "startShare": 0.09, "premiumIndex": 60, "adequateLR": 0.50, "priceSensitivity": "low", "volatility": "high", "floodExposure": 1.8 }
+  ]
+}
