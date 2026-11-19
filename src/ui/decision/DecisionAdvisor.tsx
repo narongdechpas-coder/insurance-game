@@ -5,13 +5,18 @@ import { ADVISOR_NAME } from '../../game/narrative/advisor'
 import { CARD_BY_ID } from '../../game/decisions/cards'
 import { reviewPlan, unansweredEvents } from '../../game/decisions/plan'
 import { responseOf, SCENARIO_BY_EVENT } from '../../game/decisions/scenarios'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+import { play } from '../../audio/sfx'
+import { capitalHealth } from '../../game/capital'
 import type { DecisionId } from '../../game/decisions/types'
 import { capacityWarning } from '../../game/forecast'
 import { useGameStore } from '../../store/useGameStore'
 import { Glossed } from '../glossary/Term'
 
 /** Advisor reacts to the plan as it changes: warnings first, then tips, then card guidance. */
+/** quarter the capital-danger cue last played in (once per quarter, not on every visit) */
+let dangerPlayedFor = -1
+
 export function DecisionAdvisor() {
   const plan = useGameStore((s) => s.plan)
   const game = useGameStore((s) => s.game)
@@ -31,6 +36,22 @@ export function DecisionAdvisor() {
     step === 'strategy' ? [activeCard === 'staff' ? 'repair' : activeCard] : step === 'scenario' && activeEvent ? (responseOf(responses, activeEvent)?.related ?? []) : []
   const warnings = notes.filter((n) => n.tone === 'warning')
   const tips = notes.filter((n) => n.tone === 'tip')
+  // cues: a new warning (two notes down), a new tip (soft ding), capital in danger (three low notes, once a quarter)
+  const counts = useRef({ w: warnings.length, t: tips.length })
+  useEffect(() => {
+    const was = counts.current
+    if (warnings.length > was.w) play('warning')
+    else if (tips.length > was.t && !warnings.length) play('tip')
+    counts.current = { w: warnings.length, t: tips.length }
+  }, [warnings.length, tips.length])
+  const danger = capitalHealth(game).level === 'danger'
+  const qi = game.quarter.index
+  useEffect(() => {
+    if (danger && dangerPlayedFor !== qi) {
+      dangerPlayedFor = qi
+      play('danger')
+    }
+  }, [danger, qi])
   const about = (n: { cards: string[] }) => n.cards.length === 0 || n.cards.some((c) => focus.includes(c))
   const lead = warnings.find(about) ?? tips.find(about) ?? warnings[0] ?? tips[0]
   const pending = unansweredEvents(game, responses).length

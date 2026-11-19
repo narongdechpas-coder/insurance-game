@@ -86,7 +86,7 @@ export function DecisionRoom() {
               <button onClick={() => setStep('strategy')} className={GHOST}>
                 <ChevronsLeft size={18} /> กลับไปแก้กลยุทธ์
               </button>
-              <button
+              <button data-sfx="none"
                 disabled={over || pending > 0}
                 onClick={() => {
                   confirm()

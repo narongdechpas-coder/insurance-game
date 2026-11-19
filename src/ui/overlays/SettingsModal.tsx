@@ -1,4 +1,4 @@
-import { Box, Building2, Home, Save, Trash2 } from 'lucide-react'
+import { Box, Building2, Home, Save, Trash2, Volume2, VolumeX } from 'lucide-react'
 import { useState } from 'react'
 import { useGameStore } from '../../store/useGameStore'
 import { InstallButton } from '../InstallButton'
@@ -21,6 +21,10 @@ export function SettingsModal() {
   const speed = useGameStore((s) => s.settings.runSpeed)
   const setSpeed = useGameStore((s) => s.setRunSpeed)
   const toCover = useGameStore((s) => s.toCover)
+  const soundOn = useGameStore((s) => s.settings.soundOn)
+  const sfxVolume = useGameStore((s) => s.settings.sfxVolume)
+  const musicVolume = useGameStore((s) => s.settings.musicVolume)
+  const setSound = useGameStore((s) => s.setSound)
   const deleteSave = useGameStore((s) => s.deleteSave)
   const q = useGameStore((s) => s.game.quarter)
   const [confirm, setConfirm] = useState(false)
@@ -61,6 +65,26 @@ export function SettingsModal() {
             </button>
           )
         })}
+      </div>
+
+      <div className="text-[14px] text-navy-700/80 mt-5 mb-2">เสียง</div>
+      <div className="rounded-2xl bg-white/80 px-4 py-3 space-y-2.5" data-sound-settings>
+        <button data-sound-toggle onClick={() => setSound({ soundOn: !soundOn })} className="flex items-center gap-3 text-[15px] font-medium text-navy-900">
+          {soundOn ? <Volume2 size={20} className="text-brand-600" /> : <VolumeX size={20} className="text-navy-700/60" />}
+          {soundOn ? 'เปิดเสียง' : 'ปิดเสียงอยู่'}
+        </button>
+        {(
+          [
+            ['sfxVolume', 'เสียงประกอบ', sfxVolume],
+            ['musicVolume', 'เพลงพื้นหลัง (เร็วๆ นี้)', musicVolume],
+          ] as const
+        ).map(([k, label, v]) => (
+          <label key={k} className={`flex items-center gap-3 text-[13.5px] text-navy-800 ${soundOn ? '' : 'opacity-40'}`}>
+            <span className="w-[150px]">{label}</span>
+            <input data-volume={k} type="range" min={0} max={100} step={5} value={Math.round(v * 100)} disabled={!soundOn} onChange={(e) => setSound({ [k]: Number(e.target.value) / 100 })} className="flex-1 accent-brand-500" />
+            <span className="w-10 text-right tabular-nums">{Math.round(v * 100)}%</span>
+          </label>
+        ))}
       </div>
 
       <div className="mt-5 rounded-2xl bg-white/80 px-4 py-3 flex items-center gap-3 text-[14px] text-navy-800">

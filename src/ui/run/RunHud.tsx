@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useGameStore } from '../../store/useGameStore'
 import { mb, pct } from '../review/format'
 import { Stage } from '../Stage'
+import { play } from '../../audio/sfx'
 import { buildTimeline, MONTH_SECONDS, MONTHS, monthAt, RUN_SECONDS } from './timeline'
 
 const MONTH_NAMES = [
@@ -27,6 +28,15 @@ export function RunHud() {
   useEffect(() => {
     if (t >= RUN_SECONDS) finish()
   }, [t, finish])
+  // sounds: a tick as each month turns, thunder when the flood arrives
+  const monthNow = monthAt(t)
+  useEffect(() => {
+    if (monthNow > 1) play('month')
+  }, [monthNow])
+  const floodNow = floodFrom !== null && floodFrom !== undefined && t >= floodFrom
+  useEffect(() => {
+    if (floodNow) play('flood')
+  }, [floodNow])
   const r = game.lastReport
   if (!r) return null
   const k = Math.min(1, t / (MONTHS * MONTH_SECONDS)) // share of the quarter elapsed
