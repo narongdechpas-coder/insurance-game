@@ -48,5 +48,6 @@ export function createSimState(config: GameConfig, competitors: Competitor[], pl
     mix: { ...START_MIX },
     prevWp: playerShare * P.marketGwp0,
     v2: createV2(),
+    log: [],
   }
 }

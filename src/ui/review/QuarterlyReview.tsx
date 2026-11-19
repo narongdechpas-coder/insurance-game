@@ -234,7 +234,7 @@ export function QuarterlyReview() {
             </div>
           ) : (
             <div className="flex-1 min-h-0 px-8 pb-4 overflow-auto">
-              <PnlTable pnl={r.pnl} />
+              <PnlTable pnl={r.pnl} prev={game.sim.log?.[game.sim.log.length - 2]?.pnl ?? null} prevLabel={`ไตรมาสก่อน (${game.sim.log?.[game.sim.log.length - 2]?.label ?? ''})`} />
               <p className="mt-2 text-[12px] text-navy-700/60 flex items-center gap-1.5">
                 <BookOpen size={13} /> ตัวเลขจำลองจากค่าประมาณการเพื่อเกม หน่วยล้านบาท · ทุกอัตราส่วนคิดบนเบี้ยประกันภัยที่ถือเป็นรายได้ (Earned Premium) · ค่าการตลาดของช่อง Direct รวมค่าโฆษณาและค่าแพลตฟอร์ม
               </p>

@@ -150,3 +150,16 @@ export function buildPnl(x: Inputs): Pnl {
   }
   return { columns: [...cols, total], reinsurance: x.reinsurance, netUwResult: total.uwResult - x.reinsurance, investmentIncome: x.investmentIncome }
 }
+
+/** Add several quarters' P&L together (ratios are recomputed from the summed amounts by the table). */
+export function sumPnl(list: Pnl[]): Pnl | null {
+  if (!list.length) return null
+  const keys = ['writtenPremium', 'earnedPremium', 'paidLoss', 'incurredLoss', 'commission', 'marketing', 'otherUw', 'admin', 'expenseTotal', 'uwResult'] as const
+  const columns = list[0].columns.map((c0) => {
+    const col = { ...c0 }
+    for (const k of keys) col[k] = list.reduce((a, p) => a + (p.columns.find((x) => x.id === c0.id)?.[k] ?? 0), 0)
+    return col
+  })
+  const add = (k: 'reinsurance' | 'netUwResult' | 'investmentIncome') => list.reduce((a, p) => a + p[k], 0)
+  return { columns, reinsurance: add('reinsurance'), netUwResult: add('netUwResult'), investmentIncome: add('investmentIncome') }
+}

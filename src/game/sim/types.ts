@@ -65,6 +65,28 @@ export interface SimState {
   shareHistory: Record<string, number>[]
   /** engine v2: company stocks (brand, service) and per-channel segments and levers */
   v2: V2State
+  /** one short entry per quarter played, for the end-of-game lessons */
+  log: QuarterLog[]
+}
+
+/** What happened in one quarter, kept small: the plan, the events, the result and why. */
+export interface QuarterLog {
+  quarter: number
+  label: string // "Q1/1"
+  choices: { card: string; option: string; tactic?: string }[] // every card (default stances included)
+  responses: Record<string, string>
+  events: string[]
+  levers: Record<string, number>
+  after: CompanyKpis
+  price: number // player's price index after the quarter (1 = start)
+  flood: FloodOutcome
+  catGross: number
+  catNet: number
+  loads: Capacity
+  renewal: number | null // renewal-season rate, when this quarter had one
+  drivers: { id: string; text: string; tone: 'good' | 'bad'; weight: number }[] // top drivers
+  /** underwriting P&L by channel (for quarter-on-quarter comparison and the game total) */
+  pnl: Pnl
 }
 
 export type FloodOutcome = 'none' | 'hit' | 'missed'
