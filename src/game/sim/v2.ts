@@ -40,9 +40,38 @@ export interface CompanyState {
   service: number // Service Quality 0–100
 }
 
+/** One quarter of channel and segment results, kept for the channel report and the Product page. */
+export interface ChannelSnapshot {
+  quarter: number // index of the quarter played
+  label: string // e.g. "Q1/1"
+  channels: Record<ChannelId, { gwp: number; ep: number; lossRatio: number; combinedRatio: number; commission: number; uwResult: number; renewal: number; mix: number }>
+  portfolio: SegMix
+  segLossRatio: SegMix // estimated loss ratio by segment, scaled to the book's actual loss ratio
+  brand: number
+  service: number
+  marketingSpend: number
+  newBusiness: number // million THB of premium from share gained this quarter
+}
+
+/** Expected renewal for the coming renewal season, computed from the year that just ended. */
+export interface RenewalOutlook {
+  rate: number
+  byChannel: Record<ChannelId, number>
+  baseline: number // market-typical rate for this channel mix at game start
+  satisfaction: number
+  avgOverload: number
+  service: number
+  contactOverloaded: boolean
+}
+
 export interface V2State {
   company: CompanyState
   channels: Record<ChannelId, ChannelState>
+  history: ChannelSnapshot[]
+  /** overload accumulated over the current year (sum of excess loads, number of quarters) */
+  year: { excess: number; quarters: number }
+  /** set at the end of each Q4, applied in the next quarter's renewal season */
+  renewal: RenewalOutlook | null
 }
 
 export const BRAND0 = 50
@@ -52,6 +81,9 @@ export function createV2(): V2State {
   return {
     company: { brand: BRAND0, service: SERVICE0 },
     channels: Object.fromEntries(CHANNEL_TABLE.map((c) => [c.id, { seg: { ...(c.segmentMix as SegMix) }, lever: 2, focus: null }])) as Record<ChannelId, ChannelState>,
+    history: [],
+    year: { excess: 0, quarters: 0 },
+    renewal: null,
   }
 }
 
@@ -157,6 +189,28 @@ export function renewalRates(v: V2State): Record<ChannelId, number> {
   return Object.fromEntries(CHANNEL_IDS.map((c) => [c, Math.max(0.5, Math.min(0.97, CH[c].baseRenewal + leverRenewal(c, v.channels[c].lever) + svc))])) as Record<ChannelId, number>
 }
 const RENEWAL0 = CHANNEL_IDS.reduce((a, c) => a + START_CHANNEL_MIX[c] * CH[c].baseRenewal, 0)
+
+export const RENEWAL_BASELINE = RENEWAL0
+
+/**
+ * Renewal season (start of each year): how many customers renew, from the year that just ended.
+ * Satisfaction moves every channel ±6 pts per star around 3.8; an overloaded year costs renewals.
+ * Game assumptions, not market data.
+ */
+export function renewalOutlook(v: V2State, mix: Mix, satisfaction: number, contactOverloaded: boolean): RenewalOutlook {
+  const avgOverload = v.year.quarters ? v.year.excess / v.year.quarters : 0
+  const base = renewalRates(v)
+  const byChannel = Object.fromEntries(
+    CHANNEL_IDS.map((c) => [c, Math.max(0.55, Math.min(0.95, base[c] + 0.06 * (satisfaction - 3.8) - 1.0 * avgOverload))]),
+  ) as Record<ChannelId, number>
+  const rate = CHANNEL_IDS.reduce((a, c) => a + mix[c] * byChannel[c], 0)
+  return { rate, byChannel, baseline: RENEWAL0, satisfaction, avgOverload, service: v.company.service, contactOverloaded }
+}
+
+/** Share multiplier from a renewal season: each point of renewal above/below the baseline. */
+export const renewalShareFactor = (rate: number) => 1 + 0.6 * (rate - RENEWAL0)
+/** Rivals face the same season, driven by their satisfaction. */
+export const rivalRenewal = (satisfaction: number) => Math.max(0.55, Math.min(0.95, RENEWAL0 + 0.06 * (satisfaction - 3.8)))
 
 /** Share inertia for the player: better renewal keeps more of last quarter's book. */
 export function playerInertia(v: V2State, mix: Mix, base: number): number {

@@ -1,10 +1,11 @@
-import { BookOpen, Building2, ClipboardList, Cog, LineChart, Settings, Target, Trophy } from 'lucide-react'
+import { BookOpen, Building2, CarFront, ClipboardList, Cog, LineChart, Settings, Target, Trophy } from 'lucide-react'
 import { brandUrl } from '../assets/registry'
 import { useGameStore } from '../store/useGameStore'
 
 const NAV = [
   { id: 'hq', label: 'HQ', icon: Building2, phase: null },
   { id: 'market', label: 'Market', icon: LineChart, phase: null },
+  { id: 'product', label: 'Product', icon: CarFront, phase: null },
   { id: 'strategy', label: 'Strategy', icon: Target, phase: null },
   { id: 'operation', label: 'Operation', icon: Cog, phase: null },
   { id: 'report', label: 'Report', icon: ClipboardList, phase: null },
@@ -36,7 +37,7 @@ export function TopBar() {
                   ? close()
                   : n.id === 'strategy'
                     ? open()
-                    : n.id === 'market' || n.id === 'operation'
+                    : n.id === 'market' || n.id === 'operation' || n.id === 'product'
                       ? openPage(n.id)
                       : n.id === 'report'
                       ? hasReport

@@ -9,6 +9,7 @@ import { Simulating } from './ui/review/Simulating'
 import { RunHud } from './ui/run/RunHud'
 import { MarketPage } from './ui/pages/MarketPage'
 import { OperationPage } from './ui/pages/OperationPage'
+import { ProductPage } from './ui/pages/ProductPage'
 import { Overlays } from './ui/overlays/Overlays'
 import { WorldView } from './world/WorldView'
 
@@ -31,6 +32,7 @@ export default function App() {
       {screen === 'gameover' && <GameOver />}
       {screen === 'market' && <MarketPage />}
       {screen === 'operation' && <OperationPage />}
+      {screen === 'product' && <ProductPage />}
       <Intro />
       <Overlays />
     </>

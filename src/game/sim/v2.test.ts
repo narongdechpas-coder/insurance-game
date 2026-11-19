@@ -87,3 +87,38 @@ describe('engine v2', () => {
     expect(overload.lastReport!.v2.service).toBeLessThan(invest.lastReport!.v2.service)
   })
 })
+
+describe('renewal season', () => {
+  const play = (s: GameState, p: QuarterPlan, n: number, resp: Record<string, string> = {}) => {
+    for (let i = 0; i < n; i++) s = simulateQuarter({ ...s, events: s.events.filter((e) => e.id === 'renewal-season') }, p, resp)
+    return s
+  }
+  it('arrives after every Q4 with an expected rate in the card, and moves share in the next quarter', () => {
+    const s4 = play(start(), plan(), 4)
+    const ev = s4.events.find((e) => e.id === 'renewal-season')
+    expect(ev).toBeTruthy()
+    expect(ev!.detail).toMatch(/คาดว่าจะต่ออายุ \d+%/)
+    expect(s4.sim.v2.renewal).not.toBeNull()
+    const s5 = simulateQuarter(s4, plan(), { 'renewal-season': 'standardRenewal' })
+    expect(s5.lastReport!.v2.renewalSeason).not.toBeNull()
+    expect(s5.lastReport!.drivers.some((d) => d.id === 'renewal')).toBe(true)
+    expect(s5.sim.v2.renewal).toBeNull()
+  })
+  it('a loyalty discount renews more customers than doing nothing', () => {
+    const s4 = play(start(), plan(), 4)
+    const a = simulateQuarter(s4, plan(), { 'renewal-season': 'loyaltyDiscount' }, { calm: true })
+    const b = simulateQuarter(s4, plan(), { 'renewal-season': 'standardRenewal' }, { calm: true })
+    expect(a.lastReport!.v2.renewalSeason!.rate).toBeCloseTo(b.lastReport!.v2.renewalSeason!.rate + 0.04, 6)
+    expect(a.kpis.marketShare).toBeGreaterThan(b.kpis.marketShare)
+  })
+  it('an overloaded year renews fewer customers', () => {
+    const calmYear = play(start(), plan(), 4)
+    const hotYear = play(start(), plan({ pricing: 'cut2' }), 4)
+    expect(hotYear.sim.v2.renewal!.avgOverload).toBeGreaterThan(calmYear.sim.v2.renewal!.avgOverload)
+  })
+  it('keeps a channel history every quarter', () => {
+    const s = play(start(), plan(), 3)
+    expect(s.sim.v2.history).toHaveLength(3)
+    expect(s.sim.v2.history[2].label).toBe('Q3/1')
+  })
+})

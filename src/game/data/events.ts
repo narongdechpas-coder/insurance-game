@@ -141,6 +141,16 @@ export const CONSEQUENCE_EVENTS: GameEvent[] = [
     modules: ['vehicleRisk', 'pricing'],
   },
   {
+    id: 'renewal-season',
+    kind: 'threat',
+    consequence: true,
+    title: 'ฤดูต่ออายุกรมธรรม์ต้นปี',
+    detail: 'กรมธรรม์ที่ขายไปเมื่อปีก่อนครบรอบต่ออายุพร้อมกัน ลูกค้าจะต่ออายุมากน้อยแค่ไหน ขึ้นกับความพอใจและงานบริการตลอดปีที่ผ่านมา',
+    icon: 'renewal',
+    locations: ['customers'],
+    modules: ['cx', 'distribution'],
+  },
+  {
     id: 'word-of-mouth',
     kind: 'opportunity',
     consequence: true,

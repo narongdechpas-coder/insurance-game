@@ -128,6 +128,8 @@ export interface QuarterReport {
     channelSeg: Record<ChannelId, SegMix>
     renewal: Record<ChannelId, number>
     levers: Record<ChannelId, number>
+    /** set in a renewal-season quarter */
+    renewalSeason: { rate: number; byChannel: Record<string, number>; dShare: number } | null
   }
 }
 
