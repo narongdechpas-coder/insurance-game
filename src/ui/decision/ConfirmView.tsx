@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { settingsOf } from '../../game/forecast'
 import { channelsChanged, channelSummary } from './ChannelStage'
 import { priceSummary } from './PricingStage'
@@ -5,6 +6,8 @@ import { stepsChanged } from '../../game/forecast'
 import { AlertTriangle, Pencil, Users } from 'lucide-react'
 import { spriteUrl } from '../../assets/registry'
 import { CARDS, isUnlocked } from '../../game/decisions/cards'
+import { attributePlan, type Delta } from '../../game/choiceForecast'
+import { useDraft } from './useDraft'
 import { budgetOf, budgetUsed, choiceCost, optionOf, reviewPlan, tacticOf } from '../../game/decisions/plan'
 import { responseOf, scenariosFor } from '../../game/decisions/scenarios'
 import { useGameStore } from '../../store/useGameStore'
@@ -34,7 +37,7 @@ export function ConfirmView() {
   const warnings = reviewPlan(plan, game, responses).filter((n) => n.tone === 'warning')
 
   return (
-    <section data-stage="confirm" className="absolute left-7 right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] glass rounded-[28px] p-6 pointer-events-auto anim-rise">
+    <section data-stage="confirm" className="absolute left-7 right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[590px] overflow-y-auto glass rounded-[28px] p-6 pointer-events-auto anim-rise">
       <div className="flex items-end justify-between">
         <div>
           <div className="text-[13px] text-brand-600 font-medium">ปีที่ {q.year} · ไตรมาส {q.q}</div>
@@ -116,6 +119,8 @@ export function ConfirmView() {
         </div>
       </div>
 
+      <Attribution />
+
       <div className="mt-4 flex items-center justify-end gap-6 rounded-2xl bg-white/70 px-5 py-3">
         <span className="text-[14px] text-navy-700/80">งบที่ใช้ทั้งไตรมาส</span>
         <span className={`font-display font-bold text-[22px] ${used > budget ? 'text-alert' : 'text-navy-900'}`}>
@@ -124,5 +129,51 @@ export function ConfirmView() {
         <span className="text-[13.5px] text-navy-700/70">เหลือ {Math.max(0, budget - used)} ล้านบาท</span>
       </div>
     </section>
+  )
+}
+
+
+const sgn = (v: number, d = 0) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${Math.abs(v).toLocaleString('th-TH', { maximumFractionDigits: d, minimumFractionDigits: d })}`
+const tc = (v: number, eps: number, good = 1) => (Math.abs(v) < eps ? 'text-navy-700/55' : v * good > 0 ? 'text-emerald-700' : 'text-red-700')
+
+/** ③ What each change does on its own, plus the "together" row so the rows add up to the whole plan. */
+function Attribution() {
+  const game = useGameStore((s) => s.game)
+  const draft = useDraft()
+  const a = useMemo(() => attributePlan(game, draft), [game, draft])
+  const row = (key: string, label: string, d: Delta, strong = false) => (
+    <tr key={key} data-attr-row={key} className={strong ? 'font-semibold border-b border-brand-100' : ''}>
+      <td className="py-1 pr-3 text-navy-900">{label}</td>
+      <td className={`py-1 px-2 text-right tabular-nums ${tc(d.dGwp, 1)}`}>{sgn(d.dGwp)}</td>
+      <td className={`py-1 px-2 text-right tabular-nums ${tc(d.dUw3, 1)}`}>{sgn(d.dUw3)}</td>
+      <td className={`py-1 px-2 text-right tabular-nums ${tc(d.dSat3, 0.005)}`}>{sgn(d.dSat3, 2)}</td>
+      <td className={`py-1 pl-2 text-right tabular-nums ${tc(d.dFloodLoss, 1, -1)}`}>{sgn(d.dFloodLoss)}</td>
+    </tr>
+  )
+  return (
+    <div className="mt-4 rounded-2xl bg-white/70 px-5 py-3" data-attribution>
+      <div className="font-display font-semibold text-[16px] text-navy-900">③ แต่ละเรื่องให้ผลเท่าไหร่ (ประมาณการ เทียบกับคงทุกอย่างไว้)</div>
+      {a.rows.length === 0 ? (
+        <div className="text-[13.5px] text-navy-700/70 mt-1">ไตรมาสนี้ไม่ได้เปลี่ยนอะไร ทุกอย่างใช้ค่าเดิม</div>
+      ) : (
+        <table className="w-full mt-1 text-[13px]">
+          <thead>
+            <tr className="text-[11.5px] text-navy-700/65">
+              <th className="text-left font-normal pr-3">เรื่องที่เปลี่ยน</th>
+              <th className="text-right font-normal px-2">เบี้ยไตรมาสหน้า (ล้าน)</th>
+              <th className="text-right font-normal px-2">U/W 3 ไตรมาส (ล้าน)</th>
+              <th className="text-right font-normal px-2">ความพอใจ (ดาว)</th>
+              <th className="text-right font-normal pl-2">ถ้าน้ำท่วม (ล้าน)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {row('total', 'รวมทั้งแผน', a.total, true)}
+            {a.rows.map((r) => row(r.id, r.label, r.delta))}
+            {a.rows.length > 1 && row('together', 'ผลร่วม (หลายเรื่องเสริมหรือหักล้างกัน)', a.together)}
+          </tbody>
+        </table>
+      )}
+      <div className="text-[11.5px] text-navy-700/60 mt-1">ไม่สุ่ม ไม่มีน้ำท่วม (ยกเว้นคอลัมน์ถ้าน้ำท่วม) · U/W หักงบของแผนแล้ว · ตัวเลขจำลองของเกม</div>
+    </div>
   )
 }

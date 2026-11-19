@@ -72,7 +72,7 @@ export const P = {
 
 export const DIFFICULTY = {
   easy: { rivalAggression: 0.5, floodChance: 0.3, marketNoise: 0.006, rivalService: 0.025, floodSeverity: 0.85 },
-  normal: { rivalAggression: 1.0, floodChance: 0.5, marketNoise: 0.012, rivalService: 0.05, floodSeverity: 1 },
+  normal: { rivalAggression: 1.0, floodChance: 0.5, marketNoise: 0.012, rivalService: 0.06, floodSeverity: 1 },
   hard: { rivalAggression: 1.6, floodChance: 0.7, marketNoise: 0.02, rivalService: 0.075, floodSeverity: 1.2 },
 } satisfies Record<Difficulty, { rivalAggression: number; floodChance: number; marketNoise: number; rivalService: number; floodSeverity: number }>
 

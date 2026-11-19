@@ -112,7 +112,7 @@ function competitorMoves(firms: Firm[], personalities: string[], names: string[]
         break
       case 'premium':
         // a profitable, well-liked rival spends to grow (engine v3: rivals also invest when they can)
-        if (f.combinedRatio < 0.97 && f.satisfaction > 3.7) f.bonus = 0.16 * aggression
+        if (f.combinedRatio < 0.97 && f.satisfaction > 3.7) f.bonus = 0.2 * aggression
         if (f.price > 1.08) {
           f.satisfaction += 0.04
           moves.push({ id: f.id, text: `${name} คงราคา ลงทุนบริการพรีเมียมต่อ` })
@@ -260,6 +260,8 @@ export interface SimulateOptions {
   seed?: number
   /** Forecast mode: no randomness and no flood, so two plans can be compared like for like. */
   calm?: boolean
+  /** Risk forecast: the central-region flood hits this quarter at average severity (use with calm). */
+  forceFlood?: boolean
 }
 
 /**
@@ -506,9 +508,11 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
   const scale = (sim.marketGwp / P.marketGwp0) * showBoost
   const policies = (pl.share * scale) / pl.price
   const newBiz = Math.max(0, pl.share - prevShare) * scale
-  const floodActive = active.has('flood-central')
-  const floodHit = floodActive && r.next() < diff.floodChance
+  const floodActive = active.has('flood-central') || !!opts.forceFlood
+  const floodHit = !!opts.forceFlood || (floodActive && r.next() < diff.floodChance)
   const riskUp = Math.max(0, flow.risk)
+  // the risk axis moves the size of a big loss both ways: −1 = 8% smaller, +1 = 8% bigger (floor 50%)
+  const riskSeverity = Math.max(0.5, 1 + 0.08 * flow.risk)
   const claims = policies * P.claimsPerPolicy * (1 + 0.04 * riskUp) + (floodHit ? policies * P.floodClaimsSurge * pl.catExposure : 0)
   const loads: Capacity = {
     contact: ((policies + P.newBusinessCallWeight * newBiz) * (1 + sysFx.calls)) / (sim.baseDemand.policies * cap.contact),
@@ -542,7 +546,7 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
   const adverseLR = segmentAdverseLR(sim.v2.segPrice, book.mix, marketPrice, P.adverseSelection.freeGap, P.adverseSelection.lrPerGap)
   const attritional = sysFx.lr + rateLR + respLR - P.profitAxisLR * flow.profit + overloadLR + adverseLR + r.normal() * (P.attritionalNoise * book.volatility + P.riskAxisVolatility * riskUp)
   const catMult = floodActive ? (responseOf(responses, 'flood-central')?.sim?.catLossMult ?? 1) : 1
-  const catGross = floodHit ? diff.floodSeverity * P.floodLossOfGwp * gwp * pl.catExposure * book.flood * r.range(P.floodSeverity[0], P.floodSeverity[1]) * (1 + 0.08 * riskUp) * catMult : 0
+  const catGross = floodHit ? diff.floodSeverity * P.floodLossOfGwp * gwp * pl.catExposure * book.flood * r.range(P.floodSeverity[0], P.floodSeverity[1]) * riskSeverity * catMult : 0
   // premium is written now and earned over two quarters; commission follows written premium and the channel mix
   const ep = 0.5 * (gwp + sim.prevWp)
   const prevWp = sim.prevWp

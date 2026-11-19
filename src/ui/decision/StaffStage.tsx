@@ -133,7 +133,7 @@ export function StaffStage() {
       data-stage="staff"
       className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise"
     >
-      <header className="px-7 pt-5 pb-3 bg-gradient-to-br from-brand-100 via-white to-brand-50">
+      <header data-sticky-head className="sticky top-0 z-20 shadow-[0_8px_14px_-12px_rgba(20,50,110,0.45)] px-7 pt-5 pb-3 bg-gradient-to-br from-brand-100 via-white to-brand-50">
         <div className="flex items-end justify-between gap-4">
           <div>
             <div className="text-[13px] text-brand-600 font-medium">Operations · ทีมงานและระบบ</div>

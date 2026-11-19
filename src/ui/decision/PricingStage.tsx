@@ -44,7 +44,7 @@ export function PricingStage() {
       data-stage="pricing"
       className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-hidden pointer-events-auto anim-rise flex flex-col"
     >
-      <header className="relative px-7 pt-5 pb-3 bg-gradient-to-br from-brand-100 via-white to-brand-50 flex items-end gap-4">
+      <header data-sticky-head className="sticky top-0 z-20 shadow-[0_8px_14px_-12px_rgba(20,50,110,0.45)] px-7 pt-5 pb-3 bg-gradient-to-br from-brand-100 via-white to-brand-50 flex items-end gap-4">
         <div className="flex-1 min-w-0">
           <div className="text-[13px] text-brand-600 font-medium">Insurance HQ · ราคาเบี้ย</div>
           <h2 className="font-display font-bold text-[26px] leading-tight text-navy-900">ตั้งราคาแยกรายกลุ่มรถ</h2>

@@ -1,10 +1,13 @@
 import { Check, Clock, Users } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { spriteUrl } from '../../assets/registry'
 import { SCENARIO_BY_EVENT, scenariosFor } from '../../game/decisions/scenarios'
 import { useGameStore } from '../../store/useGameStore'
 import { EVENT_ART } from '../../world/eventArt'
 import { CostChip, ImpactRow, OpsBadge } from './CardStage'
+import { forecastResponses } from '../../game/choiceForecast'
+import { ForecastNumbers } from './ForecastNumbers'
+import { useDraft } from './useDraft'
 import { isInvestment, tempActive } from '../../game/sim/ops'
 import { KIND, OPTION_ICONS, SPEED_LABEL } from './visuals'
 import { Glossed } from '../glossary/Term'
@@ -23,6 +26,10 @@ export function ScenarioStage() {
 
   const sc = eventId ? SCENARIO_BY_EVENT[eventId] : undefined
   const ev = events.find((e) => e.id === eventId)
+  // engine numbers for each response, against doing nothing about this event (phase 3)
+  const game = useGameStore((s) => s.game)
+  const draft = useDraft()
+  const fc = useMemo(() => (eventId && sc ? forecastResponses(game, draft, eventId) : {}), [game, draft, eventId, sc])
   if (!sc || !ev) return null
   const chosen = responses[sc.eventId]
   const art = EVENT_ART[ev.icon]
@@ -41,8 +48,8 @@ export function ScenarioStage() {
   }
 
   return (
-    <section key={sc.eventId} data-stage="scenario" className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] glass rounded-[28px] overflow-hidden pointer-events-auto anim-rise">
-      <header className="relative bg-gradient-to-br from-brand-100 via-white to-brand-50 flex items-center px-8 py-5 gap-6">
+    <section key={sc.eventId} data-stage="scenario" className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise">
+      <header data-sticky-head className="sticky top-0 z-20 shadow-[0_8px_14px_-12px_rgba(20,50,110,0.45)] bg-gradient-to-br from-brand-100 via-white to-brand-50 flex items-center px-8 py-5 gap-6">
         <span className="shrink-0 grid place-items-center w-[180px] h-[150px]">
           {art ? (
             <img src={spriteUrl(art)} alt="" className="max-h-[150px] max-w-[180px] object-contain drop-shadow-[0_12px_16px_rgba(20,50,110,0.25)]" />
@@ -66,7 +73,7 @@ export function ScenarioStage() {
               key={r.id}
               data-response={r.id}
               onClick={() => pick(r.id)}
-              className={`relative flex flex-col text-left rounded-[20px] p-4 h-[268px] border-2 transition-all duration-300 ease-(--ease-game) ${
+              className={`relative flex flex-col text-left rounded-[20px] p-4 h-[336px] border-2 transition-all duration-300 ease-(--ease-game) ${
                 on ? 'bg-white border-brand-500 shadow-[0_14px_28px_-12px_rgba(29,95,224,0.6)] -translate-y-1' : 'bg-white/70 border-transparent hover:bg-white hover:-translate-y-1 hover:shadow-lg'
               }`}
             >
@@ -90,9 +97,12 @@ export function ScenarioStage() {
               </span>
               <span className="flex items-end justify-between pt-2 border-t border-brand-100">
                 <span className="w-[136px]">
-                  <ImpactRow impact={r.impact} size={13} />
+                  <ImpactRow impact={fc[r.id]?.arrows ?? r.impact} size={13} />
                 </span>
                 <CostChip cost={isInvestment(r.id) && ops.owned[r.id] !== undefined ? 0 : r.cost} />
+              </span>
+              <span className="mt-1.5 pt-1.5 border-t border-brand-100">
+                <ForecastNumbers d={fc[r.id]} compact />
               </span>
             </button>
           )

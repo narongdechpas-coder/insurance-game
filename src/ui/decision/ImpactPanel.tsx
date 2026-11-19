@@ -1,5 +1,8 @@
 import { RotateCcw } from 'lucide-react'
-import { changedCards, keptPlan, previewImpact } from '../../game/decisions/plan'
+import { useMemo } from 'react'
+import { deltaOf, keptDraft, playDraft } from '../../game/choiceForecast'
+import { changedCards, keptPlan } from '../../game/decisions/plan'
+import { useDraft } from './useDraft'
 import { staffOf } from '../../game/forecast'
 import { TEAMS } from '../../game/sim/ops'
 import { settingsOf, stepsChanged } from '../../game/forecast'
@@ -19,7 +22,17 @@ export function ImpactPanel() {
   const responses = useGameStore((s) => s.responses)
   const events = useGameStore((s) => s.game.events)
   const game = useGameStore((s) => s.game)
-  const impact = previewImpact(plan, responses)
+  // the whole draft vs keeping everything as it is, from the engine (phase 3)
+  const draft = useDraft()
+  const total = useMemo(() => deltaOf(playDraft(game, draft), playDraft(game, keptDraft(game, draft))), [game, draft])
+  const impact = total.arrows
+  const sgn = (v: number, d = 0) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${Math.abs(v).toLocaleString('th-TH', { maximumFractionDigits: d, minimumFractionDigits: d })}`
+  const VALUE: Record<string, string> = {
+    growth: `เบี้ย ${sgn(total.dGwp)} ล้าน/ไตรมาส`,
+    profit: `U/W ${sgn(total.dUw3)} ล้าน (3 ไตรมาส)`,
+    risk: `ถ้าน้ำท่วม ${sgn(total.dFloodLoss)} ล้าน`,
+    cx: `${sgn(total.dSat3, 2)} ดาว`,
+  }
   const segSteps = useGameStore((s) => s.segSteps)
   const channels = useGameStore((s) => s.channels)
   const gameNow = useGameStore((s) => s.game)
@@ -37,14 +50,17 @@ export function ImpactPanel() {
   return (
     <aside className="absolute right-7 top-[172px] w-[calc(380px+max(0px,100%-1600px)*0.15)] glass rounded-[28px] p-6 pointer-events-auto anim-rise" style={{ animationDelay: '0.1s' }}>
       <div className="font-display font-bold text-[20px] text-navy-900">ภาพรวมแผนไตรมาสนี้</div>
-      <div className="text-[13px] text-navy-700/70">ทิศทางที่แผนพาไป ผลจริงขึ้นกับตลาดและคู่แข่ง</div>
+      <div className="text-[13px] text-navy-700/70">ประมาณการจาก engine เทียบกับคงทุกอย่างไว้เหมือนเดิม ไม่นับเหตุการณ์ไม่คาดคิด</div>
       <div className="mt-4 space-y-3">
         {AXES.map((a) => {
           const v = impact[a.id]
           const t = tone(v, a.higherIsBetter)
           return (
-            <div key={a.id} className="flex items-center gap-3">
-              <span className="w-[118px] text-[14.5px] text-navy-800">{a.label}</span>
+            <div key={a.id} className="flex items-center gap-3" data-plan-axis={a.id}>
+              <span className="w-[118px] text-[14.5px] text-navy-800 leading-tight">
+                {a.label}
+                <span className="block text-[11.5px] text-navy-700/70 tabular-nums">{VALUE[a.id]}</span>
+              </span>
               <div className="flex-1 grid grid-cols-6 gap-1 h-3">
                 {[-3, -2, -1, 1, 2, 3].map((k) => {
                   const lit = (k < 0 && v <= k) || (k > 0 && v >= k)
