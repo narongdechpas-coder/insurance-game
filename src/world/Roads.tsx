@@ -24,6 +24,24 @@ const CLEAR = 46 // markings stay this far from a junction's asphalt (room for c
 
 const strip = (s: RoadSeg, a0: number, b0: number, a1: number, b1: number) => (s.along === 'u' ? quad(a0, b0, a1, b1) : quad(b0, a0, b1, a1))
 
+/**
+ * Join pieces that lie on the same line and touch or overlap into one road (the wider
+ * width wins), so a street running from the island into the outer city is a single strip:
+ * no seam where two pieces meet, and one even rhythm of centre dashes.
+ */
+export function mergeSegs(segs: RoadSeg[]): RoadSeg[] {
+  const out: RoadSeg[] = []
+  const sorted = [...segs].sort((a, b) => (a.along === b.along ? a.at - b.at || a.from - b.from : a.along < b.along ? -1 : 1))
+  for (const s of sorted) {
+    const last = out[out.length - 1]
+    if (last && last.along === s.along && Math.abs(last.at - s.at) < 1 && s.from <= last.to + 1) {
+      last.to = Math.max(last.to, s.to)
+      last.w = Math.max(last.w, s.w)
+    } else out.push({ ...s })
+  }
+  return out
+}
+
 /** Where other roads cross this one, as [start, end] along it. */
 function junctions(s: RoadSeg, all: RoadSeg[]): [number, number][] {
   return all

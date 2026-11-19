@@ -398,6 +398,27 @@
   "ay": 1.0,
   "ext": "webp"
  },
+ "portraits/agent-happy": {
+  "w": 359,
+  "h": 480,
+  "ax": 0.554,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/agent-normal": {
+  "w": 349,
+  "h": 480,
+  "ax": 0.503,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/agent-shocked": {
+  "w": 353,
+  "h": 480,
+  "ax": 0.526,
+  "ay": 1.0,
+  "ext": "webp"
+ },
  "portraits/claims-happy": {
   "w": 427,
   "h": 480,
@@ -459,6 +480,27 @@
   "h": 480,
   "ax": 0.427,
   "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/direct-happy": {
+  "w": 394,
+  "h": 480,
+  "ax": 0.514,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "portraits/direct-normal": {
+  "w": 389,
+  "h": 480,
+  "ax": 0.569,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "portraits/direct-shocked": {
+  "w": 378,
+  "h": 480,
+  "ax": 0.506,
+  "ay": 0.998,
   "ext": "webp"
  },
  "portraits/hq-happy": {
@@ -571,6 +613,34 @@
   "h": 453,
   "ax": 0.5,
   "ay": 1.0,
+  "ext": "webp"
+ },
+ "rivals-city/bluewave-direct": {
+  "w": 1100,
+  "h": 887,
+  "ax": 0.6,
+  "ay": 0.999,
+  "ext": "webp"
+ },
+ "rivals-city/golden-naga": {
+  "w": 1100,
+  "h": 806,
+  "ax": 0.56,
+  "ay": 0.999,
+  "ext": "webp"
+ },
+ "rivals-city/lotus-guard": {
+  "w": 1100,
+  "h": 793,
+  "ax": 0.571,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "rivals-city/summit-general": {
+  "w": 1100,
+  "h": 914,
+  "ax": 0.449,
+  "ay": 0.999,
   "ext": "webp"
  },
  "vehicles/ev-green": {

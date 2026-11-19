@@ -1,3 +1,4 @@
+import { capitalHealth, capitalWarning } from '../capital'
 import { LOCATION_BY_ID } from '../data/locations'
 import { eventsAt, locationStatus } from '../selectors'
 import type { GameState, LocationId } from '../types'
@@ -13,6 +14,9 @@ export function quarterBriefing(s: GameState): string[] {
   const lines: string[] = []
   const { year, q } = s.quarter
   const who = s.config.playerName && s.config.playerName !== 'CEO' ? `คุณ${s.config.playerName}` : 'ท่าน CEO'
+  const warn = capitalWarning(capitalHealth(s))
+  // a capital warning leads: it is the one thing the CEO must not miss
+  if (warn) lines.push(warn)
   lines.push(`ยินดีต้อนรับสู่ไตรมาส ${q} ปีที่ ${year} ค่ะ ${who} ${s.config.companyName} พร้อมแล้ว รอคำสั่งอยู่ค่ะ`)
   const opp = s.events.find((e) => e.kind === 'opportunity')
   const threat = s.events.find((e) => e.kind === 'threat')

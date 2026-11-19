@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { moodOfStatus, portraitKey } from '../assets/portraits'
 import { spriteUrl } from '../assets/registry'
 import { ADVISOR_NAME, locationComment, quarterBriefing } from '../game/narrative/advisor'
+import { capitalHealth } from '../game/capital'
 import { locationStatus } from '../game/selectors'
 import { useGameStore } from '../store/useGameStore'
 
@@ -30,7 +31,8 @@ export function AdvisorPanel() {
   const text = selected ? locationComment(game, selected) : briefing[i % briefing.length]
   const { shown, done, skip } = useTypewriter(introDone ? text : '')
   // pose follows the mood of what she is talking about
-  const mood = selected ? locationStatus(game, selected) : 'good'
+  const capital = capitalHealth(game).level
+  const mood = selected ? locationStatus(game, selected) : capital === 'danger' ? 'alert' : capital === 'watch' ? 'watch' : 'good'
   const pose = mood === 'alert' || mood === 'watch' ? 'characters/advisor-warning' : mood === 'chance' ? 'characters/advisor-happy' : 'characters/advisor'
   // a half portrait replaces the full body once that art exists
   const bust = portraitKey('advisor', mood === 'watch' ? 'shocked' : moodOfStatus(mood))

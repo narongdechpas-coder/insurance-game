@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { driverDept, driverMood, portraitKey } from '../../assets/portraits'
 import { spriteUrl } from '../../assets/registry'
 import type { Driver } from '../../game/sim/types'
+import { capitalHealth, capitalWarning } from '../../game/capital'
 import { ADVISOR_NAME } from '../../game/narrative/advisor'
 import { consequenceLines, floodLine, headline, recommendations } from '../../game/narrative/review'
 import { useGameStore } from '../../store/useGameStore'
@@ -40,6 +41,8 @@ export function QuarterlyReview() {
   const r = game.lastReport
   if (!r) return null
   const h = headline(r)
+  const health = capitalHealth(game)
+  const bankrupt = game.outcome?.reason === 'bankrupt' && !reviewOnly
   const hist = game.kpiHistory
   const flood = floodLine(r)
   const recs = recommendations(r, game)
@@ -90,9 +93,24 @@ export function QuarterlyReview() {
             </div>
           </header>
 
+          {(bankrupt || (health.level !== 'safe' && !game.outcome)) && (
+            <div
+              data-capital-banner={bankrupt ? 'bankrupt' : health.level}
+              className={`mx-8 mb-3 -mt-1 flex items-center gap-3 rounded-2xl px-4 py-2.5 text-[14.5px] font-medium ${bankrupt || health.level === 'danger' ? 'bg-alert/12 text-red-800 ring-1 ring-alert/30' : 'bg-watch/15 text-amber-900 ring-1 ring-watch/30'}`}
+            >
+              <TriangleAlert size={20} className="shrink-0" />
+              <span className="flex-1">
+                {bankrupt
+                  ? `ไตรมาสนี้เงินทุนลดลงเหลือ ${Math.round(health.capital).toLocaleString('th-TH')} ล้านบาท ต่ำกว่าเส้นหยุดรับประกัน บริษัทต้องหยุดรับประกันและเกมจบที่ไตรมาสนี้`
+                  : capitalWarning(health)}
+              </span>
+              <span className="shrink-0 text-[12px] font-normal opacity-75">เกมจบเมื่อเงินทุนต่ำกว่า {Math.round(health.line).toLocaleString('th-TH')} ล้านบาท</span>
+            </div>
+          )}
           {tab === 'story' ? (
             <div className="flex-1 min-h-0 grid grid-cols-[1fr_400px] gap-5 px-8 pb-4">
-              <div className="flex flex-col gap-4 min-h-0">
+              {/* scrolls when a warning banner takes room, instead of running under the footer */}
+              <div className="flex flex-col gap-4 min-h-0 overflow-y-auto pr-1 -mr-1">
                 {/* KPIs */}
                 <div className="grid grid-cols-4 gap-3">
                   {kpis.map((k) => {

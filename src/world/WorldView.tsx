@@ -4,7 +4,7 @@ import { useGameStore } from '../store/useGameStore'
 import { Clouds, CloudShadows, EventBubbles, People } from './Ambient'
 import { Building } from './Building'
 import { Ground } from './Ground'
-import { Surroundings } from './Surroundings'
+import { isPlainOffice, Surroundings } from './Surroundings'
 import { SPRITES } from '../assets/registry'
 import { preloadMasks } from './hitTest'
 import { anchorOf, BUILDINGS, DECOR, GREENERY, ISLAND, LAMPS } from './layout'
@@ -78,6 +78,8 @@ function clamp(c: Cam, vw: number, vh: number): Cam {
  * Drag to pan, wheel or two-finger pinch to zoom, click (tap) a building to focus it.
  */
 export function WorldView() {
+  // in the architect's-model style the plain offices behind the island become massing too
+  const massing = useGameStore((s) => s.settings.cityStyle === 'massing')
   const view = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: window.innerWidth, h: window.innerHeight })
   const [cam, setCam] = useState<Cam>(() => {
@@ -230,9 +232,11 @@ export function WorldView() {
         {LAMPS.map(([u, v], i) => (
           <Sprite key={`l${i}`} sprite="environments/street-lamp" u={u} v={v} scale={0.42} anchor={[0.5, 0.97]} />
         ))}
-        {DECOR.map((d, i) => (
+        {DECOR.map((d, i) =>
+          massing && isPlainOffice(d) ? null : (
           <Sprite key={`d${i}`} sprite={d.sprite} u={d.u} v={d.v} scale={d.scale} anchor={d.anchor ?? (d.sprite.startsWith('buildings/') || SPRITES[d.sprite].ext === 'webp' ? anchorOf(d) : [0.5, 0.8])} flip={d.flip} style={{ filter: 'drop-shadow(0 8px 10px rgba(30,50,90,0.15))' }} />
-        ))}
+          ),
+        )}
         <People />
         <Traffic />
         {LOCATIONS.map((l) => (

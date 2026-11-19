@@ -46,9 +46,11 @@ export function clearSave() {
 export interface Settings {
   /** City-run animation: 1 = normal, 2 = fast, 0 = skip straight to the newspaper. */
   runSpeed: 0 | 1 | 2
+  /** How the outer city is drawn: white walk-up buildings, or translucent massing (architect's model). */
+  cityStyle: 'walkup' | 'massing'
 }
 
-export const DEFAULT_SETTINGS: Settings = { runSpeed: 1 }
+export const DEFAULT_SETTINGS: Settings = { runSpeed: 1, cityStyle: 'walkup' }
 
 export function readSettings(): Settings {
   try {
