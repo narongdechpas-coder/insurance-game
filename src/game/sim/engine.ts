@@ -6,7 +6,8 @@ import type { DecisionId, Duration, Impact, ImpactAxis, QuarterPlan, Speed } fro
 import { EVENT_BY_ID } from '../data/events'
 import type { CompanyKpis, GameState } from '../types'
 import { attractiveness } from './init'
-import { acquisitionRate, buildPnl, commissionRate, distributionChannel, nextMix, START_MIX } from './channels'
+import { acquisitionRate, buildPnl, CHANNELS, commissionRate, distributionChannel, START_MIX } from './channels'
+import { bookFactors, CHANNEL_IDS, channelAttraction, channelLRFactors, channelRates, nextChannelMix, playerInertia, renewalRates, serviceStars, shiftSegments, updateCompany } from './v2'
 import { DIFFICULTY, DURATION_WEIGHTS, P } from './params'
 import { rng } from './rng'
 import type { Boost, Capacity, CompetitorMove, Driver, Firm, GameOutcome, Ops, QuarterReport, QueuedEffect, RivalReport, SimState, Standing } from './types'
@@ -323,7 +324,15 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   sim.marketGwp *= 1 + P.marketGrowth + r.normal() * diff.marketNoise + (slowdown ? P.economy.marketShock : 0)
   const yieldNow = P.investmentYield * (slowdown ? P.economy.investmentFactor : 1)
   const all = [pl, ...sim.firms]
-  const attr = (f: Firm, price = f.price) => attractiveness(price, f.satisfaction, f === pl ? flow.growth : 0, f.bonus)
+  // engine v2: segments move with this quarter's product/underwriting choices; channels pull with their levers and the brand
+  shiftSegments(sim.v2, plan)
+  const chAttr = channelAttraction(sim.v2, plan)
+  const plChannelBonus = CHANNEL_IDS.reduce((a, c) => a + sim.mix[c] * chAttr[c], 0)
+  const bookNow = bookFactors(sim.v2, sim.mix)
+  const attr = (f: Firm, price = f.price) =>
+    f === pl
+      ? attractiveness(price, f.satisfaction, flow.growth, f.bonus + plChannelBonus) - P.priceElasticity * (bookNow.elasticity - 1) * Math.log(price)
+      : attractiveness(price, f.satisfaction, 0, f.bonus)
   const targetShares = (priceOverride?: number) => {
     const raw = all.map((f) => f.s0 * Math.exp(attr(f, f === pl && priceOverride ? priceOverride : f.price) - f.a0))
     const sum = raw.reduce((a, b) => a + b, 0)
@@ -331,10 +340,14 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   }
   const target = targetShares()
   const targetNoPrice = targetShares(prevPrice)
-  all.forEach((f, i) => (f.share = P.shareInertia * f.share + (1 - P.shareInertia) * target[i]))
+  const plInertia = playerInertia(sim.v2, sim.mix, P.shareInertia)
+  all.forEach((f, i) => {
+    const k = f === pl ? plInertia : P.shareInertia
+    f.share = k * f.share + (1 - k) * target[i]
+  })
   const total = all.reduce((a, f) => a + f.share, 0)
   all.forEach((f) => (f.share /= total))
-  const shareFromPrice = (1 - P.shareInertia) * (target[0] - targetNoPrice[0])
+  const shareFromPrice = (1 - plInertia) * (target[0] - targetNoPrice[0])
 
   // 5. operations: demand vs capacity
   const cap = capacityAt(sim, q)
@@ -359,20 +372,22 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   const gwp = pl.share * sim.marketGwp
   const spend = planCost(plan, responses)
   const trend = (1 + P.claimsTrend) ** q
-  const rateLR = (P.baseLossRatio * trend) / Math.min(P.rateCap, earnedRate(pl.rateHist))
+  const prevMix = sim.mix
+  sim.mix = nextChannelMix(sim.mix, chAttr)
+  const book = bookFactors(sim.v2, sim.mix)
+  const rateLR = (book.lr * P.baseLossRatio * trend) / Math.min(P.rateCap, earnedRate(pl.rateHist))
   const marketPrice = sim.firms.reduce((a, f) => a + f.price * f.share, 0) / sim.firms.reduce((a, f) => a + f.share, 0)
   const priceGap = pl.price / marketPrice - 1
   const adverseLR = Math.max(0, priceGap - P.adverseSelection.freeGap) * P.adverseSelection.lrPerGap
-  const attritional = rateLR - P.profitAxisLR * flow.profit + overloadLR + adverseLR + r.normal() * (P.attritionalNoise + P.riskAxisVolatility * riskUp)
+  const attritional = rateLR - P.profitAxisLR * flow.profit + overloadLR + adverseLR + r.normal() * (P.attritionalNoise * book.volatility + P.riskAxisVolatility * riskUp)
   const catMult = floodActive ? (responseOf(responses, 'flood-central')?.sim?.catLossMult ?? 1) : 1
-  const catGross = floodHit ? diff.floodSeverity * P.floodLossOfGwp * gwp * pl.catExposure * r.range(P.floodSeverity[0], P.floodSeverity[1]) * (1 + 0.08 * riskUp) * catMult : 0
+  const catGross = floodHit ? diff.floodSeverity * P.floodLossOfGwp * gwp * pl.catExposure * book.flood * r.range(P.floodSeverity[0], P.floodSeverity[1]) * (1 + 0.08 * riskUp) * catMult : 0
   // premium is written now and earned over two quarters; commission follows written premium and the channel mix
-  const prevMix = sim.mix
-  sim.mix = nextMix(sim.mix, plan)
   const ep = 0.5 * (gwp + sim.prevWp)
   const prevWp = sim.prevWp
   sim.prevWp = gwp
-  const commission = gwp * (commissionRate(sim.mix) + acquisitionRate(sim.mix))
+  const rates = Object.fromEntries(CHANNELS.map((c) => [c.id, channelRates(c.id, sim.v2.channels[c.id].lever, c)])) as Record<(typeof CHANNEL_IDS)[number], { commission: number; acquisition: number }>
+  const commission = CHANNEL_IDS.reduce((a, c) => a + gwp * sim.mix[c] * (rates[c].commission + rates[c].acquisition), 0)
   const adminAmount = P.adminRatio * ep - P.baselineSpend
   const expense = (commission + adminAmount + spend) / ep
   const uw = underwrite(ep, attritional, expense, catGross * (ep / gwp), qs, xl)
@@ -450,7 +465,14 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
 
   // 8. satisfaction
   const headroom = (d: number) => (d > 0 ? d * Math.max(0, 5 - pl.satisfaction) / 1.2 : d * Math.max(0, pl.satisfaction - 1) / 2.8)
-  pl.satisfaction = clamp(pl.satisfaction + headroom(P.cxAxisStars * flow.cx - overloadStars) + P.satisfactionReversion * (P.satisfactionAnchor - pl.satisfaction), 1, 5)
+  const companyDelta = updateCompany(sim.v2, {
+    plan,
+    responseIds: [...active].map((id) => responseOf(responses, id)?.id).filter(Boolean) as string[],
+    excess,
+    wordOfMouth: active.has('word-of-mouth'),
+    complaints: active.has('complaints-rise'),
+  })
+  pl.satisfaction = clamp(pl.satisfaction + headroom(P.cxAxisStars * flow.cx - overloadStars + serviceStars(sim.v2.company.service)) + P.satisfactionReversion * (P.satisfactionAnchor - pl.satisfaction), 1, 5)
   sim.highCxStreak = pl.satisfaction >= 4.3 ? sim.highCxStreak + 1 : 0
 
   // 9. next quarter's events
@@ -518,6 +540,8 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
     wp: gwp,
     prevWp,
     attritionalLR: attritional,
+    rates,
+    lrFactor: channelLRFactors(sim.v2, sim.mix),
     // paid/incurred moves with how tightly losses are controlled: fast-track and generous service pay sooner,
     // strict loss control and an overloaded claims team pay later
     paidRatio: clamp(
@@ -561,6 +585,17 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   const competitors = state.competitors.map((c, i) => ({ ...c, marketShare: sim.firms[i].share }))
   const rank = 1 + competitors.filter((c) => c.marketShare > pl.share).length
   const report: QuarterReport = {
+    v2: {
+      brand: sim.v2.company.brand,
+      service: sim.v2.company.service,
+      brandDelta: companyDelta.brand,
+      serviceDelta: companyDelta.service,
+      channelMix: { ...sim.mix },
+      portfolio: book.mix,
+      channelSeg: Object.fromEntries(CHANNEL_IDS.map((c) => [c, { ...sim.v2.channels[c].seg }])) as QuarterReport['v2']['channelSeg'],
+      renewal: renewalRates(sim.v2),
+      levers: Object.fromEntries(CHANNEL_IDS.map((c) => [c, sim.v2.channels[c].lever])) as QuarterReport['v2']['levers'],
+    },
     quarter: state.quarter,
     plan,
     responses,

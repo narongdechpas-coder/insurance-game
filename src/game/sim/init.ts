@@ -1,5 +1,6 @@
 import { START_MIX } from './channels'
 import { P } from './params'
+import { createV2 } from './v2'
 import type { Firm, SimState } from './types'
 import type { Competitor, GameConfig } from '../types'
 
@@ -46,5 +47,6 @@ export function createSimState(config: GameConfig, competitors: Competitor[], pl
     shareHistory: [Object.fromEntries([['player', playerShare], ...competitors.map((c) => [c.id, c.marketShare] as [string, number])])],
     mix: { ...START_MIX },
     prevWp: playerShare * P.marketGwp0,
+    v2: createV2(),
   }
 }

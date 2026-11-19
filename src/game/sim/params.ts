@@ -15,7 +15,7 @@ export const P = {
   growthAxisWeight: 0.1, // attractiveness per +1 growth effect
 
   // underwriting
-  baseLossRatio: 0.58, // attritional; floods add ≈4–5 pts on average → CR ≈ 97% at neutral play
+  baseLossRatio: 0.545, // attritional; floods add ≈4–5 pts on average → CR ≈ 96–97% at neutral play (lowered from 0.58 in engine v2: growth must be able to pay)
   rateLagWeights: [0.3, 0.4, 0.3], // earned rate = current, last, the one before
   rateCap: 1.1, // rate above 110% of adequate buys no further loss-ratio benefit (only the price, and adverse selection)
   claimsTrend: 0.005, // claims cost inflation per quarter: holding price slowly erodes margin

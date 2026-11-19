@@ -1,7 +1,8 @@
 import type { Responses } from '../decisions/scenarios'
 import type { ImpactAxis, QuarterPlan } from '../decisions/types'
 import type { CompanyKpis, QuarterStamp } from '../types'
-import type { Mix, Pnl } from './channels'
+import type { ChannelId, Mix, Pnl } from './channels'
+import type { SegMix, V2State } from './v2'
 
 /** Operational capacity, as a multiple of the demand the company had at game start. */
 export interface Capacity {
@@ -62,6 +63,8 @@ export interface SimState {
   lastRaised: Record<string, number>
   /** market share of every company after each quarter (index 0 = game start); keys: 'player' + competitor ids */
   shareHistory: Record<string, number>[]
+  /** engine v2: company stocks (brand, service) and per-channel segments and levers */
+  v2: V2State
 }
 
 export type FloodOutcome = 'none' | 'hit' | 'missed'
@@ -114,6 +117,18 @@ export interface QuarterReport {
   earnedPremium: number
   pnl: Pnl
   rank: number
+  /** engine v2 detail for the channel report */
+  v2: {
+    brand: number
+    service: number
+    brandDelta: number
+    serviceDelta: number
+    channelMix: Mix
+    portfolio: SegMix
+    channelSeg: Record<ChannelId, SegMix>
+    renewal: Record<ChannelId, number>
+    levers: Record<ChannelId, number>
+  }
 }
 
 export interface Standing {

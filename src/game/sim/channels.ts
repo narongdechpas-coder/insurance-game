@@ -1,3 +1,4 @@
+import { CHANNEL_TABLE } from '../data/tables'
 import type { QuarterPlan } from '../decisions/types'
 
 /**
@@ -14,7 +15,8 @@ export const CHANNELS: { id: ChannelId; label: string; commission: number; acqui
 ]
 
 export type Mix = Record<ChannelId, number>
-export const START_MIX: Mix = { dealer: 0.5, agent: 0.28, direct: 0.22 }
+/** Channel mix at game start = each channel's share of the market (src/game/data/channels.json). */
+export const START_MIX: Mix = Object.fromEntries(CHANNEL_TABLE.map((c) => [c.id, c.marketShare])) as Mix
 
 /** How the distribution decision moves the channel mix this quarter (then renormalised). */
 const SHIFT: Record<string, Partial<Mix>> = {
@@ -84,6 +86,10 @@ interface Inputs {
   investmentIncome: number
   /** share of incurred loss already paid this quarter (claims-handling speed vs loss control) */
   paidRatio: number
+  /** per-channel commission/acquisition on written premium (channel levers); default = CHANNELS */
+  rates?: Record<ChannelId, { commission: number; acquisition: number }>
+  /** per-channel loss-ratio multiplier from the segments each channel sells; default = fixed offsets */
+  lrFactor?: Record<ChannelId, number>
 }
 
 /** Allocate the engine's company totals to channels. Columns always add up to the total. */
@@ -91,7 +97,14 @@ export function buildPnl(x: Inputs): Pnl {
   // centre the channel LR offsets on earned-premium weights, so the total incurred equals the engine's exactly
   const epTotal = 0.5 * (x.wp + x.prevWp)
   const epw = Object.fromEntries(CHANNELS.map((c) => [c.id, (0.5 * (x.wp * x.mix[c.id] + x.prevWp * x.prevMix[c.id])) / epTotal])) as Mix
-  const off = lrOffsets(epw)
+  const off = x.lrFactor
+    ? (() => {
+        // channel LR = book LR × its segment factor, re-centred on earned weights so the total stays exact
+        const raw = Object.fromEntries(CHANNELS.map((c) => [c.id, x.attritionalLR * (x.lrFactor![c.id] - 1)])) as Mix
+        const avg = CHANNELS.reduce((a, c) => a + raw[c.id] * epw[c.id], 0)
+        return Object.fromEntries(CHANNELS.map((c) => [c.id, raw[c.id] - avg])) as Record<ChannelId, number>
+      })()
+    : lrOffsets(epw)
   const mktgW = CHANNELS.reduce((a, c) => a + c.mktgWeight * x.mix[c.id], 0)
   const dist = x.distributionSpend
   const cols: PnlColumn[] = CHANNELS.map((c) => {
@@ -99,8 +112,9 @@ export function buildPnl(x: Inputs): Pnl {
     const ep = 0.5 * (wp + x.prevWp * x.prevMix[c.id])
     const epShare = ep / (0.5 * (x.wp + x.prevWp))
     const incurred = (x.attritionalLR + off[c.id]) * ep + x.catGross * epShare
-    const commission = wp * c.commission
-    const marketing = wp * c.acquisition + (x.marketingSpend * c.mktgWeight * x.mix[c.id]) / mktgW + (x.distChannel ? (x.distChannel === c.id ? dist : 0) : dist * x.mix[c.id])
+    const rate = x.rates?.[c.id] ?? { commission: c.commission, acquisition: c.acquisition }
+    const commission = wp * rate.commission
+    const marketing = wp * rate.acquisition + (x.marketingSpend * c.mktgWeight * x.mix[c.id]) / mktgW + (x.distChannel ? (x.distChannel === c.id ? dist : 0) : dist * x.mix[c.id])
     const otherUw = x.otherSpend * x.mix[c.id]
     const admin = x.adminAmount * epShare
     const expenseTotal = commission + marketing + otherUw + admin
