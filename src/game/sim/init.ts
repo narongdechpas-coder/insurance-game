@@ -1,7 +1,7 @@
 import { START_MIX } from './channels'
 import { P } from './params'
 import { createV2 } from './v2'
-import { createOps } from './ops'
+import { createOps, rivalStartOps } from './ops'
 import { defaultPlan } from '../decisions/cards'
 import type { Firm, SimState } from './types'
 import type { Competitor, GameConfig } from '../types'
@@ -43,7 +43,7 @@ export function createSimState(config: GameConfig, competitors: Competitor[], pl
     settings: defaultPlan(),
     treaty: defaultPlan().reinsurance,
     queue: [],
-    firms: competitors.map((c) => firm(c.id, c.marketShare, SAT0[c.personality], c.marketShare * capitalPerShare, EXPOSURE0[c.personality])),
+    firms: competitors.map((c) => ({ ...firm(c.id, c.marketShare, SAT0[c.personality], c.marketShare * capitalPerShare, EXPOSURE0[c.personality]), ops: rivalStartOps(c.marketShare / playerShare, c.personality) })),
     looseStreak: 0,
     highCxStreak: 0,
     lastRaised: {},

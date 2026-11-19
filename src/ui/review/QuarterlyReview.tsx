@@ -103,7 +103,7 @@ export function QuarterlyReview() {
               <TriangleAlert size={20} className="shrink-0" />
               <span className="flex-1">
                 {bankrupt
-                  ? `ไตรมาสนี้เงินทุนลดลงเหลือ ${Math.round(health.capital).toLocaleString('th-TH')} ล้านบาท ต่ำกว่าเส้นหยุดรับประกัน บริษัทต้องหยุดรับประกันและเกมจบที่ไตรมาสนี้`
+                  ? `ไตรมาสนี้เงินทุนลดลงเหลือ ${Math.round(health.capital).toLocaleString('th-TH')} ล้านบาท ต่ำกว่าทุนขั้นต่ำ ${Math.round(health.line).toLocaleString('th-TH')} ล้านบาท (12.5% ของเบี้ยทั้งปี) บริษัทต้องหยุดรับประกันและเกมจบที่ไตรมาสนี้`
                   : capitalWarning(health)}
               </span>
               <span className="shrink-0 text-[12px] font-normal opacity-75">เกมจบเมื่อเงินทุนต่ำกว่า {Math.round(health.line).toLocaleString('th-TH')} ล้านบาท</span>

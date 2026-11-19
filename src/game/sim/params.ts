@@ -63,13 +63,17 @@ export const P = {
   regulation: { fineAtShare20: 45, satisfactionBar: 3.6, complianceAtShare20: 22 },
 
   // end of game
-  bankruptcyFraction: 0.5, // capital below 50% of start = game over (game rule, not a solvency regulation)
+  bankruptcyFraction: 0.5, // (engine v2 rule, kept for reference: capital below 50% of start)
+  /** engine v3: minimum capital = this share of a year's written premium (game rule, NOT the regulator's CAR) */
+  minCapitalOfAnnualGwp: 0.125,
+  /** engine v3: the strategy budget each quarter = this share of last quarter's earned premium */
+  budgetOfEarnedPremium: 0.075,
 } as const
 
 export const DIFFICULTY = {
-  easy: { rivalAggression: 0.5, floodChance: 0.3, marketNoise: 0.006, rivalService: 0, floodSeverity: 0.85 },
-  normal: { rivalAggression: 1.0, floodChance: 0.5, marketNoise: 0.012, rivalService: 0.02, floodSeverity: 1 },
-  hard: { rivalAggression: 1.6, floodChance: 0.7, marketNoise: 0.02, rivalService: 0.05, floodSeverity: 1.2 },
+  easy: { rivalAggression: 0.5, floodChance: 0.3, marketNoise: 0.006, rivalService: 0.025, floodSeverity: 0.85 },
+  normal: { rivalAggression: 1.0, floodChance: 0.5, marketNoise: 0.012, rivalService: 0.05, floodSeverity: 1 },
+  hard: { rivalAggression: 1.6, floodChance: 0.7, marketNoise: 0.02, rivalService: 0.075, floodSeverity: 1.2 },
 } satisfies Record<Difficulty, { rivalAggression: number; floodChance: number; marketNoise: number; rivalService: number; floodSeverity: number }>
 
 /** Spread of an effect over quarters, by how long it lasts. */

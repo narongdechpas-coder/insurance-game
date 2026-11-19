@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_CONFIG } from '../config'
 import { defaultPlan } from '../decisions/cards'
-import { keptPlan, planCost } from '../decisions/plan'
+import { budgetOf, keptPlan, planCost, reviewPlan } from '../decisions/plan'
+import { capitalHealth } from '../capital'
 import type { QuarterPlan } from '../decisions/types'
 import { withChannelSettings, settingsOf, type StaffTarget } from '../forecast'
 import { createInitialState } from '../initialState'
@@ -135,5 +136,36 @@ describe('engine v3 operations', () => {
     expect(keep.sim.v2.company.brand).toBeLessThan(53)
     expect(up.sim.v2.company.brand).toBeGreaterThan(62)
     expect(up.sim.v2.company.brand).toBeLessThan(72)
+  })
+
+  it('phase 4: minimum capital grows with premium; budget follows earned premium', () => {
+    const s0 = start()
+    expect(capitalHealth(s0).line).toBeCloseTo(1000, 0)
+    expect(budgetOf(s0)).toBe(150)
+    let a = s0
+    for (let i = 0; i < 4; i++) a = step(a, { pricing: { option: 'cut2' } })
+    expect(a.lastReport!.gwp).toBeGreaterThan(2100)
+    expect(capitalHealth(a).line).toBeCloseTo(0.125 * 4 * a.lastReport!.gwp, 5)
+    expect(budgetOf(a)).toBe(Math.round((0.075 * a.lastReport!.earnedPremium) / 5) * 5)
+  })
+
+  it('phase 4: rivals run teams and fixed costs like the player', () => {
+    const s = step(start())
+    for (const f of s.sim.firms) {
+      expect(f.ops).toBeDefined()
+      expect(f.lastLoads!.claims).toBeGreaterThan(0.5)
+      expect(f.lastLoads!.claims).toBeLessThan(1.2)
+    }
+    const big = s.sim.firms.reduce((a, f) => (f.s0 > a.s0 ? f : a))
+    const small = s.sim.firms.reduce((a, f) => (f.s0 < a.s0 ? f : a))
+    expect(big.ops!.staff.claims).toBeGreaterThan(small.ops!.staff.claims)
+  })
+
+  it('phase 4: the advisor flags fixed cost above 12% of premium', () => {
+    let s = start()
+    for (let i = 0; i < 6; i++) s = step(s, { pricing: { option: 'raise2' } })
+    const share = s.lastReport!.ops.costs.fixed / s.lastReport!.earnedPremium
+    const flagged = reviewPlan(keptPlan(s), s).some((n) => n.id === 'fixed-cost')
+    expect(flagged).toBe(share > 0.12)
   })
 })

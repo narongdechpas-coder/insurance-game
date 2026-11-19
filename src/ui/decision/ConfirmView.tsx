@@ -4,8 +4,8 @@ import { priceSummary } from './PricingStage'
 import { stepsChanged } from '../../game/forecast'
 import { AlertTriangle, Pencil, Users } from 'lucide-react'
 import { spriteUrl } from '../../assets/registry'
-import { CARDS, isUnlocked, QUARTER_BUDGET_MB } from '../../game/decisions/cards'
-import { choiceCost, optionOf, planCost, reviewPlan, tacticOf } from '../../game/decisions/plan'
+import { CARDS, isUnlocked } from '../../game/decisions/cards'
+import { budgetOf, choiceCost, optionOf, planCost, reviewPlan, tacticOf } from '../../game/decisions/plan'
 import { responseOf, scenariosFor } from '../../game/decisions/scenarios'
 import { useGameStore } from '../../store/useGameStore'
 import { EVENT_ART } from '../../world/eventArt'
@@ -29,6 +29,7 @@ export function ConfirmView() {
   const scen = scenariosFor(game.events.map((e) => e.id))
   const cards = CARDS.filter((c) => isUnlocked(c, q.index))
   const used = planCost(plan, responses, game.sim.ops.owned)
+  const budget = budgetOf(game)
   const warnings = reviewPlan(plan, game, responses).filter((n) => n.tone === 'warning')
 
   return (
@@ -116,10 +117,10 @@ export function ConfirmView() {
 
       <div className="mt-4 flex items-center justify-end gap-6 rounded-2xl bg-white/70 px-5 py-3">
         <span className="text-[14px] text-navy-700/80">งบที่ใช้ทั้งไตรมาส</span>
-        <span className={`font-display font-bold text-[22px] ${used > QUARTER_BUDGET_MB ? 'text-alert' : 'text-navy-900'}`}>
-          {used} / {QUARTER_BUDGET_MB} ล้านบาท
+        <span className={`font-display font-bold text-[22px] ${used > budget ? 'text-alert' : 'text-navy-900'}`}>
+          {used} / {budget} ล้านบาท
         </span>
-        <span className="text-[13.5px] text-navy-700/70">เหลือ {Math.max(0, QUARTER_BUDGET_MB - used)} ล้านบาท</span>
+        <span className="text-[13.5px] text-navy-700/70">เหลือ {Math.max(0, budget - used)} ล้านบาท</span>
       </div>
     </section>
   )

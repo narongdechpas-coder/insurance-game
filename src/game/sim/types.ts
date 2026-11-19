@@ -44,6 +44,9 @@ export interface Firm {
   a0: number // attractiveness at game start (so neutral play keeps shares stable)
   crSum: number // for the average combined ratio at game end
   quarters: number
+  /** engine v3, rivals only: their teams and last quarter's load (the player's live in SimState.ops) */
+  ops?: OpsState
+  lastLoads?: Capacity
 }
 
 export interface SimState {

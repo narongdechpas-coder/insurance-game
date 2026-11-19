@@ -26,6 +26,8 @@ export interface OpsState {
   /** hired people still in training: they are paid now and add capacity from `at` */
   pending: { team: Team; n: number; at: number }[]
   garages: number
+  /** garages at the start (upkeep is paid only on garages added later); default = OPS.garages.start */
+  garages0?: number
   /** investment id → quarter index it was made */
   owned: Partial<Record<InvestmentId, number>>
   temps: TempBoost[]
@@ -154,7 +156,7 @@ export function runOps(
   const paid = o.staff.claims + o.staff.contact + o.pending.reduce((a, p) => a + p.n, 0) + OPS.otherStaff
   const maintenance =
     INVESTMENT_IDS.reduce((a, id) => a + (o.owned[id] !== undefined ? OPS.investments[id].maintenanceMB : 0), 0) +
-    Math.max(0, o.garages - OPS.garages.start) * OPS.garages.maintenanceMBPerGarage
+    Math.max(0, o.garages - (o.garages0 ?? OPS.garages.start)) * OPS.garages.maintenanceMBPerGarage
   const salaries = quarterPay(paid)
   return { salaries, otherFixed: OPS.otherFixedMB, maintenance, hiring, severance }
 }
@@ -175,3 +177,15 @@ export function serviceBonus(o: OpsState) {
 export function headcount(o: OpsState) {
   return { ...o.staff, training: o.pending.reduce((a, p) => a + p.n, 0), other: OPS.otherStaff }
 }
+
+/** A rival's starting teams: sized to its share; Golden starts with an upgraded garage network, BlueWave with its app. */
+export function rivalStartOps(k: number, pers: string): OpsState {
+  const o = createOps()
+  o.staff = { claims: Math.round(o.staff.claims * k), contact: Math.round(o.staff.contact * k * (pers === 'digital' ? 0.72 : 1)) }
+  o.garages = Math.round(o.garages * k)
+  o.garages0 = o.garages
+  if (pers === 'premium') o.owned = { upgradeNetwork: -1 }
+  if (pers === 'digital') o.owned = { ownApp: -1, selfService: -1 }
+  return o
+}
+
