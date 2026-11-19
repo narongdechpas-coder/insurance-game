@@ -34,22 +34,22 @@ describe('engine v3 operations', () => {
     expect(o.demand.claims / o.capacity.claims).toBeLessThan(1)
   })
 
-  it('hiring is paid now and adds capacity next quarter; the people stay', () => {
+  it('hiring is paid now and adds capacity next quarter; the people stay; at most 15% a quarter', () => {
     let s = step(start())
     const cap0 = s.lastReport!.ops.capacity.claims
-    s = step(s, {}, { claims: 140 })
+    s = step(s, {}, { claims: 160 }) // asks for 40, recruiting takes 18 (15% of 120)
     const r1 = s.lastReport!.ops
-    expect(r1.staff.training).toBe(20)
+    expect(r1.staff.training).toBe(18)
     expect(r1.capacity.claims).toBeCloseTo(cap0, 3)
-    expect(r1.costs.hiring).toBeCloseTo((20 * OPS.salaryPerPersonMonth) / 1e6, 5)
-    expect(r1.costs.salaries).toBeCloseTo((520 * OPS.salaryPerPersonMonth * 3) / 1e6, 5)
+    expect(r1.costs.hiring).toBeCloseTo((18 * OPS.salaryPerPersonMonth) / 1e6, 5)
+    expect(r1.costs.salaries).toBeCloseTo((518 * OPS.salaryPerPersonMonth * 3) / 1e6, 5)
     s = step(s)
     s = step(s)
     const r3 = s.lastReport!.ops
-    expect(r3.staff.claims).toBe(140)
-    expect(r3.capacity.claims).toBeGreaterThan(cap0 * 1.15)
+    expect(r3.staff.claims).toBe(138)
+    expect(r3.capacity.claims).toBeGreaterThan(cap0 * 1.12)
     expect(r3.costs.hiring).toBe(0)
-    expect(r3.costs.salaries).toBeCloseTo((520 * OPS.salaryPerPersonMonth * 3) / 1e6, 5)
+    expect(r3.costs.salaries).toBeCloseTo((518 * OPS.salaryPerPersonMonth * 3) / 1e6, 5)
   })
 
   it('lay-offs cut capacity at once and pay severance once', () => {
@@ -167,5 +167,32 @@ describe('engine v3 operations', () => {
     const share = s.lastReport!.ops.costs.fixed / s.lastReport!.earnedPremium
     const flagged = reviewPlan(keptPlan(s), s).some((n) => n.id === 'fixed-cost')
     expect(flagged).toBe(share > 0.12)
+  })
+
+  it('phase 3a: a system takes quarters to build, then customers move onto it and calls fall', () => {
+    let s = step(start())
+    const calls0 = s.lastReport!.ops.demand.contact
+    const order = (st: GameState, ids: string[]) => ({ ...st, sim: { ...st.sim, ops: { ...st.sim.ops, orders: ids } } })
+    s = simulateQuarter(order(quiet(s), ['chatbot', 'claimsApp', 'autoRenew']), keptPlan(s), {}, { calm: true })
+    // two IT slots: the third order waits
+    expect(Object.keys(s.sim.ops.systems!)).toEqual(['chatbot', 'claimsApp'])
+    expect(s.lastReport!.ops.systems.spend).toBeCloseTo(2 + 2, 5) // chatbot 2 MB in 1 quarter, app 4 MB over 2
+    s = step(s) // chatbot live (dev 1), app still building
+    expect(s.sim.ops.systems!.chatbot!.live).toBe(1)
+    expect(s.lastReport!.ops.systems.maint).toBeCloseTo(0.1, 5)
+    const callsLive = s.lastReport!.ops.demand.contact
+    for (let i = 0; i < 4; i++) s = step(s)
+    expect(s.sim.ops.systems!.claimsApp!.live).toBe(1)
+    // a fully adopted chatbot + app remove about a quarter of calls (vs the same book without them)
+    expect(s.lastReport!.ops.systems.calls).toBeLessThan(-0.2)
+    expect(callsLive / calls0).toBeLessThan(1)
+    // version 2 upgrades the live system and keeps its users
+    const users = s.sim.ops.systems!.claimsApp!.adoption
+    s = simulateQuarter(order(quiet(s), ['claimsApp']), keptPlan(s), {}, { calm: true })
+    s = step(s)
+    s = step(s)
+    expect(s.sim.ops.systems!.claimsApp!.live).toBe(2)
+    for (const [c, v] of Object.entries(users as Record<string, number>)) expect((s.sim.ops.systems!.claimsApp!.adoption as Record<string, number>)[c]).toBeGreaterThanOrEqual(v)
+    expect(s.lastReport!.ops.systems.survey).toBeLessThan(-0.3)
   })
 })

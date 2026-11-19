@@ -1,4 +1,5 @@
 import OPS_JSON from '../data/operations.json'
+import type { SysState, SystemId } from './systems'
 import type { Capacity, Ops } from './types'
 
 /**
@@ -33,10 +34,14 @@ export interface OpsState {
   temps: TempBoost[]
   /** headcount the player asked for this quarter (set by the decision room, consumed by the engine) */
   target: Partial<Record<Team, number>>
+  /** phase 3a: systems built or being built */
+  systems?: Partial<Record<SystemId, SysState>>
+  /** systems the player ordered this quarter (build v1 or upgrade to v2), consumed by the engine */
+  orders?: string[]
 }
 
 export function createOps(): OpsState {
-  return { staff: { claims: OPS.teams.claims.start, contact: OPS.teams.contact.start }, pending: [], garages: OPS.garages.start, owned: {}, temps: [], target: {} }
+  return { staff: { claims: OPS.teams.claims.start, contact: OPS.teams.contact.start }, pending: [], garages: OPS.garages.start, owned: {}, temps: [], target: {}, systems: {}, orders: [] }
 }
 
 /** Policies in force and work at game start (per quarter), from the assumptions. */
@@ -129,7 +134,8 @@ export function runOps(
     const now = o.staff[team] + pend
     const want = Math.max(0, Math.round((o.target[team] ?? now) + (x.extraHires[team] ?? 0)))
     if (want > now) {
-      const n = want - now
+      // recruiting and training can take in only so many people a quarter
+      const n = Math.min(want - now, hireCap(o, team))
       o.pending.push({ team, n, at: q + 1 })
       hiring += (n * OPS.salaryPerPersonMonth * OPS.hireCostMonths) / 1e6
     } else if (want < now) {
@@ -159,6 +165,11 @@ export function runOps(
     Math.max(0, o.garages - (o.garages0 ?? OPS.garages.start)) * OPS.garages.maintenanceMBPerGarage
   const salaries = quarterPay(paid)
   return { salaries, otherFixed: OPS.otherFixedMB, maintenance, hiring, severance }
+}
+
+/** Most people a team can take on in one quarter (recruiting and training bottleneck). */
+export function hireCap(o: OpsState, team: Team) {
+  return Math.max(OPS.teams[team].step, Math.ceil(o.staff[team] * OPS.hireCapOfTeam))
 }
 
 /** Variable operating cost for a quarter's volume (million baht). */

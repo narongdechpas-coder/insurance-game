@@ -1,5 +1,5 @@
 import { ArrowLeft, ChevronsLeft, ChevronsRight, ShieldCheck } from 'lucide-react'
-import { budgetLeft, budgetOf, unansweredEvents } from '../../game/decisions/plan'
+import { budgetOf, budgetUsed, unansweredEvents } from '../../game/decisions/plan'
 import { useGameStore } from '../../store/useGameStore'
 import { Stage } from '../Stage'
 import { Toasts } from '../Toasts'
@@ -27,7 +27,7 @@ export function DecisionRoom() {
   const setStep = useGameStore((s) => s.setStep)
   const toast = useGameStore((s) => s.toast)
   const confirm = useGameStore((s) => s.confirmPlan)
-  const over = useGameStore((s) => budgetLeft(s.plan, s.responses, s.game.sim.ops.owned, budgetOf(s.game)) < 0)
+  const over = useGameStore((s) => budgetUsed(s.game, s.plan, s.responses, s.sysOrders) > budgetOf(s.game))
   const pending = useGameStore((s) => unansweredEvents(s.game, s.responses).length)
   const activeCard = useGameStore((s) => s.ui.activeCard)
 

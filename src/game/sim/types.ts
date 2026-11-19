@@ -47,6 +47,8 @@ export interface Firm {
   /** engine v3, rivals only: their teams and last quarter's load (the player's live in SimState.ops) */
   ops?: OpsState
   lastLoads?: Capacity
+  /** phase 3a, rivals only: extra pull from their partner systems */
+  sysPull?: number
 }
 
 export interface SimState {
@@ -108,6 +110,10 @@ export interface OpsReport {
   inForce: number
   policiesWritten: number
   costs: { salaries: number; otherFixed: number; maintenance: number; hiring: number; severance: number; issuance: number; survey: number; fixed: number; variable: number }
+  /** claims reported this quarter (demand.claims is the claims team's work, after self-service) */
+  claims: number
+  /** phase 3a: build installments, upkeep, launches and the share of work/cost removed */
+  systems: { spend: number; maint: number; news: { id: string; version: number; kind: string }[]; calls: number; claimsWork: number; survey: number; issuance: number }
 }
 
 export type FloodOutcome = 'none' | 'hit' | 'missed'

@@ -10,6 +10,7 @@ import { acquisitionRate, buildPnl, CHANNELS, commissionRate, distributionChanne
 import { bookFactors, bookPrice, CHANNEL_IDS, driftByPrice, portfolioMix, RENEWAL_BASELINE, renewalOutlook, renewalShareFactor, rivalRenewal, segmentAdverseLR, segmentLossRatios, segmentMoves, segmentPriceTerm, segmentRateLR, SEGMENT_IDS, channelAttraction, channelLRFactors, channelRates, nextChannelMix, playerInertia, renewalRates, serviceStars, shiftSegments, updateCompany } from './v2'
 import { DIFFICULTY, DURATION_WEIGHTS, P } from './params'
 import { rng } from './rng'
+import { buildingCount, nextVersion, runSystems, systemAlias, systemEffects, type SystemId } from './systems'
 import { capitalLine } from '../capital'
 import { capacityMultiple, isInvestment, OPS, rivalStartOps, runOps, serviceBonus, startUnits, TEAMS, variableCosts, type Team } from './ops'
 import type { Capacity, CompetitorMove, Driver, Firm, GameOutcome, Ops, QuarterReport, QueuedEffect, RivalReport, SimState, Standing } from './types'
@@ -142,6 +143,8 @@ function competitorMoves(firms: Firm[], personalities: string[], names: string[]
           moves.push({ id: f.id, text: `${name} ขึ้นราคาเพื่อรักษากำไร` })
         } else moves.push({ id: f.id, text: `${name} คงราคา เน้นวินัยการรับประกัน` })
     }
+    // partner systems make intermediaries push this rival (phase 3a)
+    f.bonus += f.sysPull ?? 0
     f.rateHist = [...f.rateHist.slice(-2), f.price]
   })
   return moves
@@ -271,7 +274,15 @@ const RIVAL_STAFFING: Record<Personality, { hireAt: number; aim: number; trimAt:
 }
 
 /** One rival's operations this quarter: staffing, overload, and operating cost (million THB). */
-function rivalOps(f: Firm, pers: Personality, prev: Firm, q: number, scale: number, floodHit: boolean, playerS0: number, prepared: boolean) {
+/** Systems each rival personality builds, in order (game-design assumption). */
+const RIVAL_SYSTEMS: Record<Personality, SystemId[]> = {
+  aggressive: ['dealerPortal', 'chatbot'],
+  premium: ['claimsApp', 'garageOnline', 'autoRenew'],
+  digital: ['chatbot', 'claimsApp', 'autoRenew', 'agentApp'],
+  conservative: ['autoRenew', 'claimsApp'],
+}
+
+function rivalOps(f: Firm, pers: Personality, prev: Firm, q: number, scale: number, floodHit: boolean, playerS0: number, prepared: boolean, rand: () => number) {
   const o = f.ops ?? (f.ops = rivalStartOps(f.s0 / playerS0, pers))
   const k = f.s0 / playerS0
   const st = RIVAL_STAFFING[pers]
@@ -287,23 +298,32 @@ function rivalOps(f: Firm, pers: Personality, prev: Firm, q: number, scale: numb
   // rivals that prepare for a flood bring in extra adjusters for that quarter, like the player's response
   const temps = prepared ? [{ source: 'preposition', ops: 'claims' as Ops, value: 0.45, quarters: 1 }] : []
   const cost = runOps(o, q, { investments: [], temps, extraHires: {}, extraGarages })
+  // rivals build systems too, in the order their personality favours (phase 3a)
+  o.systems ??= {}
+  const want = RIVAL_SYSTEMS[pers].filter((id) => nextVersion(o.systems![id]))
+  const sysTick = runSystems(o.systems, q, want.slice(0, Math.max(0, OPS.itSlots - buildingCount(o.systems))), 50, rand)
+  const fx = systemEffects(o.systems, START_MIX)
+  f.sysPull = CHANNEL_IDS.reduce((a, c) => a + START_MIX[c] * fx.pull[c], 0)
   const gwp0 = f.s0 * P.marketGwp0
-  const cap = capacityMultiple(o, q, gwp0)
+  const cap0 = capacityMultiple(o, q, gwp0)
+  const cap: Capacity = { ...cap0, repair: cap0.repair * (1 + fx.repair) }
   const policies = (f.share * scale) / f.price
   const newBiz = Math.max(0, f.share - prev.share) * scale
   const claims = policies * P.claimsPerPolicy + (floodHit ? policies * P.floodClaimsSurge * f.catExposure : 0)
   const loads: Capacity = {
-    contact: (policies + P.newBusinessCallWeight * newBiz) / (f.s0 * cap.contact),
-    claims: claims / (f.s0 * cap.claims),
+    contact: ((policies + P.newBusinessCallWeight * newBiz) * (1 + fx.calls)) / (f.s0 * cap.contact),
+    claims: (claims * (1 + fx.claimsWork)) / (f.s0 * cap.claims),
     repair: (claims - (floodHit ? policies * P.floodClaimsSurge * f.catExposure * 0.7 : 0)) / (f.s0 * cap.repair),
   }
   f.lastLoads = loads
   const excess = { contact: Math.max(0, loads.contact - 1), claims: Math.max(0, loads.claims - 1), repair: Math.max(0, loads.repair - 1) }
   const su = startUnits(gwp0)
-  const v = variableCosts(((policies / f.s0) * su.inForce) / 4, loads.claims * cap.claims * su.claims)
+  const vr = variableCosts(((policies / f.s0) * su.inForce) / 4, (claims / f.s0) * su.claims)
+  const v = { issuance: vr.issuance * (1 + fx.issuance), survey: vr.survey * (1 + fx.survey) }
   const marketing = (st.marketing + (f.bonus > 0 ? st.promoMarketing : 0)) * k
   return {
-    cost: cost.salaries + cost.otherFixed + cost.maintenance + cost.hiring + cost.severance + v.issuance + v.survey + marketing,
+    cost: cost.salaries + cost.otherFixed + cost.maintenance + cost.hiring + cost.severance + v.issuance + v.survey + marketing + sysTick.spend + sysTick.maint,
+    lr: fx.lr,
     overloadStars: excess.contact * P.overload.contact.stars + excess.claims * P.overload.claims.stars + excess.repair * P.overload.repair.stars,
     overloadLR: excess.claims * P.overload.claims.lossRatio + excess.repair * P.overload.repair.lossRatio,
     loads,
@@ -331,12 +351,14 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
   if (treatyOpen) sim.treaty = planIn.reinsurance
 
   // 1. decisions → effect queue and operations (investments once, temporary measures not stacked)
-  const opsIn = { investments: [] as string[], temps: [] as { source: string; ops: Ops; value: number; quarters: number }[], extraHires: {} as Partial<Record<Team, number>>, extraGarages: 0 }
+  const opsIn = { orders: [] as string[], investments: [] as string[], temps: [] as { source: string; ops: Ops; value: number; quarters: number }[], extraHires: {} as Partial<Record<Team, number>>, extraGarages: 0 }
   const addOps = (id: string, hook?: SimHook) => {
     const temp = (OPS.temporary as Record<string, { ops: string; capacity: number; quarters: number }>)[id]
     const hire = (OPS.hires as Record<string, { team: string; people: number }>)[id]
     const garages = (OPS.garageAdds as Record<string, number>)[id]
-    if (isInvestment(id)) opsIn.investments.push(id)
+    const sysId = systemAlias(id)
+    if (sysId) opsIn.orders.push(sysId)
+    else if (isInvestment(id)) opsIn.investments.push(id)
     else if (temp) opsIn.temps.push({ source: id, ops: temp.ops as Ops, value: temp.capacity, quarters: temp.quarters })
     else if (hire) opsIn.extraHires[hire.team as Team] = (opsIn.extraHires[hire.team as Team] ?? 0) + hire.people
     else if (garages) opsIn.extraGarages += garages
@@ -358,6 +380,13 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
   // engine v3: people, garages, investments and temporary measures, and what they cost this quarter
   const ownedBefore = { ...sim.ops.owned }
   const opsCost = runOps(sim.ops, q, opsIn)
+  // phase 3a: systems (build, go live with project risk, customers and partners move onto them)
+  sim.ops.systems ??= {}
+  const sysTick = runSystems(sim.ops.systems, q, [...opsIn.orders, ...(sim.ops.orders ?? [])], sim.v2.company.brand, () => r.next())
+  sim.ops.orders = []
+  opsCost.maintenance += sysTick.maint
+  const sysFx = systemEffects(sim.ops.systems, sim.mix)
+  sim.v2.sysRenewal = sysFx.renewal
 
   const flow: Impact = { growth: 0, profit: 0, risk: 0, cx: 0 }
   const flowBySource = new Map<string, Impact>()
@@ -414,6 +443,8 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
   // engine v2: segments move with this quarter's product/underwriting choices; channels pull with their levers and the brand
   shiftSegments(sim.v2, plan)
   const chAttr = channelAttraction(sim.v2, plan)
+  // partner systems make dealers and agents push our policies (like a commission rise, without the cost)
+  for (const c of CHANNEL_IDS) chAttr[c] += sysFx.pull[c]
   // event responses that push a channel, change the loss ratio or protect renewals this quarter
   let respLR = 0
   let respInertia = 0
@@ -469,7 +500,9 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
 
   // 5. operations: demand vs capacity
   const gwp0 = sim.baseDemand.policies * P.marketGwp0
-  const cap = capacityMultiple(sim.ops, q, gwp0)
+  const cap0 = capacityMultiple(sim.ops, q, gwp0)
+  // systems: garage tools add repair capacity; customer self-service removes calls and claims paperwork
+  const cap: Capacity = { ...cap0, repair: cap0.repair * (1 + sysFx.repair) }
   const scale = (sim.marketGwp / P.marketGwp0) * showBoost
   const policies = (pl.share * scale) / pl.price
   const newBiz = Math.max(0, pl.share - prevShare) * scale
@@ -478,8 +511,8 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
   const riskUp = Math.max(0, flow.risk)
   const claims = policies * P.claimsPerPolicy * (1 + 0.04 * riskUp) + (floodHit ? policies * P.floodClaimsSurge * pl.catExposure : 0)
   const loads: Capacity = {
-    contact: (policies + P.newBusinessCallWeight * newBiz) / (sim.baseDemand.policies * cap.contact),
-    claims: claims / (sim.baseDemand.claims * cap.claims),
+    contact: ((policies + P.newBusinessCallWeight * newBiz) * (1 + sysFx.calls)) / (sim.baseDemand.policies * cap.contact),
+    claims: (claims * (1 + sysFx.claimsWork)) / (sim.baseDemand.claims * cap.claims),
     repair: (claims - (floodHit ? policies * P.floodClaimsSurge * pl.catExposure * 0.7 : 0)) / (sim.baseDemand.claims * cap.repair),
   }
   // the same work in real units (policies, claims, calls, repairs) for the player and the Operation page
@@ -495,7 +528,7 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
 
   // 6. losses and money — player
   const gwp = pl.share * sim.marketGwp * showBoost
-  const spend = planCost(plan, responses, ownedBefore)
+  const spend = planCost(plan, responses, ownedBefore) + sysTick.spend
   const trend = (1 + P.claimsTrend) ** q
   const prevMix = sim.mix
   sim.mix = nextChannelMix(sim.mix, chAttr)
@@ -507,7 +540,7 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
   const marketPrice = sim.firms.reduce((a, f) => a + f.price * f.share, 0) / sim.firms.reduce((a, f) => a + f.share, 0)
   const priceGap = pl.price / marketPrice - 1
   const adverseLR = segmentAdverseLR(sim.v2.segPrice, book.mix, marketPrice, P.adverseSelection.freeGap, P.adverseSelection.lrPerGap)
-  const attritional = rateLR + respLR - P.profitAxisLR * flow.profit + overloadLR + adverseLR + r.normal() * (P.attritionalNoise * book.volatility + P.riskAxisVolatility * riskUp)
+  const attritional = sysFx.lr + rateLR + respLR - P.profitAxisLR * flow.profit + overloadLR + adverseLR + r.normal() * (P.attritionalNoise * book.volatility + P.riskAxisVolatility * riskUp)
   const catMult = floodActive ? (responseOf(responses, 'flood-central')?.sim?.catLossMult ?? 1) : 1
   const catGross = floodHit ? diff.floodSeverity * P.floodLossOfGwp * gwp * pl.catExposure * book.flood * r.range(P.floodSeverity[0], P.floodSeverity[1]) * (1 + 0.08 * riskUp) * catMult : 0
   // premium is written now and earned over two quarters; commission follows written premium and the channel mix
@@ -518,7 +551,10 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
   const commission = CHANNEL_IDS.reduce((a, c) => a + gwp * sim.mix[c] * (rates[c].commission + rates[c].acquisition), 0)
   // engine v3: fixed cost (people, rent, IT, upkeep) is money per quarter, not a share of premium;
   // variable cost follows policies written and claims
-  const varCost = variableCosts(policiesWritten, demandUnits.claims)
+  const claimCount = (claims / sim.baseDemand.claims) * su.claims
+  const varRaw = variableCosts(policiesWritten, claimCount)
+  // systems cut the cost of issuing policies (portals, auto renewal) and of surveying claims (photo assessment)
+  const varCost = { issuance: varRaw.issuance * (1 + sysFx.issuance), survey: varRaw.survey * (1 + sysFx.survey) }
   const opsVariable = varCost.issuance + varCost.survey
   const adminAmount = opsCost.salaries + opsCost.otherFixed + opsCost.maintenance + opsCost.hiring + opsCost.severance
   const expense = (commission + adminAmount + spend + opsVariable) / ep
@@ -553,8 +589,8 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
     const cat = floodHit || (floodActive && r.next() < diff.floodChance) ? diff.floodSeverity * P.floodLossOfGwp * g * f.catExposure * r.range(P.floodSeverity[0], P.floodSeverity[1]) : 0
     // engine v3: rivals run the same operating model as the player: teams that can overload,
     // fixed costs in money, variable costs per policy and claim, and their own marketing spend
-    const rv = rivalOps(f, pers, prev, q, scale, cat > 0, sim.baseDemand.policies, !!(floodActive && RIVAL_EVENT_PLAY['flood-central'][pers].prepared))
-    const lr = (P.baseLossRatio * trend) / Math.min(P.rateCap, earnedRate(f.rateHist)) + rv.overloadLR + r.normal() * P.attritionalNoise
+    const rv = rivalOps(f, pers, prev, q, scale, cat > 0, sim.baseDemand.policies, !!(floodActive && RIVAL_EVENT_PLAY['flood-central'][pers].prepared), () => r.next())
+    const lr = (P.baseLossRatio * trend) / Math.min(P.rateCap, earnedRate(f.rateHist)) + rv.overloadLR + rv.lr + r.normal() * P.attritionalNoise
     const res = underwrite(g, lr, commissionRate(START_MIX) + acquisitionRate(START_MIX) + rv.cost / g, cat, P.quotaShare.keep, { retention: P.xl.retention * (g / 2000), cost: P.xl.cost })
     f.capital += res.netResult + f.capital * yieldNow
     f.combinedRatio = res.lossRatio + res.expenseRatio
@@ -603,7 +639,7 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
     plan,
     responseIds: [...active].map((id) => responseOf(responses, id)?.id).filter(Boolean) as string[],
     excess,
-    serviceBonus: serviceBonus(sim.ops),
+    serviceBonus: serviceBonus(sim.ops) + sysFx.service,
     wordOfMouth: active.has('word-of-mouth'),
     complaints: active.has('complaints-rise'),
   })
@@ -810,6 +846,8 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
       inForce,
       policiesWritten,
       costs: { ...opsCost, fixed: adminAmount, issuance: varCost.issuance, survey: varCost.survey, variable: opsVariable },
+      claims: claimCount,
+      systems: { spend: sysTick.spend, maint: sysTick.maint, news: sysTick.news, calls: sysFx.calls, claimsWork: sysFx.claimsWork, survey: sysFx.survey, issuance: sysFx.issuance },
     },
     v2: {
       brand: sim.v2.company.brand,

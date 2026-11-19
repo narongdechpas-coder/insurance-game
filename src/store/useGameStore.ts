@@ -61,6 +61,9 @@ interface Store {
   /** headcount per team the player wants (engine v3: kept until changed) */
   staff: StaffTarget
   setStaff: (team: Team, n: number) => void
+  /** systems ordered this quarter (build or upgrade), one-off */
+  sysOrders: string[]
+  toggleSysOrder: (id: string) => void
   settings: Settings
   startGame: (opts: { quarters: GameLength; difficulty: Difficulty; companyName: string; playerName: string }) => void
   openDecisionRoom: (target?: DecisionId | DecisionStep) => void
@@ -112,6 +115,7 @@ export const useGameStore = create<Store>((set, get) => ({
   channels: settingsOf(initialGame),
   segSteps: keepPrices(),
   staff: staffOf(initialGame),
+  sysOrders: [],
   ui: { hovered: null, selected: null, highlightedEvent: null, introDone: false, toasts: [], screen: 'cover', step: 'scenario', activeCard: 'pricing', activeEvent: null, reviewOnly: false, runStart: 0, modal: null, term: null },
   plan: defaultPlan(),
   responses: {},
@@ -127,6 +131,7 @@ export const useGameStore = create<Store>((set, get) => ({
       channels: settingsOf(game),
       segSteps: keepPrices(),
       staff: staffOf(game),
+      sysOrders: [],
       ui: { ...s.ui, screen: 'command', introDone: false, selected: null, hovered: null, highlightedEvent: null, modal: null, term: null },
     }))
   },
@@ -140,6 +145,7 @@ export const useGameStore = create<Store>((set, get) => ({
       channels: settingsOf(save.game),
       segSteps: keepPrices(),
       staff: staffOf(save.game),
+      sysOrders: [],
       ui: { ...s.ui, screen: 'command', step: 'scenario', activeEvent: null, introDone: false, selected: null, hovered: null, highlightedEvent: null, modal: null, term: null },
     }))
   },
@@ -178,7 +184,7 @@ export const useGameStore = create<Store>((set, get) => ({
   respond: (eventId, responseId) => set((s) => ({ responses: { ...s.responses, [eventId]: responseId } })),
   confirmPlan: () => {
     const s = get()
-    const game = simulateQuarter(withChannelSettings(s.game, s.channels, s.segSteps, s.staff), s.plan, s.responses)
+    const game = simulateQuarter(withChannelSettings(s.game, s.channels, s.segSteps, s.staff, s.sysOrders), s.plan, s.responses)
     if (game.outcome) clearSave()
     else writeSave(game)
     set({
@@ -193,6 +199,7 @@ export const useGameStore = create<Store>((set, get) => ({
       channels: settingsOf(s.game),
       segSteps: keepPrices(),
       staff: staffOf(s.game),
+      sysOrders: [],
       ui: { ...s.ui, screen: s.game.outcome ? 'gameover' : 'command', step: 'scenario', activeEvent: null },
     })),
   finishSimulation: () => set((s) => (s.ui.screen === 'simulating' ? { ui: { ...s.ui, screen: 'review' } } : s)),
@@ -210,7 +217,8 @@ export const useGameStore = create<Store>((set, get) => ({
       return { plan: { ...s.plan, [card]: choiceFor(o) } }
     }),
   chooseTactic: (card, tactic) => set((s) => ({ plan: { ...s.plan, [card]: { ...s.plan[card], tactic } } })),
-  resetPlan: () => set((s) => ({ plan: keptPlan(s.game), channels: settingsOf(s.game), segSteps: keepPrices(), staff: staffOf(s.game) })),
+  resetPlan: () => set((s) => ({ plan: keptPlan(s.game), channels: settingsOf(s.game), segSteps: keepPrices(), staff: staffOf(s.game), sysOrders: [] })),
+  toggleSysOrder: (id) => set((s) => ({ sysOrders: s.sysOrders.includes(id) ? s.sysOrders.filter((x) => x !== id) : [...s.sysOrders, id] })),
   setStaff: (team, n) => set((s) => ({ staff: { ...s.staff, [team]: Math.max(0, n) } })),
   setSegStep: (k, step) => set((s) => ({ segSteps: { ...s.segSteps, [k]: step } })),
   setLever: (c, lever) => set((s) => ({ channels: { ...s.channels, [c]: { ...s.channels[c], lever } } })),

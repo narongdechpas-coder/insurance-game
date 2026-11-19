@@ -25,6 +25,7 @@ export function CardList() {
   const segSteps = useGameStore((s) => s.segSteps)
   const game = useGameStore((s) => s.game)
   const staff = useGameStore((s) => s.staff)
+  const sysOrders = useGameStore((s) => s.sysOrders)
   const kept = useMemo(() => keptPlan(game), [game])
   return (
     <nav className="absolute left-7 top-[172px] w-[calc(300px+max(0px,100%-1600px)*0.15)] glass rounded-[24px] p-2.5 flex flex-col gap-1 pointer-events-auto anim-rise" style={{ animationDelay: '0.05s' }}>
@@ -32,14 +33,14 @@ export function CardList() {
         if (c === STAFF_ROW) {
           const on = active === 'staff'
           const now = staffOf(game)
-          const changed = TEAMS.some((t) => (staff[t] ?? now[t]) !== now[t])
+          const changed = TEAMS.some((t) => (staff[t] ?? now[t]) !== now[t]) || sysOrders.length > 0
           return (
             <button key="staff" data-card="staff" onClick={() => setActive('staff')} className={`relative flex items-center gap-3 h-[56px] rounded-2xl pl-1.5 pr-3 text-left transition-all ${on ? 'bg-white shadow-[0_6px_16px_-6px_rgba(20,50,110,0.35)] ring-2 ring-brand-500' : 'hover:bg-white/70'}`}>
               <span className="relative shrink-0 grid place-items-center w-[58px] h-[46px] rounded-xl bg-gradient-to-b from-brand-50 to-brand-100 overflow-hidden">
                 <img src={spriteUrl(BUILDINGS.claims.sprite)} alt="" className="max-w-[54px] max-h-[42px] object-contain" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block font-medium text-[14.5px] text-navy-900 leading-tight truncate">ทีมงาน</span>
+                <span className="block font-medium text-[14.5px] text-navy-900 leading-tight truncate">ทีมงานและระบบ</span>
                 <span className={`block text-[12px] leading-tight truncate ${changed ? 'text-brand-600 font-medium' : 'text-navy-700/60'}`}>
                   สินไหม {staff.claims ?? now.claims} คน · Call center {staff.contact ?? now.contact} คน
                 </span>

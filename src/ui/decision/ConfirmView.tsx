@@ -5,7 +5,7 @@ import { stepsChanged } from '../../game/forecast'
 import { AlertTriangle, Pencil, Users } from 'lucide-react'
 import { spriteUrl } from '../../assets/registry'
 import { CARDS, isUnlocked } from '../../game/decisions/cards'
-import { budgetOf, choiceCost, optionOf, planCost, reviewPlan, tacticOf } from '../../game/decisions/plan'
+import { budgetOf, budgetUsed, choiceCost, optionOf, reviewPlan, tacticOf } from '../../game/decisions/plan'
 import { responseOf, scenariosFor } from '../../game/decisions/scenarios'
 import { useGameStore } from '../../store/useGameStore'
 import { EVENT_ART } from '../../world/eventArt'
@@ -28,7 +28,8 @@ export function ConfirmView() {
   const q = game.quarter
   const scen = scenariosFor(game.events.map((e) => e.id))
   const cards = CARDS.filter((c) => isUnlocked(c, q.index))
-  const used = planCost(plan, responses, game.sim.ops.owned)
+  const sysOrders = useGameStore((s) => s.sysOrders)
+  const used = budgetUsed(game, plan, responses, sysOrders)
   const budget = budgetOf(game)
   const warnings = reviewPlan(plan, game, responses).filter((n) => n.tone === 'warning')
 

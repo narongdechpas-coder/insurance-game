@@ -128,7 +128,7 @@ function play(seed: number, strategy: StrategyId, quarters: 12 | 20, issues: Iss
     const prev = s
     // random hiring and lay-offs on top (engine v3)
     const staff = r.next() < 0.3 ? { claims: 90 + Math.floor(r.next() * 80), contact: 25 + Math.floor(r.next() * 30) } : t.staff
-    s = simulateQuarter(withChannelSettings(s, set, steps, staff), t.plan, t.responses)
+    s = simulateQuarter(withChannelSettings(s, set, steps, staff, t.orders), t.plan, t.responses)
     checkQuarter(prev, s, seed, issues)
     n++
   }
