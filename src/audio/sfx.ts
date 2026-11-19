@@ -133,14 +133,26 @@ let sfxGain: GainNode | null = null
 let volume = 0.7
 let enabled = true
 
+const unlockListeners: (() => void)[] = []
+
+/** Run `cb` once audio is unlocked (now, if it already is). */
+export function onAudioUnlock(cb: () => void) {
+  if (ctx) cb()
+  else unlockListeners.push(cb)
+}
+
+/** The shared audio context (null until the first tap). */
+export const audioContext = () => ctx
+
 /** Browsers start audio only after a tap: create the context on the first gesture. */
 export function unlockAudio() {
   if (ctx || typeof window === 'undefined' || !('AudioContext' in window)) return
   try {
     ctx = new AudioContext()
     sfxGain = ctx.createGain()
-    sfxGain.gain.value = volume
+    sfxGain.gain.value = enabled ? volume : 0
     sfxGain.connect(ctx.destination)
+    for (const cb of unlockListeners.splice(0)) cb()
   } catch {
     ctx = null
   }

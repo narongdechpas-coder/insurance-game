@@ -1,6 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { capitalHealth } from '../game/capital'
+import { MusicPlayer, type TrackId } from './music'
 import { useGameStore } from '../store/useGameStore'
-import { play, setSfxVolume, unlockAudio, type SfxId } from './sfx'
+import { audioContext, onAudioUnlock, play, setSfxVolume, unlockAudio, type SfxId } from './sfx'
 
 /** Which tap sound a button makes, read from what the button is (no per-button wiring needed). */
 const TAP_RULES: [string, SfxId | 'none'][] = [
@@ -16,11 +18,46 @@ const EVENT_SOUND: Record<string, SfxId> = { opportunity: 'eventChance', threat:
  * (plan confirmed, quarter starts, newspaper, events, rank, systems, end of game, panels).
  * Renders nothing.
  */
+/** one music player for the page (React may mount the director twice in development) */
+let sharedPlayer: MusicPlayer | null = null
+
 export function AudioDirector() {
   const soundOn = useGameStore((s) => s.settings.soundOn)
   const sfxVolume = useGameStore((s) => s.settings.sfxVolume)
+  const musicVolume = useGameStore((s) => s.settings.musicVolume)
+  const screen = useGameStore((s) => s.ui.screen)
+  const outcome = useGameStore((s) => s.game.outcome)
+  const game = useGameStore((s) => s.game)
+  const capital = capitalHealth(game).level
+  const flood = game.events.some((e) => e.id === 'flood-central')
 
   useEffect(() => setSfxVolume(sfxVolume, soundOn), [soundOn, sfxVolume])
+
+  // background music: one track per screen, cross-faded; tension and rain layers react to the game
+  const [player, setPlayer] = useState<MusicPlayer | null>(null)
+  useEffect(() => onAudioUnlock(() => setPlayer((sharedPlayer ??= new MusicPlayer(audioContext()!)))), [])
+  const track: TrackId | null =
+    screen === 'cover' || screen === 'command' || screen === 'market' || screen === 'product' || screen === 'operation'
+      ? 'city'
+      : screen === 'decision'
+        ? 'boardroom'
+        : screen === 'running' || screen === 'simulating'
+          ? 'market'
+          : screen === 'review'
+            ? 'newspaper'
+            : screen === 'gameover'
+              ? outcome?.playerRank === 1 && outcome.reason !== 'bankrupt'
+                ? 'win'
+                : 'lose'
+              : null
+  useEffect(() => {
+    if (!player) return
+    player.setVolume(soundOn ? musicVolume : 0)
+    player.play(soundOn && musicVolume > 0 ? track : null)
+  }, [player, track, soundOn, musicVolume])
+  useEffect(() => {
+    player?.setLayers(capital === 'danger' ? 1 : capital === 'watch' ? 0.5 : 0, flood)
+  }, [player, capital, flood])
 
   // taps: the first tap also unlocks audio (browsers block sound until the player touches the page)
   useEffect(() => {
