@@ -76,7 +76,7 @@ export function SettingsModal() {
         {(
           [
             ['sfxVolume', 'เสียงประกอบ', sfxVolume],
-            ['musicVolume', 'เพลงพื้นหลัง (เร็วๆ นี้)', musicVolume],
+            ['musicVolume', 'เพลงพื้นหลัง', musicVolume],
           ] as const
         ).map(([k, label, v]) => (
           <label key={k} className={`flex items-center gap-3 text-[13.5px] text-navy-800 ${soundOn ? '' : 'opacity-40'}`}>
