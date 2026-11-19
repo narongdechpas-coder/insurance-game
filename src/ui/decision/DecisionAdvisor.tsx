@@ -5,6 +5,9 @@ import { ADVISOR_NAME } from '../../game/narrative/advisor'
 import { CARD_BY_ID } from '../../game/decisions/cards'
 import { reviewPlan, unansweredEvents } from '../../game/decisions/plan'
 import { responseOf, SCENARIO_BY_EVENT } from '../../game/decisions/scenarios'
+import { useMemo } from 'react'
+import type { DecisionId } from '../../game/decisions/types'
+import { capacityWarning } from '../../game/forecast'
 import { useGameStore } from '../../store/useGameStore'
 import { Glossed } from '../glossary/Term'
 
@@ -16,7 +19,11 @@ export function DecisionAdvisor() {
   const step = useGameStore((s) => s.ui.step)
   const activeCard = useGameStore((s) => s.ui.activeCard)
   const activeEvent = useGameStore((s) => s.ui.activeEvent)
-  const notes = reviewPlan(plan, game, responses)
+  const channels = useGameStore((s) => s.channels)
+  // forecast overload of the draft plan (calm engine run) joins the plan checks as a warning
+  const cap = useMemo(() => capacityWarning(game, plan, responses, channels), [game, plan, responses, channels])
+  // overload is the costliest surprise, so it leads the warnings
+  const notes = [...(cap ? [{ id: 'capacity', tone: 'warning' as const, text: cap, cards: ['pricing', 'distribution', 'repair'] as DecisionId[] }] : []), ...reviewPlan(plan, game, responses)]
   // what the player is looking at decides which note leads
   const focus: string[] =
     step === 'strategy' ? [activeCard] : step === 'scenario' && activeEvent ? (responseOf(responses, activeEvent)?.related ?? []) : []

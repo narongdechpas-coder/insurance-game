@@ -49,6 +49,28 @@ export function KpiPanel() {
           </div>
         </div>
       ))}
+      {/* company-level stocks (engine v2): slow-moving, act on every channel */}
+      <div className="mt-0.5 px-2 pt-2 border-t border-brand-100 space-y-1.5" data-company>
+        {[
+          { label: 'Brand Awareness', v: game.sim.v2.company.brand, d: game.lastReport?.v2.brandDelta ?? 0, color: 'bg-brand-500' },
+          { label: 'Service Quality', v: game.sim.v2.company.service, d: game.lastReport?.v2.serviceDelta ?? 0, color: 'bg-good' },
+        ].map((x) => (
+          <div key={x.label} data-company-stock={x.label} className="text-[11.5px] text-navy-800">
+            <div className="flex justify-between">
+              <span>
+                <Glossed text={x.label} />
+              </span>
+              <span className="tabular-nums font-medium">
+                {Math.round(x.v)}
+                {Math.abs(x.d) >= 0.5 && <span className={x.d > 0 ? 'text-emerald-700' : 'text-red-700'}> {x.d > 0 ? '▲' : '▼'}{Math.abs(x.d).toFixed(0)}</span>}
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full bg-navy-900/10 overflow-hidden">
+              <div className={`h-full rounded-full ${x.color}`} style={{ width: `${x.v}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
       <div className="text-[10px] text-navy-700/45 text-center pt-0.5">ตัวเลขจำลองสำหรับต้นแบบ</div>
     </aside>
   )

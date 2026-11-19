@@ -29,6 +29,12 @@ export interface SimHook {
   repair?: number
   quarters?: number
   catLossMult?: number // flood losses multiplied by this if the flood hits
+  /** extra pull of a sales channel this quarter (engine v2 channel attraction) */
+  channelAttr?: Partial<Record<'dealer' | 'agent' | 'direct', number>>
+  /** loss-ratio points added this quarter (discounts, looser checks) */
+  lr?: number
+  /** extra share stickiness this quarter (renewal offers) */
+  inertia?: number
 }
 
 export interface Scenario {
@@ -84,6 +90,34 @@ export const SCENARIOS: Scenario[] = [
       { id: 'fullCompliance', label: 'ตรวจและปรับกระบวนการสินไหมทั้งระบบ', blurb: 'ใช้งบและเวลา แต่ไม่ถูกปรับ และลูกค้าได้บริการดีขึ้นจริง', cost: 25, speed: 'normal', icon: 'shield', impact: { growth: 0, profit: 0, risk: -1, cx: 1 } },
       { id: 'quickFix', label: 'แก้เฉพาะเรื่องที่ถูกร้องเรียนบ่อย', blurb: 'งบน้อย ลดโอกาสถูกปรับได้ครึ่งหนึ่ง', cost: 10, speed: 'fast', icon: 'wrench', impact: { growth: 0, profit: 0, risk: 0, cx: 0 } },
       { id: 'waitAndSee', label: 'รอผลตรวจก่อนค่อยแก้', blurb: 'ไม่ใช้งบตอนนี้ ถ้าความพอใจลูกค้าต่ำจะถูกปรับเต็มจำนวน', cost: 0, speed: 'slow', icon: 'hold', impact: { growth: 0, profit: 0, risk: 1, cx: 0 } },
+    ],
+  },
+  // ---- high season ----
+  {
+    eventId: 'motor-show',
+    question: 'ช่วง Motor Show งานใหม่ผ่านดีลเลอร์เร่งขึ้น จะเล่นแค่ไหน',
+    responses: [
+      { id: 'boothPartner', label: 'ตั้งบูธร่วมกับค่ายรถ', blurb: 'ได้ลูกค้ารถใหม่จากงานโดยตรง ต้องเตรียมคนออกกรมธรรม์และสายด่วนรับงานที่เพิ่ม', cost: 25, speed: 'fast', icon: 'store', impact: { growth: 1, profit: 0, risk: 0, cx: 0 }, sim: { channelAttr: { dealer: 0.2 } } },
+      { id: 'showPackage', label: 'แพ็กเกจราคาพิเศษเฉพาะงาน', blurb: 'ยอดเร่งแรงกว่า แต่ส่วนลดกินกำไรของงานกลุ่มนี้', cost: 10, speed: 'fast', icon: 'down', impact: { growth: 1, profit: -1, risk: 0, cx: 0 }, sim: { channelAttr: { dealer: 0.28 }, lr: 0.01 } },
+      { id: 'skipShow', label: 'ไม่เข้าร่วม ปล่อยตามปกติ', blurb: 'ไม่ใช้งบ งานใหม่ช่วงนี้ส่วนหนึ่งจะไปอยู่กับคู่แข่งที่ลงงาน', cost: 0, speed: 'fast', icon: 'hold', impact: { growth: -1, profit: 0, risk: 0, cx: 0 }, sim: { channelAttr: { dealer: -0.08 } } },
+    ],
+  },
+  {
+    eventId: 'motor-expo',
+    question: 'ช่วง Motor Expo ปลายปี จะเล่นแค่ไหน',
+    responses: [
+      { id: 'boothPartner', label: 'ตั้งบูธร่วมกับค่ายรถ', blurb: 'ได้ลูกค้ารถใหม่จากงาน แต่ต้องแย่งกับคู่แข่งที่ลงงานเต็มที่เหมือนกัน', cost: 25, speed: 'fast', icon: 'store', impact: { growth: 1, profit: 0, risk: 0, cx: 0 }, sim: { channelAttr: { dealer: 0.2 } } },
+      { id: 'showPackage', label: 'แพ็กเกจราคาพิเศษเฉพาะงาน', blurb: 'ยอดเร่งแรง ส่วนลดกินกำไร', cost: 10, speed: 'fast', icon: 'down', impact: { growth: 1, profit: -1, risk: 0, cx: 0 }, sim: { channelAttr: { dealer: 0.28 }, lr: 0.01 } },
+      { id: 'skipShow', label: 'ไม่เข้าร่วม ปล่อยตามปกติ', blurb: 'ไม่ใช้งบ เสียงานใหม่ส่วนหนึ่งให้คู่แข่ง', cost: 0, speed: 'fast', icon: 'hold', impact: { growth: -1, profit: 0, risk: 0, cx: 0 }, sim: { channelAttr: { dealer: -0.08 } } },
+    ],
+  },
+  {
+    eventId: 'year-end-promo',
+    question: 'คู่แข่งทุกรายอัดโปรโมชันปิดยอดปลายปี เราจะตอบอย่างไร',
+    responses: [
+      { id: 'matchPromo', label: 'อัดโปรโมชันตาม', blurb: 'รักษายอดงานใหม่ได้ แต่ส่วนลดทำให้ Loss Ratio ไตรมาสนี้แย่ลง', cost: 20, speed: 'fast', icon: 'down', impact: { growth: 1, profit: -1, risk: 0, cx: 0 }, sim: { channelAttr: { dealer: 0.08, agent: 0.08, direct: 0.08 }, lr: 0.012 } },
+      { id: 'renewalOffer', label: 'เน้นรักษาลูกค้าเดิม (ส่วนลดต่ออายุ)', blurb: 'ไม่แย่งงานใหม่ แต่กันลูกค้าเดิมไม่ให้ถูกดึงไป ต้นทุนต่ำกว่า', cost: 15, speed: 'fast', icon: 'shield', impact: { growth: 0, profit: 0, risk: 0, cx: 1 }, sim: { inertia: 0.04, lr: 0.004 } },
+      { id: 'holdLine', label: 'ไม่ลงสงครามราคา', blurb: 'รักษากำไร แต่เสียงานใหม่ช่วงนี้ให้คู่แข่ง', cost: 0, speed: 'fast', icon: 'hold', impact: { growth: -1, profit: 1, risk: 0, cx: 0 } },
     ],
   },
   // ---- consequence events (raised by the engine) ----

@@ -233,7 +233,7 @@ export function updateCompany(v: V2State, x: CompanyInputs): { brand: number; se
   const dt = x.plan.distribution.tactic
   if (dt && SERVICE_MOVE[dt]) svc += SERVICE_MOVE[dt]
   for (const id of x.responseIds) svc += SERVICE_MOVE[id] ?? 0
-  svc -= 25 * (x.excess.contact + x.excess.claims + x.excess.repair)
+  svc -= 15 * (x.excess.contact + x.excess.claims + x.excess.repair)
   c.service += svc - 0.05 * (c.service - SERVICE0)
   c.brand = Math.max(0, Math.min(100, c.brand))
   c.service = Math.max(0, Math.min(100, c.service))

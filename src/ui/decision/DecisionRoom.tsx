@@ -6,6 +6,7 @@ import { Toasts } from '../Toasts'
 import { TopBar } from '../TopBar'
 import { CardList } from './CardList'
 import { CardStage } from './CardStage'
+import { ChannelStage } from './ChannelStage'
 import { ConfirmView } from './ConfirmView'
 import { DecisionAdvisor } from './DecisionAdvisor'
 import { DecisionHeader } from './DecisionHeader'
@@ -26,6 +27,7 @@ export function DecisionRoom() {
   const confirm = useGameStore((s) => s.confirmPlan)
   const over = useGameStore((s) => budgetLeft(s.plan, s.responses) < 0)
   const pending = useGameStore((s) => unansweredEvents(s.game, s.responses).length)
+  const activeCard = useGameStore((s) => s.ui.activeCard)
 
   const toConfirm = () => {
     if (pending) {
@@ -50,7 +52,7 @@ export function DecisionRoom() {
         {step === 'strategy' && (
           <>
             <CardList />
-            <CardStage />
+            {activeCard === 'distribution' ? <ChannelStage /> : <CardStage />}
           </>
         )}
         {step === 'confirm' && <ConfirmView />}

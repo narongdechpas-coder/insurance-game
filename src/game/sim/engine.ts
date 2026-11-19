@@ -221,6 +221,9 @@ function consequencesFor(loads: Capacity, sim: SimState, plan: QuarterPlan, q: n
 function externalEvents(nextQ: number, lotusCut: boolean, r: ReturnType<typeof rng>): string[] {
   const out: string[] = []
   const season = nextQ % 4 >= 2
+  // high season (calendar): Motor Show in Q2, Motor Expo and the year-end promotion race in Q4
+  if (nextQ % 4 === 1) out.push('motor-show')
+  if (nextQ % 4 === 3) out.push('motor-expo', 'year-end-promo')
   if (r.next() < (season ? 0.65 : 0.22)) out.push('flood-central')
   if (lotusCut || r.next() < 0.3) out.push('rival-promo')
   if (r.next() < 0.45) out.push('ev-growth')
@@ -255,11 +258,19 @@ const RIVAL_EVENT_PLAY: Record<string, Record<Personality, { text: string; prepa
 export interface SimulateOptions {
   /** Override the random seed (tests, balance runs). */
   seed?: number
+  /** Forecast mode: no randomness and no flood, so two plans can be compared like for like. */
+  calm?: boolean
 }
+
+/** New business across the whole market is this much higher during a motor show (game assumption). */
+const SHOW_BOOST = 1.06
+/** Rivals' extra pull during the year-end promotion race. */
+const YEAR_END_RIVAL_PULL = 0.08
 
 export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: Responses, opts: SimulateOptions = {}): GameState {
   const q = state.quarter.index
-  const r = rng((opts.seed ?? state.config.seed) * 31 + q * 7919 + 17)
+  const r0 = rng((opts.seed ?? state.config.seed) * 31 + q * 7919 + 17)
+  const r: typeof r0 = opts.calm ? { next: () => 0.999, range: (lo, hi) => (lo + hi) / 2, normal: () => 0, pick: (xs) => xs[0] } : r0
   const diff = DIFFICULTY[state.config.difficulty]
   const sim: SimState = structuredClone(state.sim)
   const pl = sim.player
@@ -327,12 +338,24 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   // engine v2: segments move with this quarter's product/underwriting choices; channels pull with their levers and the brand
   shiftSegments(sim.v2, plan)
   const chAttr = channelAttraction(sim.v2, plan)
+  // event responses that push a channel, change the loss ratio or protect renewals this quarter
+  let respLR = 0
+  let respInertia = 0
+  for (const id of active) {
+    const h = responseOf(responses, id)?.sim
+    if (!h) continue
+    for (const [c, v] of Object.entries(h.channelAttr ?? {})) chAttr[c as keyof typeof chAttr] += v
+    respLR += h.lr ?? 0
+    respInertia += h.inertia ?? 0
+  }
+  const showBoost = active.has('motor-show') || active.has('motor-expo') ? SHOW_BOOST : 1
+  const rivalPromo = active.has('year-end-promo') ? YEAR_END_RIVAL_PULL : 0
   const plChannelBonus = CHANNEL_IDS.reduce((a, c) => a + sim.mix[c] * chAttr[c], 0)
   const bookNow = bookFactors(sim.v2, sim.mix)
   const attr = (f: Firm, price = f.price) =>
     f === pl
       ? attractiveness(price, f.satisfaction, flow.growth, f.bonus + plChannelBonus) - P.priceElasticity * (bookNow.elasticity - 1) * Math.log(price)
-      : attractiveness(price, f.satisfaction, 0, f.bonus)
+      : attractiveness(price, f.satisfaction, 0, f.bonus + rivalPromo)
   const targetShares = (priceOverride?: number) => {
     const raw = all.map((f) => f.s0 * Math.exp(attr(f, f === pl && priceOverride ? priceOverride : f.price) - f.a0))
     const sum = raw.reduce((a, b) => a + b, 0)
@@ -340,7 +363,7 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   }
   const target = targetShares()
   const targetNoPrice = targetShares(prevPrice)
-  const plInertia = playerInertia(sim.v2, sim.mix, P.shareInertia)
+  const plInertia = Math.min(0.88, playerInertia(sim.v2, sim.mix, P.shareInertia) + respInertia)
   all.forEach((f, i) => {
     const k = f === pl ? plInertia : P.shareInertia
     f.share = k * f.share + (1 - k) * target[i]
@@ -351,7 +374,7 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
 
   // 5. operations: demand vs capacity
   const cap = capacityAt(sim, q)
-  const scale = sim.marketGwp / P.marketGwp0
+  const scale = (sim.marketGwp / P.marketGwp0) * showBoost
   const policies = (pl.share * scale) / pl.price
   const newBiz = Math.max(0, pl.share - prevShare) * scale
   const floodActive = active.has('flood-central')
@@ -369,7 +392,7 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   if (excess.contact > 0) sim.queue.push({ at: q + 1, axis: 'growth', value: P.overload.contact.growth * excess.contact * 4, source: 'callcenter-overload' })
 
   // 6. losses and money — player
-  const gwp = pl.share * sim.marketGwp
+  const gwp = pl.share * sim.marketGwp * showBoost
   const spend = planCost(plan, responses)
   const trend = (1 + P.claimsTrend) ** q
   const prevMix = sim.mix
@@ -379,7 +402,7 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
   const marketPrice = sim.firms.reduce((a, f) => a + f.price * f.share, 0) / sim.firms.reduce((a, f) => a + f.share, 0)
   const priceGap = pl.price / marketPrice - 1
   const adverseLR = Math.max(0, priceGap - P.adverseSelection.freeGap) * P.adverseSelection.lrPerGap
-  const attritional = rateLR - P.profitAxisLR * flow.profit + overloadLR + adverseLR + r.normal() * (P.attritionalNoise * book.volatility + P.riskAxisVolatility * riskUp)
+  const attritional = rateLR + respLR - P.profitAxisLR * flow.profit + overloadLR + adverseLR + r.normal() * (P.attritionalNoise * book.volatility + P.riskAxisVolatility * riskUp)
   const catMult = floodActive ? (responseOf(responses, 'flood-central')?.sim?.catLossMult ?? 1) : 1
   const catGross = floodHit ? diff.floodSeverity * P.floodLossOfGwp * gwp * pl.catExposure * book.flood * r.range(P.floodSeverity[0], P.floodSeverity[1]) * (1 + 0.08 * riskUp) * catMult : 0
   // premium is written now and earned over two quarters; commission follows written premium and the channel mix
@@ -417,7 +440,7 @@ export function simulateQuarter(state: GameState, plan: QuarterPlan, responses: 
     const play = (id: string) => (active.has(id) ? RIVAL_EVENT_PLAY[id][pers] : null)
     const eventActions: string[] = []
     const impacts: { label: string; amount: number }[] = []
-    const g = f.share * sim.marketGwp
+    const g = f.share * sim.marketGwp * showBoost
     const lr = (P.baseLossRatio * trend) / Math.min(P.rateCap, earnedRate(f.rateHist)) + r.normal() * P.attritionalNoise
     const cat = floodHit || (floodActive && r.next() < diff.floodChance) ? diff.floodSeverity * P.floodLossOfGwp * g * f.catExposure * r.range(P.floodSeverity[0], P.floodSeverity[1]) : 0
     // rivals carry the same cost structure as the player at the starting channel mix (incl. routine spend)
