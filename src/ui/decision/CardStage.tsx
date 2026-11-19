@@ -1,4 +1,7 @@
 import { BadgeCheck, Building2, Check, Clock, Coins, Hourglass, Sparkles } from 'lucide-react'
+import { choiceKey, forecastCard, type Delta } from '../../game/choiceForecast'
+import { ForecastNumbers } from './ForecastNumbers'
+import { useDraft } from './useDraft'
 import { useMemo } from 'react'
 import { forecastPricing } from '../../game/forecast'
 import { moodOfStatus, portraitKey } from '../../assets/portraits'
@@ -41,7 +44,7 @@ export function CostChip({ cost }: { cost: number }) {
 }
 
 /** Layer 2: how to carry out the chosen stance. */
-function TacticRow({ card, stanceLabel, tactics, skip, locked }: { card: DecisionId; stanceLabel: string; tactics: Tactic[]; skip: string[]; locked: boolean }) {
+function TacticRow({ card, stanceLabel, tactics, skip, locked, fc }: { card: DecisionId; stanceLabel: string; tactics: Tactic[]; skip: string[]; locked: boolean; fc: Record<string, Delta> }) {
   const plan = useGameStore((s) => s.plan)
   const ops = useGameStore((s) => s.game.sim.ops)
   const q = useGameStore((s) => s.game.quarter.index)
@@ -57,15 +60,16 @@ function TacticRow({ card, stanceLabel, tactics, skip, locked }: { card: Decisio
         {tactics.map((t) => {
           const on = t.id === chosen
           const Icon = OPTION_ICONS[t.icon]
-          // preview what the whole card does with this tactic
-          const impact = choiceImpact({ ...plan, [card]: { ...plan[card], tactic: t.id } }, card)
+          // engine numbers for this tactic (arrows read from the same numbers)
+          const f = fc[choiceKey({ option: plan[card].option, tactic: t.id })]
+          const impact = f?.arrows ?? choiceImpact({ ...plan, [card]: { ...plan[card], tactic: t.id } }, card)
           return (
             <button
               key={t.id}
               data-tactic={t.id}
               onClick={() => !locked && chooseTactic(card, t.id)}
               disabled={locked && !on}
-              className={`relative flex flex-col text-left rounded-[18px] p-3.5 h-[226px] disabled:opacity-50 border-2 transition-all duration-300 ease-(--ease-game) ${
+              className={`relative flex flex-col text-left rounded-[18px] p-3.5 h-[318px] disabled:opacity-50 border-2 transition-all duration-300 ease-(--ease-game) ${
                 on ? 'bg-white border-gold-500 shadow-[0_12px_24px_-12px_rgba(217,138,7,0.65)] -translate-y-1' : 'bg-white/70 border-transparent hover:bg-white hover:-translate-y-0.5 hover:shadow-md'
               }`}
             >
@@ -100,6 +104,9 @@ function TacticRow({ card, stanceLabel, tactics, skip, locked }: { card: Decisio
                   <ImpactRow impact={impact} size={13} />
                 </span>
                 <CostChip cost={isInvestment(t.id) && ops.owned[t.id] !== undefined ? 0 : t.cost} />
+              </span>
+              <span className="mt-1.5 pt-1.5 border-t border-brand-100">
+                <ForecastNumbers d={f} compact />
               </span>
             </button>
           )
@@ -192,6 +199,8 @@ export function CardStage() {
   const game = useGameStore((s) => s.game)
   const head = portraitKey(card.location, moodOfStatus(locationStatus(game, card.location)))
   const chosenOption = card.options.find((o) => o.id === chosen)
+  const draft = useDraft()
+  const fc = useMemo(() => forecastCard(game, draft, id), [game, draft, id])
   const keptChoice = keptPlan(game)[id]
   const keptOpt = card.options.find((o) => o.id === keptChoice.option)
   const keptTac = keptOpt?.tactics?.find((t) => t.id === keptChoice.tactic)
@@ -203,7 +212,7 @@ export function CardStage() {
 
   return (
     <section key={id} className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise">
-      <header className={`relative bg-gradient-to-br from-brand-100 via-white to-brand-50 flex items-center px-8 gap-6 transition-[height] duration-300 ${compact ? 'h-[128px]' : 'h-[178px]'}`}>
+      <header data-sticky-head className={`sticky top-0 z-20 shadow-[0_8px_14px_-12px_rgba(20,50,110,0.45)] bg-gradient-to-br from-brand-100 via-white to-brand-50 flex items-center px-8 gap-6 transition-[height] duration-300 ${compact ? 'h-[128px]' : 'h-[178px]'}`}>
         <img
           src={spriteUrl(PANEL_ART[card.location] ?? BUILDINGS[card.location].sprite)}
           alt=""
@@ -252,7 +261,7 @@ export function CardStage() {
               data-option={o.id}
               onClick={() => choose(id, o.id)}
               disabled={locked && !on}
-              className={`group relative flex flex-col text-left rounded-[20px] border-2 disabled:opacity-50 transition-all duration-300 ease-(--ease-game) ${compact ? 'h-[100px] p-3' : 'h-[300px] p-3.5'} ${
+              className={`group relative flex flex-col text-left rounded-[20px] border-2 disabled:opacity-50 transition-all duration-300 ease-(--ease-game) ${compact ? 'h-[100px] p-3' : 'h-[360px] p-3.5'} ${
                 on
                   ? 'bg-white border-brand-500 shadow-[0_14px_28px_-12px_rgba(29,95,224,0.6)] -translate-y-1'
                   : 'bg-white/70 border-transparent hover:bg-white hover:-translate-y-1 hover:shadow-lg'
@@ -274,7 +283,12 @@ export function CardStage() {
               {!compact && <span className="text-[13px] leading-snug text-navy-700/80 mt-1.5 flex-1"><Glossed text={o.blurb} skip={inTitle} /></span>}
               {!compact && (
                 <span className="mt-2 pt-2.5 border-t border-brand-100">
-                  <ImpactRow impact={o.impact} />
+                  <ImpactRow impact={fc[o.id]?.arrows ?? o.impact} />
+                </span>
+              )}
+              {!compact && (
+                <span className="mt-1.5">
+                  <ForecastNumbers d={fc[o.id]} compact />
                 </span>
               )}
               <span className={`flex items-center gap-1.5 ${compact ? 'mt-auto' : 'mt-2'}`}>
@@ -292,7 +306,7 @@ export function CardStage() {
         })}
       </div>
       {id === 'pricing' && <PriceForecastStrip cols={cols} />}
-      {tactics && chosenOption && <TacticRow card={id} stanceLabel={chosenOption.label} tactics={tactics} skip={inTitle} locked={locked} />}
+      {tactics && chosenOption && <TacticRow card={id} stanceLabel={chosenOption.label} tactics={tactics} skip={inTitle} locked={locked} fc={fc} />}
     </section>
   )
 }

@@ -237,3 +237,13 @@ export const useGameStore = create<Store>((set, get) => ({
     setTimeout(() => set((s) => ({ ui: { ...s.ui, toasts: s.ui.toasts.filter((t) => t.id !== id) } })), 2600)
   },
 }))
+
+/** The decision room's draft, as the forecasts read it (phase 3). */
+export const draftOf = (s: { plan: QuarterPlan; responses: Responses; channels: ChannelSettings; segSteps: SegmentSteps; staff: StaffTarget; sysOrders: string[] }) => ({
+  plan: s.plan,
+  responses: s.responses,
+  channels: s.channels,
+  steps: s.segSteps,
+  staff: s.staff,
+  orders: s.sysOrders,
+})
