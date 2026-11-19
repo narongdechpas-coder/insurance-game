@@ -89,7 +89,8 @@ export const BACK_STRIP: Placement[] = [
   { sprite: 'buildings/office-low', u: COLS[2][0] - 140, v: FILLER_ROW[1] - 16, scale: 0.5 },
   { sprite: 'buildings/office-row', u: COLS[2][0] + 110, v: FILLER_ROW[1] - 16, scale: 0.5 },
 ]
-const RIVAL_SLOTS: Record<string, number> = { lotus: 0, naga: 2, bluewave: 4, summit: 5 }
+// BlueWave stands on its own block outside the island (see Surroundings: RIVAL_LOT); slot 4 is too close to the road
+const RIVAL_SLOTS: Record<string, number> = { lotus: 0, naga: 2, summit: 5 }
 for (const [id, slot] of Object.entries(RIVAL_SLOTS)) {
   const key = RIVAL_CITY_ART[id]
   if (hasSprite(key)) BACK_STRIP[slot] = { ...BACK_STRIP[slot], sprite: key, scale: 0.42, v: FILLER_ROW[1] - 16 }
