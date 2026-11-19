@@ -53,6 +53,7 @@ body,
 #root {
   height: 100%;
   margin: 0;
+  overflow: hidden; /* fallback for browsers without 'clip' (older Samsung Internet / WebView) */
   overflow: clip; /* 'hidden' still allows focus/scrollIntoView to shift the 16:9 stage */
   background: #cfe2f5;
   font-family: var(--font-body);
@@ -179,7 +180,9 @@ html {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   overscroll-behavior: none;
-  touch-action: manipulation; /* no double-tap zoom delay */
+  /* pan only: no double-tap zoom and no page pinch-zoom (some tablets ignore user-scalable=no);
+     the city handles its own pinch */
+  touch-action: pan-x pan-y;
 }
 .rotate-hint { display: none; }
 @media (orientation: portrait) and (pointer: coarse) {

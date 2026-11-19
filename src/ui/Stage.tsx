@@ -12,9 +12,31 @@ export function Stage({ children }: { children: ReactNode }) {
       const scale = Math.min(window.innerWidth / 1600, window.innerHeight / 900)
       setBox({ scale, w: window.innerWidth / scale, h: window.innerHeight / scale })
     }
+    // Android tablets can report the new size a moment after 'resize' (system bars, address bar,
+    // rotation), so fit again shortly after; and the page itself must never scroll or pan
+    let t = 0
+    const refit = () => {
+      fit()
+      clearTimeout(t)
+      t = window.setTimeout(fit, 350)
+    }
+    const unscroll = () => {
+      if (window.scrollX || window.scrollY) window.scrollTo(0, 0)
+      const root = document.getElementById('root')
+      if (root && (root.scrollTop || root.scrollLeft)) root.scrollTo(0, 0)
+    }
     fit()
-    window.addEventListener('resize', fit)
-    return () => window.removeEventListener('resize', fit)
+    window.addEventListener('resize', refit)
+    window.addEventListener('orientationchange', refit)
+    window.visualViewport?.addEventListener('resize', refit)
+    window.addEventListener('scroll', unscroll, true)
+    return () => {
+      clearTimeout(t)
+      window.removeEventListener('resize', refit)
+      window.removeEventListener('orientationchange', refit)
+      window.visualViewport?.removeEventListener('resize', refit)
+      window.removeEventListener('scroll', unscroll, true)
+    }
   }, [])
   return (
     <div className="stage pointer-events-none" style={{ width: box.w, height: box.h, transform: `translate(-50%, -50%) scale(${box.scale})` }}>
