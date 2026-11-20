@@ -44,7 +44,7 @@ export function PricingStage() {
   return (
     <section
       data-stage="pricing"
-      className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-hidden pointer-events-auto anim-rise flex flex-col"
+      className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[calc(100%-172px-150px)] glass rounded-[28px] overflow-hidden pointer-events-auto anim-rise flex flex-col"
     >
       <StageHeader
         art={PANEL_ART.hq ?? BUILDINGS.hq.sprite}

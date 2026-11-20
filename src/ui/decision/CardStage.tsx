@@ -211,7 +211,7 @@ export function CardStage() {
   const tight = compact && card.options.length >= 5 // five compact tiles: smaller icon, shorter cost chip
 
   return (
-    <section key={id} className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise">
+    <section key={id} className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[calc(100%-172px-150px)] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise">
       <StageHeader
         art={PANEL_ART[card.location] ?? BUILDINGS[card.location].sprite}
         kicker={`${loc.en} · ${loc.th}`}

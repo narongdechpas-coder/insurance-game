@@ -1,3 +1,4 @@
+import { measureLabel } from '../../game/decisions/scenarios'
 import { Minus, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { SystemsPanel } from './SystemsPanel'
@@ -5,7 +6,7 @@ import { HeaderChip, StageHeader } from './StageHeader'
 import { BUILDINGS } from '../../world/layout'
 import { portraitKey } from '../../assets/portraits'
 import { hasSprite, spriteUrl } from '../../assets/registry'
-import { CARD_BY_ID } from '../../game/decisions/cards'
+import { CARD_BY_ID, CARDS } from '../../game/decisions/cards'
 import { EVENT_BY_ID } from '../../game/data/events'
 import { forecastQuarter, fmtUnits, staffOf } from '../../game/forecast'
 import { boostAt, hireCap, INVESTMENT_IDS, OPS, TEAMS, type Team } from '../../game/sim/ops'
@@ -19,7 +20,8 @@ const TEAM_UI: Record<Team, { loc: string; who: string }> = {
 const mb = (v: number) => (Math.abs(v) < 100 ? v.toFixed(1) : Math.round(v).toLocaleString('th-TH'))
 const pct = (v: number) => `${Math.round(v * 100)}%`
 const loadTone = (v: number) => (v > 1.05 ? 'text-red-700' : v > 0.97 ? 'text-amber-700' : 'text-emerald-700')
-const sourceLabel = (src: string) => CARD_BY_ID[src as DecisionId]?.title ?? EVENT_BY_ID[src]?.title ?? src
+const sourceLabel = (src: string) => measureLabel(src) ?? tacticLabel(src) ?? CARD_BY_ID[src as DecisionId]?.title ?? EVENT_BY_ID[src]?.title ?? src
+const tacticLabel = (id: string) => CARDS.flatMap((c) => c.options.flatMap((o) => o.tactics ?? [])).find((t) => t.id === id)?.label ?? null
 
 /**
  * Team screen (engine v3): people are kept from quarter to quarter. Hiring is paid now and adds
@@ -139,7 +141,7 @@ export function StaffStage() {
   return (
     <section
       data-stage="staff"
-      className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise"
+      className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[calc(100%-172px-150px)] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise"
     >
       <StageHeader
         art={tab === 'systems' ? 'systems/sys-claims-app' : opsArt}
