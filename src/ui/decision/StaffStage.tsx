@@ -1,8 +1,10 @@
 import { Minus, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { SystemsPanel } from './SystemsPanel'
+import { HeaderChip, StageHeader } from './StageHeader'
+import { BUILDINGS } from '../../world/layout'
 import { portraitKey } from '../../assets/portraits'
-import { spriteUrl } from '../../assets/registry'
+import { hasSprite, spriteUrl } from '../../assets/registry'
 import { CARD_BY_ID } from '../../game/decisions/cards'
 import { EVENT_BY_ID } from '../../game/data/events'
 import { forecastQuarter, fmtUnits, staffOf } from '../../game/forecast'
@@ -128,31 +130,36 @@ export function StaffStage() {
   const owned = INVESTMENT_IDS.filter((id) => o.owned[id] !== undefined)
   const temps = o.temps.filter((x) => x.until >= q)
   const c = fc.ops.costs
+  // header art: the head of IT on the systems tab (smiles when a system just went live, worried when one slipped);
+  // the team office on the people tab, or the training room while new people are being hired or trained
+  const news = game.lastReport?.ops?.systems?.news ?? []
+  const itMood = news.some((n) => n.kind === 'delayed' || n.kind === 'partial') ? 'shocked' : news.some((n) => n.kind === 'live') ? 'happy' : 'normal'
+  const hiring = TEAMS.some((t) => (staff[t] ?? now[t]) > now[t]) || o.pending.length > 0
+  const opsArt = hasSprite(hiring ? 'ops/ops-training' : 'ops/ops-claims-team') ? (hiring ? 'ops/ops-training' : 'ops/ops-claims-team') : BUILDINGS.claims.sprite
   return (
     <section
       data-stage="staff"
       className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise"
     >
-      <header data-sticky-head className="sticky top-0 z-20 shadow-[0_8px_14px_-12px_rgba(20,50,110,0.45)] px-7 pt-5 pb-3 bg-gradient-to-br from-brand-100 via-white to-brand-50">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <div className="text-[13px] text-brand-600 font-medium">Operations · ทีมงานและระบบ</div>
-            <h2 className="font-display font-bold text-[28px] leading-tight text-navy-900">{tab === 'people' ? 'คนและกำลังงาน' : 'ระบบและดิจิทัล'}</h2>
-          </div>
-          <div className="glass rounded-full p-1 flex gap-1 shrink-0" role="tablist">
-            {(['people', 'systems'] as const).map((k) => (
-              <button key={k} role="tab" data-tab={k} aria-selected={tab === k} onClick={() => setTab(k)} className={`h-9 px-4 rounded-full text-[14px] font-medium ${tab === k ? 'bg-brand-500 text-white' : 'text-navy-800 hover:bg-white/70'}`}>
-                {k === 'people' ? 'คน' : 'ระบบ'}
-              </button>
-            ))}
-          </div>
-        </div>
-        <p className="text-[13.5px] text-navy-700/80 mt-0.5">
-          {tab === 'people'
-            ? 'จำนวนคนค้างไว้ทุกไตรมาสจนกว่าจะเปลี่ยน · รับเพิ่มจ่ายเงินเดือนทันที ได้กำลังหลังอบรมไตรมาสถัดไป (ไม่เกิน 15% ของทีมต่อไตรมาส) · ลดคนกำลังหายทันทีและจ่ายค่าชดเชย · ตัวเลขเป็นค่าสมมติของเกม'
-            : 'คนแก้ปัญหาได้เร็ว ระบบช้ากว่าแต่ต้นทุนระยะยาวต่ำ · ทีม IT พัฒนาได้พร้อมกัน 2 ระบบ · ลูกค้าและคู่ค้าค่อยๆ ย้ายมาใช้ · ตัวเลขเป็นค่าสมมติของเกม'}
-        </p>
-      </header>
+      <StageHeader
+        art={tab === 'systems' ? 'systems/sys-claims-app' : opsArt}
+        kicker="Operations · ทีมงานและระบบ"
+        title={tab === 'people' ? 'คนและกำลังงาน' : 'ระบบและดิจิทัล'}
+        subtitle={tab === 'people' ? 'จะรับหรือลดคนทีมไหน เท่าไหร่' : 'จะให้ทีม IT สร้างระบบไหนก่อน'}
+        chips={
+          <>
+            <span className="glass rounded-full p-0.5 inline-flex gap-0.5" role="tablist">
+              {(['people', 'systems'] as const).map((k) => (
+                <button key={k} role="tab" data-tab={k} aria-selected={tab === k} onClick={() => setTab(k)} className={`h-7 px-3.5 rounded-full text-[13px] font-medium ${tab === k ? 'bg-brand-500 text-white' : 'text-navy-800 hover:bg-white/70'}`}>
+                  {k === 'people' ? 'คน' : 'ระบบ'}
+                </button>
+              ))}
+            </span>
+            {tab === 'people' ? <HeaderChip>รับเพิ่มไม่เกิน 15%/ไตรมาส</HeaderChip> : <HeaderChip>ทำพร้อมกัน 2 ระบบ</HeaderChip>}
+          </>
+        }
+        head={tab === 'systems' ? portraitKey('it', itMood) : portraitKey('claims', 'normal')}
+      />
       {tab === 'systems' ? <SystemsPanel /> : <>
       <div className="grid grid-cols-3 gap-3 px-5 pt-4">
         {TEAMS.map(teamCard)}

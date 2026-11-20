@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
 import { portraitKey } from '../../assets/portraits'
-import { spriteUrl } from '../../assets/registry'
 import { SEGMENTS, type Level } from '../../game/data/tables'
 import { forecastSegments, stepsChanged, type SegmentSteps } from '../../game/forecast'
 import { SEG_PRICE_STEPS, type SegmentId } from '../../game/sim/v2'
 import { useGameStore } from '../../store/useGameStore'
+import { HeaderChip, StageHeader } from './StageHeader'
+import { BUILDINGS, PANEL_ART } from '../../world/layout'
 import { priceSensitivityFor } from '../../game/sim/init'
 import { Glossed } from '../glossary/Term'
 
@@ -45,17 +46,19 @@ export function PricingStage() {
       data-stage="pricing"
       className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-hidden pointer-events-auto anim-rise flex flex-col"
     >
-      <header data-sticky-head className="sticky top-0 z-20 shadow-[0_8px_14px_-12px_rgba(20,50,110,0.45)] px-7 pt-5 pb-3 bg-gradient-to-br from-brand-100 via-white to-brand-50 flex items-end gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="text-[13px] text-brand-600 font-medium">Insurance HQ · ราคาเบี้ย</div>
-          <h2 className="font-display font-bold text-[26px] leading-tight text-navy-900">ตั้งราคาแยกรายกลุ่มรถ</h2>
-          <p className="text-[13px] text-navy-700/75">
-            <Glossed text="ราคาที่ปรับมีผลถาวร ลูกค้าเห็นราคาใหม่ทันที แต่อัตราเบี้ยทยอยมีผลกับ Loss Ratio ราว 3 ไตรมาส · ตัวเลขเป็นประมาณการเทียบกับคงราคา ไม่นับเหตุการณ์ไม่คาดคิด" />
-          </p>
-          <QualityNote />
-        </div>
-        {head && <img src={spriteUrl(head)} alt="" data-portrait={head} className="portrait-fade -mb-3 h-[96px] w-[86px] object-contain object-bottom" />}
-      </header>
+      <StageHeader
+        art={PANEL_ART.hq ?? BUILDINGS.hq.sprite}
+        kicker="Insurance HQ · ราคาเบี้ย"
+        title="ตั้งราคาแยกรายกลุ่มรถ"
+        subtitle="ไตรมาสนี้จะปรับราคากลุ่มไหนเท่าไหร่"
+        chips={
+          <>
+            <QualityNote />
+            <HeaderChip>มีผลถาวร</HeaderChip>
+          </>
+        }
+        head={head}
+      />
       <div className="min-h-0 overflow-y-auto px-4 pb-4 pt-2">
         <table className="w-full text-[12.5px]" data-table="segment-pricing">
           <thead>
@@ -151,13 +154,10 @@ function QualityNote() {
   const good = k < 0.97
   const bad = k > 1.03
   return (
-    <p data-quality-note className={`mt-1 inline-block rounded-lg px-2 py-0.5 text-[12.5px] font-medium ${good ? 'bg-emerald-50 text-emerald-800' : bad ? 'bg-amber-50 text-amber-900' : 'bg-brand-50 text-brand-700'}`}>
-      ลูกค้าพอใจ {sat.toFixed(1)} ดาว ·{' '}
-      {good
-        ? `รับการขึ้นราคาได้ดีกว่าตลาด (เสียลูกค้าน้อยลง ~${pct}% เมื่อแพงกว่าตลาด)`
-        : bad
-          ? `ขึ้นราคาตอนนี้เสี่ยง ลูกค้าจะย้ายมากกว่าปกติ ~${pct}% เมื่อแพงกว่าตลาด ควรยกระดับบริการก่อน`
-          : 'รับการขึ้นราคาได้ระดับเดียวกับตลาด'}
-    </p>
+    <span data-quality-note title={good ? `แพงกว่าตลาดแล้วเสียลูกค้าน้อยลงราว ${pct}%` : bad ? `แพงกว่าตลาดแล้วลูกค้าย้ายมากกว่าปกติราว ${pct}% ควรยกระดับบริการก่อน` : ''}>
+      <HeaderChip tone={good ? 'good' : bad ? 'warn' : 'plain'}>
+        ลูกค้าพอใจ {sat.toFixed(1)} ดาว · {good ? `ขึ้นราคาได้ดีกว่าตลาด (เสียลูกค้าน้อยลง ~${pct}%)` : bad ? `ขึ้นราคาเสี่ยง (ลูกค้าย้ายมากขึ้น ~${pct}%)` : 'ขึ้นราคาได้เท่าตลาด'}
+      </HeaderChip>
+    </span>
   )
 }
