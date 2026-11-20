@@ -14,6 +14,7 @@ import { LOCATION_BY_ID } from '../../game/data/locations'
 import { MODULES } from '../../game/data/modules'
 import { locationStatus } from '../../game/selectors'
 import { useGameStore } from '../../store/useGameStore'
+import { P } from '../../game/sim/params'
 import { BUILDINGS, PANEL_ART } from '../../world/layout'
 import { ImpactArrows } from './ImpactArrows'
 import { AXES, DURATION_LABEL, OPTION_ICONS, SPEED_LABEL } from './visuals'
@@ -215,7 +216,12 @@ export function CardStage() {
     <ManagerBubble
       key={`bubble-${id}`}
       tone={locked ? 'warn' : 'dark'}
-      lines={locked ? 'สัญญาประกันภัยต่อเป็นรายปี เปลี่ยนได้ในห้องตัดสินใจไตรมาส 1 ของปีหน้า' : 'ค่าที่เลือกจะใช้ต่อทุกไตรมาสจนกว่าจะเปลี่ยน'}
+      lines={
+        <>
+          {locked ? 'สัญญาประกันภัยต่อเป็นรายปี เปลี่ยนได้ในห้องตัดสินใจไตรมาส 1 ของปีหน้า' : 'ค่าที่เลือกจะใช้ต่อทุกไตรมาสจนกว่าจะเปลี่ยน'}
+          {id === 'reinsurance' && <SlidingScaleNote />}
+        </>
+      }
       strong={<span data-kept-note>{locked ? `ปีนี้ใช้ "${keptLabel}" · รายปี` : `ตอนนี้บริษัทใช้ "${keptLabel}" · ใช้ต่อทุกไตรมาส`}</span>}
     />
     <section key={id} className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[calc(100%-172px-150px)] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise">
@@ -290,5 +296,18 @@ export function CardStage() {
       {tactics && chosenOption && <TacticRow card={id} stanceLabel={chosenOption.label} tactics={tactics} skip={inTitle} locked={locked} fc={fc} />}
     </section>
     </>
+  )
+}
+
+/** Quota share commission slides with the loss ratio: shown on the reinsurance card, with last quarter's figure. */
+function SlidingScaleNote() {
+  const r = useGameStore((s) => s.game.lastReport)
+  const sc = P.slidingScale
+  const p = (x: number) => Math.round(x * 100)
+  return (
+    <span data-sliding-scale>
+      {' '}· ค่าคอมคืนจาก Quota share เป็น sliding scale: Loss Ratio ดีขึ้น 1 จุด ค่าคอมเพิ่ม {sc.slide} จุด ({p(sc.provisional)}% ที่ LR {p(sc.atLR)}%, ช่วง {p(sc.min)}–{p(sc.max)}%)
+      {r?.cedingCommission !== undefined && ` · ไตรมาสที่แล้วได้ ${p(r.cedingCommission)}% (LR ${p(r.lossRatio)}%)`}
+    </span>
   )
 }
