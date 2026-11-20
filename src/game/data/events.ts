@@ -27,7 +27,7 @@ export const EVENT_DECK: GameEvent[] = [
     kind: 'competitor',
     title: 'คู่แข่งเตรียมโปรโมชันใหม่',
     detail:
-      'Lotus Guard เตรียมลดราคาประกันชั้น 1 ผ่านดีลเลอร์ ถ้าเราไม่ตอบโต้ ส่วนแบ่งในช่องทางดีลเลอร์อาจหลุด แต่ถ้าลดตามทั้งหมด Loss Ratio จะเสีย',
+      'Super Save เตรียมลดราคาประกันชั้น 1 ผ่านดีลเลอร์ ถ้าเราไม่ตอบโต้ ส่วนแบ่งในช่องทางดีลเลอร์อาจหลุด แต่ถ้าลดตามทั้งหมด Loss Ratio จะเสีย',
     icon: 'competitor',
     locations: ['marketing', 'dealer'],
     modules: ['market', 'brand', 'pricing'],

@@ -9,8 +9,20 @@ import type { Competitor, GameConfig } from '../types'
 const SAT0: Record<Competitor['personality'], number> = { aggressive: 3.5, premium: 4.1, digital: 3.9, conservative: 3.7 }
 const EXPOSURE0: Record<Competitor['personality'], number> = { aggressive: 1.2, premium: 0.9, digital: 1.0, conservative: 0.8 }
 
-export function attractiveness(price: number, satisfaction: number, growthFlow: number, bonus: number) {
-  return -P.priceElasticity * Math.log(price) + P.satisfactionWeight * (satisfaction - P.satisfactionAnchor) + P.growthAxisWeight * growthFlow + bonus
+export function attractiveness(price: number, satisfaction: number, growthFlow: number, bonus: number, market = 0) {
+  return -P.priceElasticity * qualityLog(Math.log(price), market, satisfaction) + P.satisfactionWeight * (satisfaction - P.satisfactionAnchor) + P.growthAxisWeight * growthFlow + bonus
+}
+
+/** How sensitive customers are to a price above the market, given satisfaction (1 = average). */
+export function priceSensitivityFor(satisfaction: number) {
+  const q = P.qualityPricing
+  return Math.min(q.max, Math.max(q.min, 1 - q.perStar * (satisfaction - P.satisfactionAnchor)))
+}
+
+/** log price with the part above the market (log) price scaled by the quality multiplier. */
+export function qualityLog(lnPrice: number, lnMarket: number, satisfaction: number) {
+  const gap = lnPrice - lnMarket
+  return lnMarket + (gap > 0 ? priceSensitivityFor(satisfaction) * gap : gap)
 }
 
 function firm(id: string, share: number, satisfaction: number, capital: number, catExposure: number): Firm {

@@ -369,8 +369,8 @@ export function segmentLossRatios(v: V2State, mix: SegMix, bookLR: number, lagWe
 }
 
 /** Player's price pull: each segment's price, weighted by the book and by how price-sensitive it is. */
-export function segmentPriceTerm(prices: SegMix, mix: SegMix, elasticity: number) {
-  return -elasticity * SEGMENT_IDS.reduce((a, k) => a + mix[k] * (SENS[SEG[k].priceSensitivity] / START.sens) * Math.log(prices[k]), 0)
+export function segmentPriceTerm(prices: SegMix, mix: SegMix, elasticity: number, adjust: (lnPrice: number) => number = (x) => x) {
+  return -elasticity * SEGMENT_IDS.reduce((a, k) => a + mix[k] * (SENS[SEG[k].priceSensitivity] / START.sens) * adjust(Math.log(prices[k])), 0)
 }
 
 /** Book-weighted price index (what "our price" means in the market). */

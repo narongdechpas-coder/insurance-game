@@ -30,7 +30,11 @@ export function DecisionAdvisor() {
   const staff = useGameStore((s) => s.staff)
   const cap = useMemo(() => capacityWarning(game, plan, responses, channels, segSteps, staff), [game, plan, responses, channels, segSteps, staff])
   // overload is the costliest surprise, so it leads the warnings
-  const notes = [...(cap ? [{ id: 'capacity', tone: 'warning' as const, text: cap, cards: ['pricing', 'distribution', 'repair'] as DecisionId[] }] : []), ...reviewPlan(plan, game, responses)]
+  // quality pricing: a rise on a poorly rated service drives customers away faster
+  const sat = game.kpis.satisfaction
+  const raising = Object.values(segSteps).some((x) => x > 2)
+  const quality = sat < 3.6 && raising ? [{ id: 'raise-low-quality', tone: 'warning' as const, text: `ลูกค้าพอใจแค่ ${sat.toFixed(1)} ดาว ถ้าขึ้นราคาตอนนี้ลูกค้าจะย้ายมากกว่าปกติ ควรยกระดับบริการก่อนค่อยขึ้นราคาค่ะ`, cards: ['pricing'] as DecisionId[] }] : []
+  const notes = [...(cap ? [{ id: 'capacity', tone: 'warning' as const, text: cap, cards: ['pricing', 'distribution', 'repair'] as DecisionId[] }] : []), ...quality, ...reviewPlan(plan, game, responses)]
   // what the player is looking at decides which note leads
   const focus: string[] =
     step === 'strategy' ? [activeCard === 'staff' ? 'repair' : activeCard] : step === 'scenario' && activeEvent ? (responseOf(responses, activeEvent)?.related ?? []) : []

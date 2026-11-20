@@ -5,6 +5,7 @@ import { SEGMENTS, type Level } from '../../game/data/tables'
 import { forecastSegments, stepsChanged, type SegmentSteps } from '../../game/forecast'
 import { SEG_PRICE_STEPS, type SegmentId } from '../../game/sim/v2'
 import { useGameStore } from '../../store/useGameStore'
+import { priceSensitivityFor } from '../../game/sim/init'
 import { Glossed } from '../glossary/Term'
 
 const LEVEL: Record<Level, string> = { low: 'ต่ำ', mid: 'กลาง', high: 'สูง' }
@@ -51,6 +52,7 @@ export function PricingStage() {
           <p className="text-[13px] text-navy-700/75">
             <Glossed text="ราคาที่ปรับมีผลถาวร ลูกค้าเห็นราคาใหม่ทันที แต่อัตราเบี้ยทยอยมีผลกับ Loss Ratio ราว 3 ไตรมาส · ตัวเลขเป็นประมาณการเทียบกับคงราคา ไม่นับเหตุการณ์ไม่คาดคิด" />
           </p>
+          <QualityNote />
         </div>
         {head && <img src={spriteUrl(head)} alt="" data-portrait={head} className="portrait-fade -mb-3 h-[96px] w-[86px] object-contain object-bottom" />}
       </header>
@@ -139,3 +141,23 @@ export function PricingStage() {
   )
 }
 
+
+
+/** How well customers take a price rise right now: satisfaction scales sensitivity above the market price. */
+function QualityNote() {
+  const sat = useGameStore((s) => s.game.kpis.satisfaction)
+  const k = priceSensitivityFor(sat)
+  const pct = Math.round(Math.abs(1 - k) * 100)
+  const good = k < 0.97
+  const bad = k > 1.03
+  return (
+    <p data-quality-note className={`mt-1 inline-block rounded-lg px-2 py-0.5 text-[12.5px] font-medium ${good ? 'bg-emerald-50 text-emerald-800' : bad ? 'bg-amber-50 text-amber-900' : 'bg-brand-50 text-brand-700'}`}>
+      ลูกค้าพอใจ {sat.toFixed(1)} ดาว ·{' '}
+      {good
+        ? `รับการขึ้นราคาได้ดีกว่าตลาด (เสียลูกค้าน้อยลง ~${pct}% เมื่อแพงกว่าตลาด)`
+        : bad
+          ? `ขึ้นราคาตอนนี้เสี่ยง ลูกค้าจะย้ายมากกว่าปกติ ~${pct}% เมื่อแพงกว่าตลาด ควรยกระดับบริการก่อน`
+          : 'รับการขึ้นราคาได้ระดับเดียวกับตลาด'}
+    </p>
+  )
+}

@@ -24,6 +24,12 @@ export const P = {
   attritionalNoise: 0.012,
   /** Pricing well above the market: good risks leave first, so the book left behind claims more. */
   adverseSelection: { freeGap: 0.04, lrPerGap: 0.55 },
+  /**
+   * Quality lets a company charge more: above the market price, price sensitivity is scaled by
+   * satisfaction (each star above 3.8 makes customers 35% less sensitive, each star below 35% more),
+   * within 0.55–1.6. Cutting below the market is not scaled (bargain hunters come either way).
+   */
+  qualityPricing: { perStar: 0.35, min: 0.55, max: 1.6 },
 
   // expenses
   adminRatio: 0.125, // includes a routine strategy spend of `baselineSpend`

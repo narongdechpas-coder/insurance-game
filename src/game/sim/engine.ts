@@ -5,7 +5,7 @@ import { responseOf, SCENARIO_BY_EVENT, type Responses, type SimHook } from '../
 import type { DecisionId, Duration, Impact, ImpactAxis, QuarterPlan, Speed } from '../decisions/types'
 import { EVENT_BY_ID } from '../data/events'
 import type { CompanyKpis, GameState } from '../types'
-import { attractiveness } from './init'
+import { attractiveness, qualityLog } from './init'
 import { acquisitionRate, buildPnl, CHANNELS, commissionRate, distributionChannel, START_MIX } from './channels'
 import { bookFactors, bookPrice, CHANNEL_IDS, driftByPrice, portfolioMix, RENEWAL_BASELINE, renewalOutlook, renewalShareFactor, rivalRenewal, segmentAdverseLR, segmentLossRatios, segmentMoves, segmentPriceTerm, segmentRateLR, SEGMENT_IDS, channelAttraction, channelLRFactors, channelRates, nextChannelMix, playerInertia, renewalRates, serviceStars, shiftSegments, updateCompany } from './v2'
 import { DIFFICULTY, DURATION_WEIGHTS, P } from './params'
@@ -112,7 +112,7 @@ function competitorMoves(firms: Firm[], personalities: string[], names: string[]
         break
       case 'premium':
         // a profitable, well-liked rival spends to grow (engine v3: rivals also invest when they can)
-        if (f.combinedRatio < 0.97 && f.satisfaction > 3.7) f.bonus = 0.2 * aggression
+        if (f.combinedRatio < 0.97 && f.satisfaction > 3.7) f.bonus = 0.14 * aggression
         if (f.price > 1.08) {
           f.satisfaction += 0.04
           moves.push({ id: f.id, text: `${name} คงราคา ลงทุนบริการพรีเมียมต่อ` })
@@ -463,12 +463,15 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
   const bookNow = bookFactors(sim.v2, sim.mix)
   void bookNow
   // the player's price pull is built segment by segment (price-sensitive segments react more)
-  const plPriceNow = segmentPriceTerm(sim.v2.segPrice, mixBefore, P.priceElasticity)
-  const plPricePrev = segmentPriceTerm(prevSegPrice, mixBefore, P.priceElasticity)
+  // quality pricing: above the market price, satisfaction decides how much customers mind
+  const lnMarket = Math.log(all.reduce((a, f) => a + f.share * f.price, 0) / all.reduce((a, f) => a + f.share, 0))
+  const plAdjust = (x: number) => qualityLog(x, lnMarket, pl.satisfaction)
+  const plPriceNow = segmentPriceTerm(sim.v2.segPrice, mixBefore, P.priceElasticity, plAdjust)
+  const plPricePrev = segmentPriceTerm(prevSegPrice, mixBefore, P.priceElasticity, plAdjust)
   const attr = (f: Firm, usePrev = false) =>
     f === pl
       ? attractiveness(1, f.satisfaction, flow.growth, f.bonus + plChannelBonus) + (usePrev ? plPricePrev : plPriceNow)
-      : attractiveness(f.price, f.satisfaction, 0, f.bonus + rivalPromo)
+      : attractiveness(f.price, f.satisfaction, 0, f.bonus + rivalPromo, lnMarket)
   const targetShares = (usePrev = false) => {
     const raw = all.map((f) => f.s0 * Math.exp(attr(f, f === pl && usePrev) - f.a0))
     const sum = raw.reduce((a, b) => a + b, 0)
