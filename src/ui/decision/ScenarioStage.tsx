@@ -51,7 +51,7 @@ export function ScenarioStage() {
   return (
     <>
     <ManagerBubble key={`bubble-${sc.eventId}`} id={sc.eventId} tail={false} lines={<span title={ev.detail}>{ev.detail}</span>} strong={sc.question} />
-    <section key={sc.eventId} data-stage="scenario" className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[calc(100%-172px-150px)] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise">
+    <section key={sc.eventId} data-stage="scenario" className="border-0! absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[calc(100%-172px-150px)] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise">
       <EventBanner
         icon={ev.icon}
         kind={ev.kind}
