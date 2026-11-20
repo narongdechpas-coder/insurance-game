@@ -1,6 +1,8 @@
-import { Check, Clock, Users } from 'lucide-react'
+import { Check, Clock } from 'lucide-react'
 import { useEffect, useMemo, useRef } from 'react'
-import { spriteUrl } from '../../assets/registry'
+import { HeaderChip, StageHeader } from './StageHeader'
+import { portraitKey } from '../../assets/portraits'
+import { CARD_BY_ID } from '../../game/decisions/cards'
 import { SCENARIO_BY_EVENT, scenariosFor } from '../../game/decisions/scenarios'
 import { useGameStore } from '../../store/useGameStore'
 import { EVENT_ART } from '../../world/eventArt'
@@ -33,6 +35,10 @@ export function ScenarioStage() {
   if (!sc || !ev) return null
   const chosen = responses[sc.eventId]
   const art = EVENT_ART[ev.icon]
+  // the department the event lands on presents it: worried for a threat, pleased for an opportunity
+  const relatedCard = sc.responses.flatMap((r) => r.related ?? [])[0]
+  const loc = relatedCard ? CARD_BY_ID[relatedCard as keyof typeof CARD_BY_ID].location : 'hq'
+  const head = portraitKey(loc as never, ev.kind === 'threat' ? 'shocked' : ev.kind === 'opportunity' ? 'happy' : 'normal')
 
   const pick = (id: string) => {
     const first = !chosen
@@ -48,23 +54,25 @@ export function ScenarioStage() {
   }
 
   return (
-    <section key={sc.eventId} data-stage="scenario" className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise">
-      <header data-sticky-head className="sticky top-0 z-20 shadow-[0_8px_14px_-12px_rgba(20,50,110,0.45)] bg-gradient-to-br from-brand-100 via-white to-brand-50 flex items-center px-8 py-5 gap-6">
-        <span className="shrink-0 grid place-items-center w-[180px] h-[150px]">
-          {art ? (
-            <img src={spriteUrl(art)} alt="" className="max-h-[150px] max-w-[180px] object-contain drop-shadow-[0_12px_16px_rgba(20,50,110,0.25)]" />
-          ) : (
-            <Users size={64} className="text-watch" />
-          )}
-        </span>
-        <div className="min-w-0">
-          <span className={`inline-block text-[12px] text-white rounded-full px-2.5 py-0.5 ${KIND[ev.kind].cls}`}>{KIND[ev.kind].label}</span>
-          <h2 className="font-display font-bold text-[27px] leading-tight text-navy-900 mt-1">{ev.title}</h2>
-          <p className="text-[14px] text-navy-700/85 leading-relaxed mt-1">{ev.detail}</p>
-          <p className="text-[16.5px] font-medium text-brand-600 mt-2">{sc.question}</p>
-        </div>
-      </header>
-      <div className="grid grid-cols-3 gap-3 p-5">
+    <section key={sc.eventId} data-stage="scenario" className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[calc(100%-172px-150px)] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise">
+      <StageHeader
+        art={art ?? null}
+        kicker={`รับมือเหตุการณ์ · ${KIND[ev.kind].label}`}
+        title={ev.title}
+        subtitle="เลือกทางตอบสนอง 1 ทาง · ตัวเลขใต้แต่ละทางเทียบกับไม่ทำอะไร"
+        chips={
+          <>
+            <span className={`text-[11.5px] text-white rounded-full px-2.5 py-0.5 ${KIND[ev.kind].cls}`}>{KIND[ev.kind].label}</span>
+            <HeaderChip>ใช้งบก้อนเดียวกับกลยุทธ์</HeaderChip>
+          </>
+        }
+        head={head}
+      />
+      <div data-event-detail className="mx-5 mt-3 rounded-xl bg-brand-50 px-3 py-2 text-[13.5px] leading-relaxed text-navy-800">
+        {ev.detail}
+        <div className="mt-1 text-[15px] font-semibold text-brand-700">{sc.question}</div>
+      </div>
+      <div className="grid grid-cols-3 gap-3 p-5 pt-3">
         {sc.responses.map((r) => {
           const on = r.id === chosen
           const Icon = OPTION_ICONS[r.icon]

@@ -198,3 +198,13 @@ export function scenariosFor(eventIds: string[]) {
 export function responseOf(responses: Responses, eventId: string) {
   return SCENARIO_BY_EVENT[eventId]?.responses.find((r) => r.id === responses[eventId])
 }
+
+
+/** A readable name for a card tactic or an event response id (for lists of running measures). */
+export function measureLabel(id: string): string | null {
+  for (const sc of SCENARIOS) {
+    const r = sc.responses.find((x) => x.id === id)
+    if (r) return r.label
+  }
+  return null
+}

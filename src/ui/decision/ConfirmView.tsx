@@ -62,7 +62,7 @@ export function ConfirmView() {
   )
 
   return (
-    <section data-stage="confirm" className="absolute left-7 right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[590px] overflow-y-auto glass rounded-[28px] px-6 py-5 pointer-events-auto anim-rise">
+    <section data-stage="confirm" className="absolute left-7 right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[calc(100%-172px-150px)] overflow-y-auto glass rounded-[28px] px-6 py-5 pointer-events-auto anim-rise">
       <div className="flex items-center gap-4">
         <div className="min-w-0 flex-1">
           <div className="text-[13px] text-brand-600 font-medium">ปีที่ {q.year} · ไตรมาส {q.q}</div>

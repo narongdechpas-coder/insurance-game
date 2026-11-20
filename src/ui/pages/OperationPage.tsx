@@ -1,9 +1,10 @@
+import { measureLabel } from '../../game/decisions/scenarios'
 import { CHANNELS, commissionRate } from '../../game/sim/channels'
 import { capacityAt } from '../../game/sim/engine'
 import { INVESTMENT_IDS, OPS as OPS_DATA, unitsAt } from '../../game/sim/ops'
 import { fmtUnits, staffOf } from '../../game/forecast'
 import type { Ops } from '../../game/sim/types'
-import { CARD_BY_ID } from '../../game/decisions/cards'
+import { CARD_BY_ID, CARDS } from '../../game/decisions/cards'
 import { EVENT_BY_ID } from '../../game/data/events'
 import type { DecisionId } from '../../game/decisions/types'
 import { useGameStore } from '../../store/useGameStore'
@@ -17,7 +18,8 @@ const OPS = [
 ] as const
 
 const UNIT: Record<Ops, string> = { claims: 'เคลม/ไตรมาส', contact: 'สาย/ไตรมาส', repair: 'งาน/ไตรมาส' }
-const sourceLabel = (src: string) => CARD_BY_ID[src as DecisionId]?.title ?? EVENT_BY_ID[src]?.title ?? src
+const sourceLabel = (src: string) => measureLabel(src) ?? tacticLabel(src) ?? CARD_BY_ID[src as DecisionId]?.title ?? EVENT_BY_ID[src]?.title ?? src
+const tacticLabel = (id: string) => CARDS.flatMap((c) => c.options.flatMap((o) => o.tactics ?? [])).find((t) => t.id === id)?.label ?? null
 
 /** Operation page: how loaded each service unit is, what capacity is in place, and the channel mix. */
 export function OperationPage() {

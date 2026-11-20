@@ -96,7 +96,7 @@ export function DecisionAdvisor() {
       ) : (
         <img key={pose} src={spriteUrl(pose)} alt={ADVISOR_NAME} className="relative z-10 h-[200px] w-[110px] object-contain object-bottom drop-shadow-[0_14px_20px_rgba(8,26,66,0.45)] anim-rise" />
       )}
-      <div className="relative -ml-4 mb-4 w-[800px] glass rounded-[24px] pl-7 pr-5 py-3 anim-rise">
+      <div data-advisor-bubble className="relative -ml-4 mb-4 w-[800px] glass rounded-[24px] pl-7 pr-5 py-3 anim-rise">
         <span className="absolute -left-2 bottom-8 size-5 rotate-45 bg-white" />
         <div className="flex items-center gap-2 font-display font-semibold text-brand-600 text-[15px]">
           <span className="grid place-items-center size-6 rounded-full bg-gradient-to-b from-gold-300 to-gold-500 text-white">
@@ -106,7 +106,7 @@ export function DecisionAdvisor() {
           {warnings.length > 0 && <span className="ml-1 inline-flex items-center gap-1 text-[12px] font-medium text-alert"><AlertTriangle size={13} /> {warnings.length} ข้อควรระวัง</span>}
           {tips.length > 0 && <span className="inline-flex items-center gap-1 text-[12px] font-medium text-chance"><Lightbulb size={13} /> {tips.length} คำแนะนำ</span>}
         </div>
-        <p className="mt-1 text-[16px] leading-relaxed text-navy-900"><Glossed text={text} /></p>
+        <p className="mt-1 text-[16px] leading-relaxed text-navy-900 line-clamp-3" title={text}><Glossed text={text} /></p>
       </div>
     </div>
   )
