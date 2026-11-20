@@ -81,7 +81,7 @@ export function ImpactPanel() {
           return (
             <div key={c.id} className="flex items-start gap-2 py-0.5 text-[12.5px] leading-snug" title={o.text}>
               <span className={`mt-1 size-2 shrink-0 rounded-full ${o.threat === 'high' ? 'bg-alert' : o.threat === 'mid' ? 'bg-watch' : 'bg-good'}`} />
-              <span className="shrink-0 font-medium" style={{ color: c.color }}>{c.name.split(' ')[0]}</span>
+              <span className="shrink-0 font-medium" style={{ color: c.color }}>{c.name}</span>
               <span className="text-navy-800 line-clamp-1">{o.text}</span>
             </div>
           )

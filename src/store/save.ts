@@ -1,3 +1,4 @@
+import { COMPETITORS } from '../game/data/competitors'
 import type { GameState } from '../game/types'
 
 /**
@@ -29,7 +30,10 @@ export function readSave(): SaveInfo | null {
     if (!raw) return null
     const s = JSON.parse(raw)
     if (s?.v !== VERSION || !s.game?.sim || s.game.outcome) return null
-    return { game: s.game, savedAt: s.savedAt }
+    // rival names can change between versions: show today's names on an older save
+    const names = Object.fromEntries(COMPETITORS.map((c) => [c.id, c.name]))
+    const game = { ...s.game, competitors: s.game.competitors.map((c: { id: string; name: string }) => ({ ...c, name: names[c.id] ?? c.name })) }
+    return { game, savedAt: s.savedAt }
   } catch {
     return null
   }

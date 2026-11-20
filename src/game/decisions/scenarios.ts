@@ -69,7 +69,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     eventId: 'rival-promo',
-    question: 'Lotus Guard จะลดราคาชั้น 1 ผ่านดีลเลอร์ เราจะตอบโต้อย่างไร',
+    question: 'Super Save จะลดราคาชั้น 1 ผ่านดีลเลอร์ เราจะตอบโต้อย่างไร',
     responses: [
       { id: 'matchPromo', label: 'จัดโปรตอบโต้ที่โชว์รูมเดียวกัน', blurb: 'รักษาส่วนแบ่งในช่องทางดีลเลอร์ได้ แต่กำไรต่อกรมธรรม์ลดลง', cost: 30, speed: 'fast', icon: 'store', impact: { growth: 1, profit: -1, risk: 0, cx: 0 }, related: ['pricing', 'distribution'] },
       { id: 'valueAdd', label: 'ให้บริการเสริมแทนการลดราคา', blurb: 'เช่น รถใช้ระหว่างซ่อม ลูกค้าเห็นความคุ้มค่า ไม่ต้องเข้าสงครามราคา', cost: 25, speed: 'normal', icon: 'star', impact: { growth: 0, profit: 0, risk: 0, cx: 1 }, related: ['repair'] },
