@@ -73,7 +73,7 @@ export function HeaderChip({ children, tone = 'plain' }: { children: ReactNode; 
  * its tail pointing down at the portrait on the right of the header. Anchored at the bottom, so
  * short and long bubbles keep the same gap to the panel on every stage.
  */
-export function ManagerBubble({ id, lines, strong, tone = 'dark' }: { id?: string; lines?: ReactNode; strong?: ReactNode; tone?: 'dark' | 'warn' }) {
+export function ManagerBubble({ id, lines, strong, tone = 'dark', tail = true }: { id?: string; lines?: ReactNode; strong?: ReactNode; tone?: 'dark' | 'warn'; /** false where no department head is shown (event banner) */ tail?: boolean }) {
   if (!lines && !strong) return null
   const bg = tone === 'warn' ? 'bg-amber-800/95' : 'bg-navy-900/95'
   return (
@@ -85,7 +85,7 @@ export function ManagerBubble({ id, lines, strong, tone = 'dark' }: { id?: strin
       <div className={`relative pointer-events-auto rounded-2xl ${bg} text-white px-4 py-2 shadow-[0_10px_24px_-10px_rgba(8,26,66,0.7)]`}>
         {lines && <p className="text-[12.5px] leading-snug text-white/85 line-clamp-3">{lines}</p>}
         {strong && <p className="text-[14px] font-semibold leading-snug mt-0.5 line-clamp-2">{strong}</p>}
-        <span className={`absolute -bottom-2 right-12 size-4 rotate-45 ${bg}`} />
+        {tail && <span className={`absolute -bottom-2 right-12 size-4 rotate-45 ${bg}`} />}
       </div>
     </div>
   )

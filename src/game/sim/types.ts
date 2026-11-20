@@ -44,6 +44,8 @@ export interface Firm {
   a0: number // attractiveness at game start (so neutral play keeps shares stable)
   crSum: number // for the average combined ratio at game end
   quarters: number
+  /** Quota share treaty year so far (ceded premium and ceded losses), for the annual sliding scale */
+  reYear?: { ceded: number; loss: number }
   /** engine v3, rivals only: their teams and last quarter's load (the player's live in SimState.ops) */
   ops?: OpsState
   lastLoads?: Capacity
@@ -154,8 +156,10 @@ export interface QuarterReport {
   uwResult: number
   investmentIncome: number
   reinsuranceCost: number // cost of protection this quarter (negative = recovered more than paid)
-  /** Quota share ceding commission this quarter (sliding scale on the loss ratio); missing in old saves */
+  /** provisional Quota share ceding commission paid this quarter; missing in old saves */
   cedingCommission?: number
+  /** annual sliding scale: year-to-date ceded LR, the commission it gives, and the year-end settlement (Q4) */
+  slidingScale?: { yearLR: number; commission: number; adjustment: number; settled: boolean }
   catLossGross: number
   catLossNet: number
   flood: FloodOutcome

@@ -92,12 +92,41 @@ export function cedingCommissionFor(lossRatio: number): number {
   return clamp(s.provisional + (s.atLR - lossRatio) * s.slide, s.min, s.max)
 }
 
+export interface SlidingScaleResult {
+  /** ceded loss ratio of the treaty year so far */
+  yearLR: number
+  /** commission the sliding scale gives at that loss ratio */
+  commission: number
+  /** money settled this quarter (only at year end): + the reinsurer pays us more, − we pay back */
+  adjustment: number
+  settled: boolean
+}
+
+/**
+ * Annual sliding scale, like a real Quota share treaty: every quarter adds its ceded premium and
+ * ceded losses to the treaty year; at year end (Q4) the commission is recalculated on the whole
+ * year's loss ratio and the difference from the provisional commission is settled in one go.
+ * Mutates the firm's running year and the underwriting result.
+ */
+export function settleSlidingScale(f: Firm, uw: Underwriting, qs: number, yearEnd: boolean): SlidingScaleResult {
+  const acc = f.reYear ?? { ceded: 0, loss: 0 }
+  acc.ceded += qs * uw.gwp
+  acc.loss += qs * uw.lossRatio * uw.gwp
+  const yearLR = acc.ceded > 0 ? acc.loss / acc.ceded : 0
+  const commission = cedingCommissionFor(yearLR)
+  const adjustment = yearEnd ? (commission - P.slidingScale.provisional) * acc.ceded : 0
+  uw.netResult += adjustment
+  f.reYear = yearEnd ? { ceded: 0, loss: 0 } : acc
+  return { yearLR, commission, adjustment, settled: yearEnd }
+}
+
 function underwrite(gwp: number, attritionalLR: number, expenseRatio: number, catGross: number, qs: number, xl: { retention: number; cost: number }): Underwriting {
   const retainedCat = catGross * (1 - qs)
   const catNet = Math.min(retainedCat, xl.retention) + Math.max(0, retainedCat - xl.retention - P.xl.limit)
   const grossResult = gwp * (1 - attritionalLR - expenseRatio) - catGross
   const lossRatio = attritionalLR + catGross / gwp
-  const cc = cedingCommissionFor(lossRatio)
+  // the treaty pays a provisional commission every quarter; the sliding scale settles at year end
+  const cc = P.slidingScale.provisional
   const netResult = gwp * (1 - qs) * (1 - attritionalLR) - catNet - gwp * expenseRatio + cc * qs * gwp - xl.cost * gwp
   return { gwp, lossRatio, expenseRatio, catGross, catNet, netResult, grossResult, cedingCommission: cc }
 }
@@ -587,6 +616,8 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
   const adminAmount = opsCost.salaries + opsCost.otherFixed + opsCost.maintenance + opsCost.hiring + opsCost.severance
   const expense = (commission + adminAmount + spend + opsVariable) / ep
   const uw = underwrite(ep, attritional, expense, catGross * (ep / gwp), qs, xl)
+  const treatyYearEnd = state.quarter.q === 4
+  const slide = settleSlidingScale(pl, uw, qs, treatyYearEnd)
   const investment = pl.capital * yieldNow
   // regulation review: low satisfaction is fined unless the company fixed its claims process
   const eventImpacts: { label: string; amount: number }[] = []
@@ -620,6 +651,7 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
     const rv = rivalOps(f, pers, prev, q, scale, cat > 0, sim.baseDemand.policies, !!(floodActive && RIVAL_EVENT_PLAY['flood-central'][pers].prepared), () => r.next())
     const lr = (P.baseLossRatio * trend) / Math.min(P.rateCap, earnedRate(f.rateHist)) + rv.overloadLR + rv.lr + r.normal() * P.attritionalNoise
     const res = underwrite(g, lr, commissionRate(START_MIX) + acquisitionRate(START_MIX) + rv.cost / g, cat, P.quotaShare.keep, { retention: P.xl.retention * (g / 2000), cost: P.xl.cost })
+    settleSlidingScale(f, res, P.quotaShare.keep, treatyYearEnd)
     f.capital += res.netResult + f.capital * yieldNow
     f.combinedRatio = res.lossRatio + res.expenseRatio
     f.crSum += f.combinedRatio
@@ -793,6 +825,16 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
       tone: reCost > 0 ? 'bad' : 'good',
       weight: Math.abs(reCost) * 0.8,
     })
+  if (slide.settled && Math.abs(slide.adjustment) > 5)
+    drivers.push({
+      id: 'sliding-scale',
+      text:
+        slide.adjustment > 0
+          ? `ปิดปีสัญญาประกันภัยต่อ: Loss Ratio ทั้งปี ${Math.round(slide.yearLR * 100)}% ได้ค่าคอม ${Math.round(slide.commission * 100)}% reinsurer จ่ายเพิ่ม ${Math.round(slide.adjustment)} ล้านบาท`
+          : `ปิดปีสัญญาประกันภัยต่อ: Loss Ratio ทั้งปี ${Math.round(slide.yearLR * 100)}% ค่าคอมเหลือ ${Math.round(slide.commission * 100)}% ต้องคืน reinsurer ${Math.round(-slide.adjustment)} ล้านบาท`,
+      tone: slide.adjustment > 0 ? 'good' : 'bad',
+      weight: Math.abs(slide.adjustment) * 0.8,
+    })
   for (const [src, f] of flowBySource) {
     if (src === 'pricing' || src === 'callcenter-overload') continue
     const label = CARD_BY_ID[src as DecisionId]?.title ?? EVENT_BY_ID[src]?.title ?? src
@@ -902,6 +944,7 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
     investmentIncome: investment,
     reinsuranceCost: reCost,
     cedingCommission: uw.cedingCommission,
+    slidingScale: slide,
     catLossGross: uw.catGross,
     catLossNet: uw.catNet,
     flood: floodHit ? 'hit' : floodActive ? 'missed' : 'none',

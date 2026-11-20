@@ -203,3 +203,23 @@ describe('Quota share sliding-scale commission', () => {
     expect(cedingCommissionFor(1.2)).toBe(s.min)
   })
 })
+
+describe('annual sliding scale', () => {
+  it('pays the provisional commission each quarter and settles the year in Q4', async () => {
+    const { settleSlidingScale, cedingCommissionFor } = await import('./engine')
+    const { P } = await import('./params')
+    const f = { reYear: undefined } as unknown as import('./types').Firm
+    const uw = (lr: number) => ({ gwp: 1000, lossRatio: lr, expenseRatio: 0.3, catGross: 0, catNet: 0, netResult: 0, grossResult: 0, cedingCommission: P.slidingScale.provisional })
+    const lrs = [0.45, 0.5, 0.55, 0.5] // year LR 50%
+    let last
+    lrs.forEach((lr, i) => {
+      const u = uw(lr)
+      last = settleSlidingScale(f, u, 0.2, i === 3)
+      if (i < 3) expect(u.netResult).toBe(0) // nothing settled before year end
+      else expect(u.netResult).toBeCloseTo((cedingCommissionFor(0.5) - P.slidingScale.provisional) * 0.2 * 4000)
+    })
+    expect(last!.yearLR).toBeCloseTo(0.5)
+    expect(last!.adjustment).toBeGreaterThan(0) // good year: the reinsurer pays more commission
+    expect(f.reYear).toEqual({ ceded: 0, loss: 0 }) // a new treaty year starts
+  })
+})

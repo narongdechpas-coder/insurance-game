@@ -144,7 +144,7 @@ export function QuarterlyReview() {
                 <div className="rounded-2xl bg-white border border-navy-900/5 px-5 py-4">
                   <div className="font-display font-semibold text-[17px] text-navy-900 mb-2">ทำไมผลออกมาแบบนี้</div>
                   <ol className="space-y-2">
-                    {r.drivers.slice(0, 4).map((d, i) => (
+                    {r.drivers.filter((d) => d.id !== 'sliding-scale').slice(0, 4).map((d, i) => (
                       <li key={d.id} className="flex gap-3 items-start text-[14.5px] text-navy-800" data-driver={d.id}>
                         <DriverBadge d={d} n={i + 1} />
                         <span className="self-center">{d.text}</span>
@@ -174,8 +174,8 @@ export function QuarterlyReview() {
                     </div>
                     <ul className="space-y-1.5 text-[13.5px] text-navy-800">
                       {flood && <li>• {flood}</li>}
-                      {r.drivers.filter((d) => d.id === 'economy' || d.id === 'fine' || d.id === 'reg-pass').map((d) => (
-                        <li key={d.id} className={d.tone === 'bad' ? 'text-alert' : ''}>• {d.text}</li>
+                      {r.drivers.filter((d) => ['economy', 'fine', 'reg-pass', 'sliding-scale'].includes(d.id)).map((d) => (
+                        <li key={d.id} data-driver={d.id} className={d.tone === 'bad' ? 'text-alert' : ''}>• {d.text}</li>
                       ))}
                       {cons.map((c) => (
                         <li key={c} className="text-alert">
@@ -183,7 +183,7 @@ export function QuarterlyReview() {
                           ผลจากการตัดสินใจ: “{c}” จะเป็นโจทย์ไตรมาสหน้า
                         </li>
                       ))}
-                      {!flood && cons.length === 0 && !r.drivers.some((d) => ['economy', 'fine', 'reg-pass'].includes(d.id)) && <li className="text-navy-700/60">ไม่มีเหตุการณ์ใหญ่ ไตรมาสนี้ผ่านไปอย่างราบรื่น</li>}
+                      {!flood && cons.length === 0 && !r.drivers.some((d) => ['economy', 'fine', 'reg-pass', 'sliding-scale'].includes(d.id)) && <li className="text-navy-700/60">ไม่มีเหตุการณ์ใหญ่ ไตรมาสนี้ผ่านไปอย่างราบรื่น</li>}
                     </ul>
                   </div>
                 </div>
