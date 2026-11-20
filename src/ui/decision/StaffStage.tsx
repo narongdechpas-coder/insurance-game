@@ -2,7 +2,7 @@ import { measureLabel } from '../../game/decisions/scenarios'
 import { Minus, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { SystemsPanel } from './SystemsPanel'
-import { HeaderChip, StageHeader } from './StageHeader'
+import { HeaderChip, ManagerBubble, StageHeader } from './StageHeader'
 import { BUILDINGS } from '../../world/layout'
 import { portraitKey } from '../../assets/portraits'
 import { hasSprite, spriteUrl } from '../../assets/registry'
@@ -12,6 +12,8 @@ import { forecastQuarter, fmtUnits, staffOf } from '../../game/forecast'
 import { boostAt, hireCap, INVESTMENT_IDS, OPS, TEAMS, type Team } from '../../game/sim/ops'
 import type { DecisionId } from '../../game/decisions/types'
 import { useGameStore } from '../../store/useGameStore'
+import OPS_JSON from '../../game/data/operations.json'
+import { buildingCount } from '../../game/sim/systems'
 
 const TEAM_UI: Record<Team, { loc: string; who: string }> = {
   claims: { loc: 'claims', who: 'พิจารณาและอนุมัติเคลม (งานสำรวจจ้างบริษัทภายนอกต่อเคลม)' },
@@ -35,6 +37,7 @@ export function StaffStage() {
   const segSteps = useGameStore((s) => s.segSteps)
   const staff = useGameStore((s) => s.staff)
   const setStaff = useGameStore((s) => s.setStaff)
+  const sysOrders = useGameStore((s) => s.sysOrders)
   const now = useMemo(() => staffOf(game), [game])
   const fc = useMemo(() => forecastQuarter(game, plan, responses, channels, segSteps, staff), [game, plan, responses, channels, segSteps, staff])
   const q = game.quarter.index
@@ -54,48 +57,43 @@ export function StaffStage() {
     const demand = fc.ops.demand[t]
     const head = portraitKey(TEAM_UI[t].loc as never, fc.loads[t] > 1.05 ? 'shocked' : 'normal')
     return (
-      <div key={t} data-team={t} className="rounded-[20px] bg-white/85 border border-brand-100 p-4 flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          {head && <img src={spriteUrl(head)} alt="" data-portrait={head} className="h-[56px] w-[52px] object-contain object-bottom" />}
+      <div key={t} data-team={t} className="rounded-[20px] bg-white/85 border border-brand-100 px-3.5 py-3 flex flex-col gap-1.5">
+        <div className="flex items-center gap-2.5">
+          {head && <img src={spriteUrl(head)} alt="" data-portrait={head} className="h-[44px] w-[42px] object-contain object-bottom" />}
           <div className="min-w-0">
-            <div className="font-display font-bold text-[18px] text-navy-900 leading-tight">{cfg.label}</div>
-            <div className="text-[12px] text-navy-700/70 leading-snug">{TEAM_UI[t].who}</div>
+            <div className="font-display font-bold text-[17px] text-navy-900 leading-tight">{cfg.label}</div>
+            <div className="text-[11.5px] text-navy-700/70 leading-snug truncate" title={TEAM_UI[t].who}>{TEAM_UI[t].who}</div>
           </div>
         </div>
-        <div className="flex items-center justify-between rounded-2xl bg-brand-50/80 px-3 py-2">
-          <button aria-label={`ลด ${cfg.label}`} data-staff-minus={t} onClick={() => setStaff(t, want - cfg.step)} className="grid place-items-center size-10 rounded-full bg-white text-navy-800 shadow-sm hover:brightness-95">
+        <div className="flex items-center justify-between rounded-2xl bg-brand-50/80 px-2.5 py-1.5">
+          <button aria-label={`ลด ${cfg.label}`} data-staff-minus={t} onClick={() => setStaff(t, want - cfg.step)} className="grid place-items-center size-8 rounded-full bg-white text-navy-800 shadow-sm hover:brightness-95">
             <Minus size={18} />
           </button>
           <div className="text-center">
-            <div className="font-display font-bold text-[26px] leading-none text-navy-900 tabular-nums" data-staff-count={t}>
+            <div className="font-display font-bold text-[22px] leading-none text-navy-900 tabular-nums" data-staff-count={t}>
               {want} <span className="text-[14px] font-medium">คน</span>
             </div>
-            <div data-staff-note={t} className={`text-[12px] mt-0.5 ${diff ? 'text-brand-600 font-medium' : 'text-navy-700/60'}`}>
-              {diff > 0 ? `รับเพิ่ม ${diff}` : diff < 0 ? `ลด ${-diff}` : training ? `อบรมอยู่ ${training}` : 'เท่าเดิม'} · รับได้สูงสุด {cap} คน/ไตรมาส
+            <div data-staff-note={t} className={`text-[11px] mt-0.5 ${diff ? 'text-brand-600 font-medium' : 'text-navy-700/60'}`}>
+              {diff > 0 ? `รับเพิ่ม ${diff}` : diff < 0 ? `ลด ${-diff}` : training ? `อบรมอยู่ ${training}` : 'เท่าเดิม'} · เพิ่มได้ ≤{cap}
             </div>
           </div>
-          <button aria-label={`เพิ่ม ${cfg.label}`} data-staff-plus={t} disabled={diff >= cap} onClick={() => setStaff(t, Math.min(now[t] + cap, want + cfg.step))} className="grid place-items-center size-10 rounded-full bg-white text-navy-800 shadow-sm hover:brightness-95 disabled:opacity-35">
+          <button aria-label={`เพิ่ม ${cfg.label}`} data-staff-plus={t} disabled={diff >= cap} onClick={() => setStaff(t, Math.min(now[t] + cap, want + cfg.step))} className="grid place-items-center size-8 rounded-full bg-white text-navy-800 shadow-sm hover:brightness-95 disabled:opacity-35">
             <Plus size={18} />
           </button>
         </div>
-        <dl className="text-[12.5px] leading-snug text-navy-800 space-y-0.5">
+        <dl className="text-[12px] leading-snug text-navy-800 space-y-0.5">
           <div className="flex justify-between gap-2">
             <dt>งานต่อคน</dt>
             <dd className="tabular-nums">
               {cfg.perPersonMonth.toLocaleString('th-TH')} {cfg.unit}/เดือน
             </dd>
           </div>
-          <div className="pt-1 text-[11.5px] font-medium text-brand-600">ไตรมาสหน้า (ตามแผนนี้)</div>
           <div className="flex justify-between gap-2">
-            <dt>งานเข้า</dt>
-            <dd className="tabular-nums">~{fmtUnits(demand)} {cfg.unit}</dd>
+            <dt className="whitespace-nowrap">งานเข้า / รับได้</dt>
+            <dd className="tabular-nums whitespace-nowrap">~{fmtUnits(demand)} / {fmtUnits(fc.ops.capacity[t])}</dd>
           </div>
           <div className="flex justify-between gap-2">
-            <dt>รับได้</dt>
-            <dd className="tabular-nums">{fmtUnits(fc.ops.capacity[t])} {cfg.unit}</dd>
-          </div>
-          <div className="flex justify-between gap-2">
-            <dt>ภาระงาน</dt>
+            <dt>ภาระงาน Q หน้า</dt>
             <dd className={`tabular-nums font-semibold ${loadTone(fc.loads[t])}`} data-team-load={t}>{pct(fc.loads[t])}</dd>
           </div>
           {diff > 0 && (
@@ -132,6 +130,9 @@ export function StaffStage() {
   const owned = INVESTMENT_IDS.filter((id) => o.owned[id] !== undefined)
   const temps = o.temps.filter((x) => x.until >= q)
   const c = fc.ops.costs
+  const TEAM_TH: Record<string, string> = { contact: 'Call center', claims: 'ทีมสินไหม', repair: 'อู่ในเครือ' }
+  const busiest = (['claims', 'contact', 'repair'] as const).reduce((a, k) => (fc.loads[k] > fc.loads[a] ? k : a), 'claims' as 'claims' | 'contact' | 'repair')
+  const busiestLine = `ไตรมาสหน้าตามแผนนี้ ${TEAM_TH[busiest]} หนักสุด ภาระงาน ${Math.round(fc.loads[busiest] * 100)}%${fc.loads[busiest] > 1.05 ? ' เกินกำลังแล้ว' : ''}`
   // header art: the head of IT on the systems tab (smiles when a system just went live, worried when one slipped);
   // the team office on the people tab, or the training room while new people are being hired or trained
   const news = game.lastReport?.ops?.systems?.news ?? []
@@ -139,6 +140,12 @@ export function StaffStage() {
   const hiring = TEAMS.some((t) => (staff[t] ?? now[t]) > now[t]) || o.pending.length > 0
   const opsArt = hasSprite(hiring ? 'ops/ops-training' : 'ops/ops-claims-team') ? (hiring ? 'ops/ops-training' : 'ops/ops-claims-team') : BUILDINGS.claims.sprite
   return (
+    <>
+    <ManagerBubble
+      key={`bubble-${tab}`}
+      lines={tab === 'people' ? 'รับเพิ่มจ่ายเงินเดือนทันที ได้กำลังหลังอบรมไตรมาสถัดไป (ไม่เกิน 15% ของทีม) · ลดคนกำลังหายทันทีและจ่ายค่าชดเชย 3 เดือน' : 'คนแก้ปัญหาได้เร็ว ระบบช้ากว่าแต่ต้นทุนระยะยาวต่ำ · ลูกค้าและคู่ค้าค่อยๆ ย้ายมาใช้'}
+      strong={tab === 'people' ? busiestLine : <>ทีม IT ใช้อยู่ <span data-it-slots>{buildingCount(game.sim.ops.systems ?? {}) + sysOrders.length}</span>/{OPS_JSON.itSlots} ระบบ · เสี่ยงล่าช้า 1 ไตรมาส {Math.round(OPS_JSON.systemRisk.delay * 100)}% หรือได้ผลแค่ {Math.round(OPS_JSON.systemRisk.partialFactor * 100)}% อีก {Math.round(OPS_JSON.systemRisk.partial * 100)}% · ค่าพัฒนาใช้งบกลยุทธ์</>}
+    />
     <section
       data-stage="staff"
       className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[calc(100%-172px-150px)] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise"
@@ -163,47 +170,44 @@ export function StaffStage() {
         head={tab === 'systems' ? portraitKey('it', itMood) : portraitKey('claims', 'normal')}
       />
       {tab === 'systems' ? <SystemsPanel /> : <>
-      <div className="grid grid-cols-3 gap-3 px-5 pt-4">
+      <div className="grid grid-cols-3 gap-3 px-5 pt-3">
         {TEAMS.map(teamCard)}
-        <div data-team="repair" className="rounded-[20px] bg-white/85 border border-brand-100 p-4 flex flex-col gap-2">
-          <div className="font-display font-bold text-[18px] text-navy-900 leading-tight">อู่ในเครือ</div>
-          <div className="text-[12px] text-navy-700/70 leading-snug">อู่คู่สัญญา ไม่ใช่พนักงานของเรา ค่าซ่อมอยู่ในค่าสินไหม</div>
-          <div className="rounded-2xl bg-brand-50/80 px-3 py-2 text-center">
-            <div className="font-display font-bold text-[26px] leading-none text-navy-900 tabular-nums">
+        <div data-team="repair" className="rounded-[20px] bg-white/85 border border-brand-100 px-3.5 py-3 flex flex-col gap-1.5">
+          <div>
+            <div className="font-display font-bold text-[17px] text-navy-900 leading-tight">อู่ในเครือ</div>
+            <div className="text-[11.5px] text-navy-700/70 leading-snug truncate">อู่คู่สัญญา ค่าซ่อมอยู่ในค่าสินไหม</div>
+          </div>
+          <div className="rounded-2xl bg-brand-50/80 px-3 py-1.5 text-center">
+            <div className="font-display font-bold text-[22px] leading-none text-navy-900 tabular-nums">
               {o.garages} <span className="text-[14px] font-medium">อู่</span>
             </div>
-            <div className="text-[12px] mt-0.5 text-navy-700/60">{OPS.garages.jobsPerGarageQuarter} งาน/อู่/ไตรมาส</div>
+            <div className="text-[11px] mt-0.5 text-navy-700/60">{OPS.garages.jobsPerGarageQuarter} งาน/อู่/ไตรมาส</div>
           </div>
-          <dl className="text-[12.5px] leading-snug text-navy-800 space-y-0.5">
-            <div className="pt-1 text-[11.5px] font-medium text-brand-600">ไตรมาสหน้า (ตามแผนนี้)</div>
+          <dl className="text-[12px] leading-snug text-navy-800 space-y-0.5">
             <div className="flex justify-between gap-2">
-              <dt>งานซ่อมเข้า</dt>
-              <dd className="tabular-nums">~{fmtUnits(fc.ops.demand.repair)} งาน</dd>
+              <dt className="whitespace-nowrap">งานซ่อม / รับได้</dt>
+              <dd className="tabular-nums whitespace-nowrap">~{fmtUnits(fc.ops.demand.repair)} / {fmtUnits(fc.ops.capacity.repair)}</dd>
             </div>
             <div className="flex justify-between gap-2">
-              <dt>รับได้</dt>
-              <dd className="tabular-nums">{fmtUnits(fc.ops.capacity.repair)} งาน</dd>
-            </div>
-            <div className="flex justify-between gap-2">
-              <dt>ภาระงาน</dt>
+              <dt>ภาระงาน Q หน้า</dt>
               <dd className={`tabular-nums font-semibold ${loadTone(garageLoad)}`}>{pct(garageLoad)}</dd>
             </div>
           </dl>
-          <div className="text-[12px] text-navy-700/70 mt-auto">เพิ่มกำลังอู่ได้ที่การ์ด "เครือข่ายอู่" หรือเมื่อมีเหตุการณ์อู่รับรถไม่ทัน</div>
+          <div className="text-[11.5px] leading-snug text-navy-700/70 mt-auto">เพิ่มกำลังอู่ได้ที่การ์ด "เครือข่ายอู่" หรือเมื่อมีเหตุการณ์อู่รับรถไม่ทัน</div>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3 px-5 py-4">
-        <div className="rounded-[20px] bg-white/85 border border-brand-100 px-4 py-3 text-[12.5px] text-navy-800" data-fixed-cost>
-          <div className="font-display font-semibold text-[15px] text-navy-900 mb-1">ต้นทุนคงที่ไตรมาสหน้า (ตามแผนนี้)</div>
-          <div className="flex justify-between"><span>เงินเดือนทุกฝ่าย ({fc.ops.staff.claims + fc.ops.staff.contact + fc.ops.staff.training + fc.ops.staff.other} คน)</span><span className="tabular-nums">{mb(c.salaries)} ล้าน</span></div>
-          <div className="flex justify-between"><span>ค่าเช่า ระบบ IT และค่าอื่น</span><span className="tabular-nums">{mb(c.otherFixed)} ล้าน</span></div>
-          {c.maintenance > 0 && <div className="flex justify-between"><span>ค่าดูแลการลงทุน/อู่ที่เพิ่ม</span><span className="tabular-nums">{mb(c.maintenance)} ล้าน</span></div>}
-          {c.hiring + c.severance > 0 && <div className="flex justify-between text-amber-800"><span>ค่าอบรม/ชดเชย (ครั้งเดียว)</span><span className="tabular-nums">{mb(c.hiring + c.severance)} ล้าน</span></div>}
-          <div className="flex justify-between font-semibold border-t border-brand-100 mt-1 pt-1"><span>รวม</span><span className="tabular-nums">{mb(c.fixed)} ล้าน</span></div>
-          <div className="text-[11.5px] text-navy-700/60 mt-1">ต้นทุนผันแปรแยกต่างหาก: ค่าออกกรมธรรม์ {OPS.issuancePerPolicy} บาท/ฉบับ · ค่าสำรวจภัย {OPS.surveyPerClaim} บาท/เคลม</div>
+      <div className="grid grid-cols-2 gap-3 px-5 pt-3 pb-4">
+        <div className="rounded-[20px] bg-white/85 border border-brand-100 px-4 py-2.5 text-[12.5px] text-navy-800" data-fixed-cost>
+          <div className="flex justify-between items-baseline font-display font-semibold text-[14.5px] text-navy-900"><span>ต้นทุนคงที่ Q หน้า</span><span className="tabular-nums">{mb(c.fixed)} ล้าน</span></div>
+          <div className="text-[12px] leading-snug mt-0.5">
+            เงินเดือน {fc.ops.staff.claims + fc.ops.staff.contact + fc.ops.staff.training + fc.ops.staff.other} คน <span className="tabular-nums">{mb(c.salaries)}</span> · ค่าเช่า IT และอื่นๆ <span className="tabular-nums">{mb(c.otherFixed)}</span>
+            {c.maintenance > 0 && <> · ดูแลการลงทุน <span className="tabular-nums">{mb(c.maintenance)}</span></>}
+            {c.hiring + c.severance > 0 && <span className="text-amber-800"> · อบรม/ชดเชย <span className="tabular-nums">{mb(c.hiring + c.severance)}</span></span>} ล้าน
+          </div>
+          <div className="text-[11px] text-navy-700/60 mt-0.5 truncate">ต้นทุนผันแปรแยกต่างหาก: ค่าออกกรมธรรม์ {OPS.issuancePerPolicy} บาท/ฉบับ · ค่าสำรวจภัย {OPS.surveyPerClaim} บาท/เคลม</div>
         </div>
-        <div className="rounded-[20px] bg-white/85 border border-brand-100 px-4 py-3 text-[12.5px] text-navy-800" data-boosts>
-          <div className="font-display font-semibold text-[15px] text-navy-900 mb-1">การลงทุนและกำลังเสริม</div>
+        <div className="rounded-[20px] bg-white/85 border border-brand-100 px-4 py-2.5 text-[12px] text-navy-800" data-boosts>
+          <div className="font-display font-semibold text-[14.5px] text-navy-900 mb-0.5">การลงทุนและกำลังเสริม</div>
           {owned.length === 0 && temps.length === 0 && <div className="text-navy-700/60">ยังไม่มี</div>}
           {owned.map((id) => {
             const inv = OPS.investments[id]
@@ -227,5 +231,6 @@ export function StaffStage() {
       </div>
       </>}
     </section>
+    </>
   )
 }

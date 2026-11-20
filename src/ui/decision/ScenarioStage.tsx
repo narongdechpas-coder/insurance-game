@@ -1,6 +1,6 @@
 import { Check, Clock } from 'lucide-react'
 import { useEffect, useMemo, useRef } from 'react'
-import { HeaderChip, StageHeader } from './StageHeader'
+import { HeaderChip, ManagerBubble, StageHeader } from './StageHeader'
 import { portraitKey } from '../../assets/portraits'
 import { CARD_BY_ID } from '../../game/decisions/cards'
 import { SCENARIO_BY_EVENT, scenariosFor } from '../../game/decisions/scenarios'
@@ -54,12 +54,15 @@ export function ScenarioStage() {
   }
 
   return (
+    <>
+    <ManagerBubble key={`bubble-${sc.eventId}`} id={sc.eventId} lines={<span title={ev.detail}>{ev.detail}</span>} strong={sc.question} />
     <section key={sc.eventId} data-stage="scenario" className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[calc(100%-172px-150px)] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise">
       <StageHeader
         art={art ?? null}
         kicker={`รับมือเหตุการณ์ · ${KIND[ev.kind].label}`}
         title={ev.title}
-        subtitle="เลือกทางตอบสนอง 1 ทาง · ตัวเลขใต้แต่ละทางเทียบกับไม่ทำอะไร"
+        subtitle="เลือก 1 ทาง · ตัวเลขเทียบกับไม่ทำอะไร"
+        narrowArt
         chips={
           <>
             <span className={`text-[11.5px] text-white rounded-full px-2.5 py-0.5 ${KIND[ev.kind].cls}`}>{KIND[ev.kind].label}</span>
@@ -68,11 +71,7 @@ export function ScenarioStage() {
         }
         head={head}
       />
-      <div data-event-detail className="mx-5 mt-3 rounded-xl bg-brand-50 px-3 py-2 text-[13.5px] leading-relaxed text-navy-800">
-        {ev.detail}
-        <div className="mt-1 text-[15px] font-semibold text-brand-700">{sc.question}</div>
-      </div>
-      <div className="grid grid-cols-3 gap-3 p-5 pt-3">
+      <div className="grid grid-cols-3 gap-3 px-5 py-4">
         {sc.responses.map((r) => {
           const on = r.id === chosen
           const Icon = OPTION_ICONS[r.icon]
@@ -81,7 +80,7 @@ export function ScenarioStage() {
               key={r.id}
               data-response={r.id}
               onClick={() => pick(r.id)}
-              className={`relative flex flex-col text-left rounded-[20px] p-4 h-[336px] border-2 transition-all duration-300 ease-(--ease-game) ${
+              className={`relative flex flex-col text-left rounded-[20px] px-4 py-3 border-2 transition-all duration-300 ease-(--ease-game) ${
                 on ? 'bg-white border-brand-500 shadow-[0_14px_28px_-12px_rgba(29,95,224,0.6)] -translate-y-1' : 'bg-white/70 border-transparent hover:bg-white hover:-translate-y-1 hover:shadow-lg'
               }`}
             >
@@ -96,8 +95,8 @@ export function ScenarioStage() {
                 </span>
                 <span className="font-display font-semibold text-[16.5px] leading-tight text-navy-900"><Glossed text={r.label} /></span>
               </span>
-              <span className="text-[13px] leading-snug text-navy-700/85 mt-2.5 flex-1"><Glossed text={r.blurb} /></span>
-              <span className="flex flex-wrap gap-1 mb-2">
+              <span className="text-[13px] leading-snug text-navy-700/85 mt-2 min-h-[54px]"><Glossed text={r.blurb} /></span>
+              <span className="flex flex-wrap gap-1 my-1.5">
                 <OpsBadge id={r.id} owned={ops.owned} active={tempActive(ops, r.id, q) ? Math.max(...ops.temps.filter((x) => x.source === r.id).map((x) => x.until)) - q + 1 : 0} />
                 <span className="inline-flex self-start items-center gap-1 rounded-full bg-brand-50 text-brand-600 px-2 py-0.5 text-[11px]">
                   <Clock size={11} /> {SPEED_LABEL[r.speed]}
@@ -117,5 +116,6 @@ export function ScenarioStage() {
         })}
       </div>
     </section>
+    </>
   )
 }

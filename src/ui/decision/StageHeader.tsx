@@ -15,6 +15,7 @@ export function StageHeader({
   head,
   right,
   compact = false,
+  narrowArt = false,
 }: {
   art: string | null
   kicker: ReactNode
@@ -25,6 +26,8 @@ export function StageHeader({
   /** controls next to the portrait (e.g. tabs) */
   right?: ReactNode
   compact?: boolean
+  /** narrower art (leaves room for long titles such as event names) */
+  narrowArt?: boolean
 }) {
   return (
     <header
@@ -36,12 +39,12 @@ export function StageHeader({
           src={spriteUrl(art as never)}
           alt=""
           data-head-art={art}
-          className={`shrink-0 object-contain drop-shadow-[0_12px_16px_rgba(20,50,110,0.25)] transition-all duration-300 ${compact ? 'h-[108px] w-[160px]' : 'h-[150px] w-[230px]'}`}
+          className={`shrink-0 object-contain drop-shadow-[0_12px_16px_rgba(20,50,110,0.25)] transition-all duration-300 ${compact ? 'h-[108px] w-[160px]' : narrowArt ? 'h-[140px] w-[170px]' : 'h-[150px] w-[230px]'}`}
         />
       )}
       <div className="min-w-0 flex-1">
         <div className="text-[13px] text-brand-600 font-medium">{kicker}</div>
-        <h2 className={`font-display font-bold leading-tight text-navy-900 truncate ${compact ? 'text-[25px]' : 'text-[30px]'}`}>{title}</h2>
+        <h2 className={`font-display font-bold leading-tight text-navy-900 truncate ${compact ? 'text-[25px]' : typeof title === 'string' && title.length > 24 ? 'text-[24px]' : 'text-[30px]'}`}>{title}</h2>
         {subtitle && <p className="text-[16px] text-navy-800 mt-0.5 truncate">{subtitle}</p>}
         {chips && !compact && <div className="flex flex-nowrap items-center gap-1.5 mt-2.5 overflow-hidden whitespace-nowrap">{chips}</div>}
       </div>
@@ -63,4 +66,27 @@ export function StageHeader({
 export function HeaderChip({ children, tone = 'plain' }: { children: ReactNode; tone?: 'plain' | 'good' | 'warn' }) {
   const cls = tone === 'good' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : tone === 'warn' ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-white border-brand-100 text-brand-600'
   return <span className={`text-[11.5px] rounded-full border px-2.5 py-0.5 ${cls}`}>{children}</span>
+}
+
+/**
+ * The department head speaks: a dark speech bubble in the free strip above the stage panel,
+ * its tail pointing down at the portrait on the right of the header. Anchored at the bottom, so
+ * short and long bubbles keep the same gap to the panel on every stage.
+ */
+export function ManagerBubble({ id, lines, strong, tone = 'dark' }: { id?: string; lines?: ReactNode; strong?: ReactNode; tone?: 'dark' | 'warn' }) {
+  if (!lines && !strong) return null
+  const bg = tone === 'warn' ? 'bg-amber-800/95' : 'bg-navy-900/95'
+  return (
+    <div
+      data-manager-bubble
+      data-event-detail={id}
+      className="absolute top-[84px] h-[74px] flex flex-col justify-end left-[calc(560px+max(0px,100%-1600px)*0.15)] right-[calc(476px+max(0px,100%-1600px)*0.15)] pointer-events-none anim-rise z-30"
+    >
+      <div className={`relative pointer-events-auto rounded-2xl ${bg} text-white px-4 py-2 shadow-[0_10px_24px_-10px_rgba(8,26,66,0.7)]`}>
+        {lines && <p className="text-[12.5px] leading-snug text-white/85 line-clamp-3">{lines}</p>}
+        {strong && <p className="text-[14px] font-semibold leading-snug mt-0.5 line-clamp-2">{strong}</p>}
+        <span className={`absolute -bottom-2 right-12 size-4 rotate-45 ${bg}`} />
+      </div>
+    </div>
+  )
 }

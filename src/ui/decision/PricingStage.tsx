@@ -4,7 +4,7 @@ import { SEGMENTS, type Level } from '../../game/data/tables'
 import { forecastSegments, stepsChanged, type SegmentSteps } from '../../game/forecast'
 import { SEG_PRICE_STEPS, type SegmentId } from '../../game/sim/v2'
 import { useGameStore } from '../../store/useGameStore'
-import { HeaderChip, StageHeader } from './StageHeader'
+import { HeaderChip, ManagerBubble, StageHeader } from './StageHeader'
 import { BUILDINGS, PANEL_ART } from '../../world/layout'
 import { priceSensitivityFor } from '../../game/sim/init'
 import { Glossed } from '../glossary/Term'
@@ -40,8 +40,21 @@ export function PricingStage() {
   const lrNow = (k: SegmentId) => last?.segLossRatio[k] ?? SEGMENTS.find((s) => s.id === k)!.adequateLR
   const head = portraitKey('hq', 'normal')
   const all = fc.find((f) => f.segment === 'all')!
+  const sat = game.kpis.satisfaction
+  const k = priceSensitivityFor(sat)
+  const qualityLine =
+    k < 0.97
+      ? `ลูกค้าพอใจ ${sat.toFixed(1)} ดาว ขึ้นราคาได้ดีกว่าตลาด เสียลูกค้าน้อยลงราว ${Math.round((1 - k) * 100)}%`
+      : k > 1.03
+        ? `ลูกค้าพอใจแค่ ${sat.toFixed(1)} ดาว ขึ้นราคาตอนนี้ลูกค้าจะย้ายมากกว่าปกติราว ${Math.round((k - 1) * 100)}%`
+        : `ลูกค้าพอใจ ${sat.toFixed(1)} ดาว ขึ้นราคาได้ระดับเดียวกับตลาด`
 
   return (
+    <>
+    <ManagerBubble
+      lines="ราคาที่ปรับมีผลถาวร ลูกค้าเห็นราคาใหม่ทันที แต่อัตราเบี้ยทยอยมีผลกับ Loss Ratio ราว 3 ไตรมาส"
+      strong={qualityLine}
+    />
     <section
       data-stage="pricing"
       className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[calc(100%-172px-150px)] glass rounded-[28px] overflow-hidden pointer-events-auto anim-rise flex flex-col"
@@ -141,6 +154,7 @@ export function PricingStage() {
         </table>
       </div>
     </section>
+    </>
   )
 }
 
