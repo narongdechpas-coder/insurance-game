@@ -103,8 +103,8 @@ export function SystemsPanel() {
           return (
             <div key={id} data-system={id} className={`rounded-[18px] border-2 p-3 flex flex-col gap-1.5 bg-white/85 ${ordered ? 'border-gold-500' : 'border-transparent'}`}>
               <div className="flex items-center gap-2.5">
-                <span className="shrink-0 grid place-items-center size-11 rounded-xl bg-gradient-to-b from-brand-50 to-brand-100 text-brand-600 overflow-hidden">
-                  {art ? <img src={spriteUrl(art as never)} alt="" className="max-w-[44px] max-h-[44px] object-contain" /> : <Icon size={22} />}
+                <span className={`shrink-0 grid place-items-center rounded-xl text-brand-600 overflow-hidden ${art ? 'size-[72px]' : 'size-11 bg-gradient-to-b from-brand-50 to-brand-100'}`}>
+                  {art ? <img src={spriteUrl(art as never)} alt="" data-system-art={id} className="max-w-[72px] max-h-[72px] object-contain drop-shadow-[0_6px_8px_rgba(20,50,110,0.25)]" /> : <Icon size={22} />}
                 </span>
                 <div className="min-w-0">
                   <div className="font-display font-semibold text-[15px] leading-tight text-navy-900">{spec.label}</div>

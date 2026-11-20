@@ -10,7 +10,7 @@ import { hasSprite, type SpriteKey } from './registry'
  * Every lookup returns null until the art exists, so callers keep their current art.
  */
 export type Mood = 'normal' | 'happy' | 'shocked'
-export type Who = LocationId | 'advisor'
+export type Who = LocationId | 'advisor' | 'it'
 
 export function portraitKey(who: Who, mood: Mood = 'normal'): SpriteKey | null {
   for (const m of [mood, 'normal']) {

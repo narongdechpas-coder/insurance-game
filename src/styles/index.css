@@ -187,6 +187,14 @@ html {
 /* touch-action stops at each scroll container, so the root alone does not stop a pinch or
    double-tap zoom inside a scrolling panel (tablets then zoom the page and the HUD overflows) */
 @layer base {
+  /* Tailwind v4 no longer gives buttons a pointer: everything clickable shows the hand again */
+  button:not(:disabled), [role='button'], [role='tab'], a[href], summary, label:has(input), select, input[type='range'], input[type='checkbox'], input[type='radio'] {
+    cursor: pointer;
+  }
+  button:disabled { cursor: not-allowed; }
+  /* scrollbars hidden everywhere; panels still scroll by touch, wheel and keyboard */
+  * { scrollbar-width: none; }
+  *::-webkit-scrollbar { display: none; }
   /* in the base layer so utilities such as the city's touch-none still win */
   *, *::before, *::after {
     touch-action: pan-x pan-y;

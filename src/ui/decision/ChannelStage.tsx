@@ -7,6 +7,8 @@ import type { ChannelId } from '../../game/sim/channels'
 import { CH, CHANNEL_IDS, renewalRates, type SegmentId } from '../../game/sim/v2'
 import { useGameStore } from '../../store/useGameStore'
 import { Glossed } from '../glossary/Term'
+import { HeaderChip, StageHeader } from './StageHeader'
+import { BUILDINGS, PANEL_ART } from '../../world/layout'
 
 const NAME: Record<ChannelId, { en: string; th: string; who: string }> = {
   dealer: { en: 'Dealer', th: 'ดีลเลอร์รถยนต์', who: 'ผู้ดูแลเครือข่ายดีลเลอร์' },
@@ -57,13 +59,19 @@ export function ChannelStage() {
       data-stage="channels"
       className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-hidden pointer-events-auto anim-rise flex flex-col"
     >
-      <header className="px-7 pt-5 pb-3 bg-gradient-to-br from-brand-100 via-white to-brand-50">
-        <div className="text-[13px] text-brand-600 font-medium">Distribution · ช่องทางขาย</div>
-        <h2 className="font-display font-bold text-[26px] leading-tight text-navy-900">ตั้งค่าแยกรายช่องทาง</h2>
-        <p className="text-[13.5px] text-navy-700/75">
-          <Glossed text="ค่าคอมมิชชันคิดจากเบี้ยของช่องทางนั้นทั้งก้อน ค่าที่ตั้งใช้ต่อทุกไตรมาสจนกว่าจะเปลี่ยน · ตัวเลขด้านล่างเป็นประมาณการไตรมาสหน้า ถ้าไม่มีเหตุการณ์ไม่คาดคิด" />
-        </p>
-      </header>
+      <StageHeader
+        art={PANEL_ART.dealer ?? BUILDINGS.dealer.sprite}
+        kicker="Distribution · ช่องทางขาย"
+        title="ตั้งค่าแยกรายช่องทาง"
+        subtitle="ค่าคอม งบโฆษณา และกลุ่มรถที่เน้นขาย"
+        chips={
+          <>
+            <HeaderChip>ใช้ต่อทุกไตรมาส</HeaderChip>
+            <HeaderChip>ประมาณการไตรมาสหน้า</HeaderChip>
+          </>
+        }
+        head={portraitKey('dealer', 'normal')}
+      />
       <div className="grid grid-cols-3 gap-3 px-4 pb-4 pt-3 min-h-0 overflow-y-auto">
         {CHANNEL_IDS.map((c) => {
           const st = set[c]

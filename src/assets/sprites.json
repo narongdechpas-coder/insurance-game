@@ -398,6 +398,20 @@
   "ay": 0.944,
   "ext": "png"
  },
+ "ops/ops-claims-team": {
+  "w": 640,
+  "h": 640,
+  "ax": 0.502,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "ops/ops-training": {
+  "w": 638,
+  "h": 640,
+  "ax": 0.537,
+  "ay": 1.0,
+  "ext": "webp"
+ },
  "portraits/advisor-happy": {
   "w": 379,
   "h": 480,
@@ -545,6 +559,27 @@
   "ay": 1.0,
   "ext": "webp"
  },
+ "portraits/it-happy": {
+  "w": 379,
+  "h": 480,
+  "ax": 0.499,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/it-normal": {
+  "w": 383,
+  "h": 480,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "portraits/it-shocked": {
+  "w": 378,
+  "h": 480,
+  "ax": 0.548,
+  "ay": 1.0,
+  "ext": "webp"
+ },
  "portraits/marketing-happy": {
   "w": 381,
   "h": 480,
@@ -662,6 +697,48 @@
   "h": 914,
   "ax": 0.449,
   "ay": 0.999,
+  "ext": "webp"
+ },
+ "systems/sys-agent-app": {
+  "w": 640,
+  "h": 640,
+  "ax": 0.508,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "systems/sys-auto-renew": {
+  "w": 626,
+  "h": 640,
+  "ax": 0.477,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "systems/sys-chatbot": {
+  "w": 640,
+  "h": 629,
+  "ax": 0.496,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "systems/sys-claims-app": {
+  "w": 640,
+  "h": 636,
+  "ax": 0.497,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "systems/sys-dealer-portal": {
+  "w": 640,
+  "h": 640,
+  "ax": 0.502,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "systems/sys-garage-online": {
+  "w": 640,
+  "h": 639,
+  "ax": 0.48,
+  "ay": 1.0,
   "ext": "webp"
  },
  "vehicles/ev-green": {

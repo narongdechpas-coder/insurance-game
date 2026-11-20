@@ -1,11 +1,11 @@
 import { BadgeCheck, Building2, Check, Clock, Coins, Hourglass, Sparkles } from 'lucide-react'
 import { choiceKey, forecastCard, type Delta } from '../../game/choiceForecast'
 import { ForecastNumbers } from './ForecastNumbers'
+import { HeaderChip, StageHeader } from './StageHeader'
 import { useDraft } from './useDraft'
 import { useMemo } from 'react'
 import { forecastPricing } from '../../game/forecast'
 import { moodOfStatus, portraitKey } from '../../assets/portraits'
-import { spriteUrl } from '../../assets/registry'
 import { CARD_BY_ID } from '../../game/decisions/cards'
 import { choiceImpact, keptPlan, tacticOf } from '../../game/decisions/plan'
 import { isInvestment, OPS, tempActive } from '../../game/sim/ops'
@@ -212,38 +212,17 @@ export function CardStage() {
 
   return (
     <section key={id} className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[612px] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise">
-      <header data-sticky-head className={`sticky top-0 z-20 shadow-[0_8px_14px_-12px_rgba(20,50,110,0.45)] bg-gradient-to-br from-brand-100 via-white to-brand-50 flex items-center px-8 gap-6 transition-[height] duration-300 ${compact ? 'h-[128px]' : 'h-[178px]'}`}>
-        <img
-          src={spriteUrl(PANEL_ART[card.location] ?? BUILDINGS[card.location].sprite)}
-          alt=""
-          className={`object-contain drop-shadow-[0_12px_16px_rgba(20,50,110,0.25)] transition-all duration-300 ${compact ? 'h-[108px] w-[160px]' : 'h-[150px] w-[230px]'}`}
-        />
-        <div className={`min-w-0 ${head ? 'flex-1' : ''}`}>
-          <div className="text-[13px] text-brand-600 font-medium">
-            {loc.en} · {loc.th}
-          </div>
-          <h2 className={`font-display font-bold leading-tight text-navy-900 ${compact ? 'text-[25px]' : 'text-[30px]'}`}><Glossed text={card.title} /></h2>
-          <p className="text-[16px] text-navy-800 mt-0.5"><Glossed text={card.question} skip={inTitle} /></p>
-          {!compact && (
-            <div className="flex flex-wrap gap-1.5 mt-2.5">
-              {card.modules.map((m) => (
-                <span key={m} className="text-[11.5px] rounded-full bg-white border border-brand-100 text-brand-600 px-2.5 py-0.5">
-                  {MODULES[m].en}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-        {head && (
-          <img
-            key={head}
-            src={spriteUrl(head)}
-            alt=""
-            data-portrait={head}
-            className={`self-end shrink-0 object-contain object-bottom drop-shadow-[0_10px_14px_rgba(20,50,110,0.3)] transition-all duration-300 ${compact ? 'h-[116px] w-[110px]' : 'h-[164px] w-[150px]'}`}
-          />
-        )}
-      </header>
+      <StageHeader
+        art={PANEL_ART[card.location] ?? BUILDINGS[card.location].sprite}
+        kicker={`${loc.en} · ${loc.th}`}
+        title={<Glossed text={card.title} />}
+        subtitle={<Glossed text={card.question} skip={inTitle} />}
+        chips={card.modules.map((m) => (
+          <HeaderChip key={m}>{MODULES[m].en}</HeaderChip>
+        ))}
+        head={head}
+        compact={compact}
+      />
       <div data-kept-note className={`mx-5 mt-3 rounded-xl px-3 py-1.5 text-[12.5px] ${locked ? 'bg-amber-50 text-amber-900' : 'bg-brand-50 text-brand-700'}`}>
         {locked
           ? `สัญญาประกันภัยต่อเป็นรายปี ปีนี้ใช้ "${keptLabel}" · เปลี่ยนได้ในห้องตัดสินใจไตรมาส 1 ของปีหน้า`
