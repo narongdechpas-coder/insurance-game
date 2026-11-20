@@ -73,14 +73,8 @@ export function SystemsPanel() {
   }
 
   return (
-    <div className="px-5 pt-3 pb-5" data-systems>
-      <div className="flex items-center justify-between text-[12.5px] text-navy-800 mb-2">
-        <span>
-          ทีม IT ใช้อยู่ <b data-it-slots>{busy + orders.length}</b>/{OPS_JSON.itSlots} · เสี่ยงล่าช้า 1 ไตรมาส {pct(OPS_JSON.systemRisk.delay)} · ได้ผลแค่ {pct(OPS_JSON.systemRisk.partialFactor)} อีก {pct(OPS_JSON.systemRisk.partial)}
-        </span>
-        <span className="text-navy-700/60">ค่าพัฒนาจ่ายตามไตรมาสที่พัฒนา ใช้งบกลยุทธ์</span>
-      </div>
-      <div className="grid grid-cols-3 gap-3">
+    <div className="px-5 pt-2.5 pb-3" data-systems>
+      <div className="grid grid-cols-3 gap-2.5">
         {SYSTEM_IDS.map((id) => {
           const spec = SYSTEMS[id]
           const st = sys[id]
@@ -101,28 +95,27 @@ export function SystemsPanel() {
               ? `ใช้งานรุ่น ${st.live} · ${adoption}${st.factor < 1 ? ` · ได้ผล ${pct(st.factor)}` : ''}`
               : 'ยังไม่มี'
           return (
-            <div key={id} data-system={id} className={`rounded-[18px] border-2 p-3 flex flex-col gap-1.5 bg-white/85 ${ordered ? 'border-gold-500' : 'border-transparent'}`}>
+            <div key={id} data-system={id} className={`rounded-[18px] border-2 px-3 py-2 flex flex-col gap-1 bg-white/85 ${ordered ? 'border-gold-500' : 'border-transparent'}`}>
               <div className="flex items-center gap-2.5">
-                <span className={`shrink-0 grid place-items-center rounded-xl text-brand-600 overflow-hidden ${art ? 'size-[72px]' : 'size-11 bg-gradient-to-b from-brand-50 to-brand-100'}`}>
-                  {art ? <img src={spriteUrl(art as never)} alt="" data-system-art={id} className="max-w-[72px] max-h-[72px] object-contain drop-shadow-[0_6px_8px_rgba(20,50,110,0.25)]" /> : <Icon size={22} />}
+                <span className={`shrink-0 grid place-items-center rounded-xl text-brand-600 overflow-hidden ${art ? 'size-[46px]' : 'size-10 bg-gradient-to-b from-brand-50 to-brand-100'}`}>
+                  {art ? <img src={spriteUrl(art as never)} alt="" data-system-art={id} className="max-w-[46px] max-h-[46px] object-contain drop-shadow-[0_6px_8px_rgba(20,50,110,0.25)]" /> : <Icon size={22} />}
                 </span>
                 <div className="min-w-0">
-                  <div className="font-display font-semibold text-[15px] leading-tight text-navy-900">{spec.label}</div>
-                  <div className="text-[11.5px] text-navy-700/65">{spec.side === 'customer' ? 'ฝั่งลูกค้า · ลดงาน' : 'ฝั่งคู่ค้า · ลดต้นทุน + คู่ค้าดันยอด'}</div>
+                  <div className="font-display font-semibold text-[14.5px] leading-tight text-navy-900 truncate">{spec.label}</div>
+                  <div className="text-[11px] text-navy-700/65 truncate" title={spec.side === 'customer' ? 'ฝั่งลูกค้า · ลดงาน' : 'ฝั่งคู่ค้า · ลดต้นทุน + คู่ค้าดันยอด'}>{spec.side === 'customer' ? 'ฝั่งลูกค้า' : 'ฝั่งคู่ค้า'}</div>
+                  <div data-system-status={id} title={status} className={`text-[11.5px] font-medium truncate ${st?.live ? 'text-emerald-700' : st?.building ? 'text-amber-800' : 'text-navy-700/60'}`}>
+                    {status}
+                  </div>
                 </div>
               </div>
-              <div data-system-status={id} className={`text-[12px] font-medium ${st?.live ? 'text-emerald-700' : st?.building ? 'text-amber-800' : 'text-navy-700/60'}`}>
-                {status}
-              </div>
-              {cur && st?.live && <div className="text-[11.5px] text-navy-700/75 leading-snug">ตอนนี้: {effectLines(cur.effects, spec.channel).join(' · ')} (เต็มผลเมื่อทุกคนใช้)</div>}
+              {cur && st?.live && <div className="text-[11px] text-navy-700/75 leading-snug line-clamp-1" title={effectLines(cur.effects, spec.channel).join(' · ')}>ตอนนี้: {effectLines(cur.effects, spec.channel).join(' · ')} (เต็มผลเมื่อทุกคนใช้)</div>}
               {next && (
-                <div className="rounded-xl bg-brand-50/80 px-2.5 py-1.5 text-[11.5px] leading-snug text-navy-800">
-                  <div className="font-semibold text-brand-700">{v === 2 ? 'รุ่น 2: ' : ''}{next.label}</div>
-                  <div>{effectLines(next.effects, spec.channel).join(' · ')}</div>
-                  <div className="text-navy-700/70 mt-0.5">
-                    พัฒนา {next.dev} ไตรมาส · ค่าพัฒนา {next.cost} ล้าน · ค่าดูแล {next.maint} ล้าน/ไตรมาส
+                <div className="rounded-xl bg-brand-50/80 px-2.5 py-1.5 text-[11px] leading-snug text-navy-800">
+                  <div className="line-clamp-2" title={effectLines(next.effects, spec.channel).join(' · ')}><b className="font-semibold text-brand-700">{v === 2 ? 'รุ่น 2: ' : ''}{next.label}</b> · {effectLines(next.effects, spec.channel).join(' · ')}</div>
+                  <div className="text-navy-700/70 truncate">
+                    พัฒนา {next.dev} Q · ค่าพัฒนา {next.cost} ล้าน · ดูแล {next.maint} ล้าน/Q
                   </div>
-                  {peopleEquivalent(next.effects) && <div className="text-emerald-800 mt-0.5">{peopleEquivalent(next.effects)}</div>}
+                  {peopleEquivalent(next.effects) && <div className="text-emerald-800 truncate" title={peopleEquivalent(next.effects)}>{peopleEquivalent(next.effects)}</div>}
                 </div>
               )}
               {next && (
@@ -130,7 +123,7 @@ export function SystemsPanel() {
                   data-system-order={id}
                   disabled={!ordered && freeSlots <= 0}
                   onClick={() => toggle(id)}
-                  className={`mt-auto h-9 rounded-full text-[13px] font-medium transition-colors disabled:opacity-40 ${ordered ? 'bg-gold-500 text-navy-900' : 'bg-brand-500 text-white hover:brightness-110'}`}
+                  className={`mt-auto h-7 rounded-full text-[12.5px] font-medium transition-colors disabled:opacity-40 ${ordered ? 'bg-gold-500 text-navy-900' : 'bg-brand-500 text-white hover:brightness-110'}`}
                 >
                   {ordered ? 'สั่งแล้ว (กดเพื่อยกเลิก)' : !ordered && freeSlots <= 0 ? 'ทีม IT เต็ม' : v === 2 ? 'อัปเกรดเป็นรุ่น 2' : 'สั่งพัฒนา'}
                 </button>

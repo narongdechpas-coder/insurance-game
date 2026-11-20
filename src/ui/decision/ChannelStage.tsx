@@ -7,7 +7,7 @@ import type { ChannelId } from '../../game/sim/channels'
 import { CH, CHANNEL_IDS, renewalRates, type SegmentId } from '../../game/sim/v2'
 import { useGameStore } from '../../store/useGameStore'
 import { Glossed } from '../glossary/Term'
-import { HeaderChip, StageHeader } from './StageHeader'
+import { HeaderChip, ManagerBubble, StageHeader } from './StageHeader'
 import { BUILDINGS, PANEL_ART } from '../../world/layout'
 
 const NAME: Record<ChannelId, { en: string; th: string; who: string }> = {
@@ -55,6 +55,11 @@ export function ChannelStage() {
   const mix = game.sim.mix
 
   return (
+    <>
+    <ManagerBubble
+      lines="ค่าคอมคิดจากเบี้ยทั้งช่องทาง ค่าที่ตั้งใช้ต่อทุกไตรมาสจนกว่าจะเปลี่ยน"
+      strong="ตัวเลขใต้แต่ละช่องทางเป็นประมาณการไตรมาสหน้า ถ้าไม่มีเหตุการณ์ไม่คาดคิด"
+    />
     <section
       data-stage="channels"
       className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[calc(100%-172px-150px)] glass rounded-[28px] overflow-hidden pointer-events-auto anim-rise flex flex-col"
@@ -168,5 +173,6 @@ export function ChannelStage() {
         })}
       </div>
     </section>
+    </>
   )
 }

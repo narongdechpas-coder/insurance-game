@@ -1,7 +1,7 @@
 import { BadgeCheck, Building2, Check, Clock, Coins, Hourglass, Sparkles } from 'lucide-react'
 import { choiceKey, forecastCard, type Delta } from '../../game/choiceForecast'
 import { ForecastNumbers } from './ForecastNumbers'
-import { HeaderChip, StageHeader } from './StageHeader'
+import { HeaderChip, ManagerBubble, StageHeader } from './StageHeader'
 import { useDraft } from './useDraft'
 import { useMemo } from 'react'
 import { forecastPricing } from '../../game/forecast'
@@ -51,7 +51,7 @@ function TacticRow({ card, stanceLabel, tactics, skip, locked, fc }: { card: Dec
   const chooseTactic = useGameStore((s) => s.chooseTactic)
   const chosen = tacticOf(plan, card)?.id
   return (
-    <div className="px-5 pb-5 anim-rise" key={stanceLabel}>
+    <div className="px-5 pb-4 anim-rise" key={stanceLabel}>
       <div className="flex items-center gap-2 mb-2.5">
         <span className="font-display font-semibold text-[16px] text-navy-900">วิธีทำ: {stanceLabel}</span>
         <span className="text-[12.5px] text-navy-700/60">เลือกแบบแนะนำไว้ให้แล้ว เปลี่ยนได้</span>
@@ -69,7 +69,7 @@ function TacticRow({ card, stanceLabel, tactics, skip, locked, fc }: { card: Dec
               data-tactic={t.id}
               onClick={() => !locked && chooseTactic(card, t.id)}
               disabled={locked && !on}
-              className={`relative flex flex-col text-left rounded-[18px] p-3.5 h-[318px] disabled:opacity-50 border-2 transition-all duration-300 ease-(--ease-game) ${
+              className={`relative flex flex-col text-left rounded-[18px] px-3.5 py-3 disabled:opacity-50 border-2 transition-all duration-300 ease-(--ease-game) ${
                 on ? 'bg-white border-gold-500 shadow-[0_12px_24px_-12px_rgba(217,138,7,0.65)] -translate-y-1' : 'bg-white/70 border-transparent hover:bg-white hover:-translate-y-0.5 hover:shadow-md'
               }`}
             >
@@ -84,7 +84,7 @@ function TacticRow({ card, stanceLabel, tactics, skip, locked, fc }: { card: Dec
                 </span>
                 <span className="font-display font-semibold text-[15.5px] leading-tight text-navy-900"><Glossed text={t.label} skip={skip} /></span>
               </span>
-              <span className="text-[12.5px] leading-snug text-navy-700/85 mt-2 flex-1"><Glossed text={t.blurb} skip={skip} /></span>
+              <span className="text-[12.5px] leading-snug text-navy-700/85 mt-1.5 min-h-[34px]"><Glossed text={t.blurb} skip={skip} /></span>
               <span className="flex flex-wrap gap-1 mt-1.5">
                 {t.recommended && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-gold-300/60 text-navy-900 px-2 py-0.5 text-[11px] font-medium">
@@ -211,6 +211,13 @@ export function CardStage() {
   const tight = compact && card.options.length >= 5 // five compact tiles: smaller icon, shorter cost chip
 
   return (
+    <>
+    <ManagerBubble
+      key={`bubble-${id}`}
+      tone={locked ? 'warn' : 'dark'}
+      lines={locked ? 'สัญญาประกันภัยต่อเป็นรายปี เปลี่ยนได้ในห้องตัดสินใจไตรมาส 1 ของปีหน้า' : 'ค่าที่เลือกจะใช้ต่อทุกไตรมาสจนกว่าจะเปลี่ยน'}
+      strong={<span data-kept-note>{locked ? `ปีนี้ใช้ "${keptLabel}" · รายปี` : `ตอนนี้บริษัทใช้ "${keptLabel}" · ใช้ต่อทุกไตรมาส`}</span>}
+    />
     <section key={id} className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[calc(100%-172px-150px)] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise">
       <StageHeader
         art={PANEL_ART[card.location] ?? BUILDINGS[card.location].sprite}
@@ -223,12 +230,7 @@ export function CardStage() {
         head={head}
         compact={compact}
       />
-      <div data-kept-note className={`mx-5 mt-3 rounded-xl px-3 py-1.5 text-[12.5px] ${locked ? 'bg-amber-50 text-amber-900' : 'bg-brand-50 text-brand-700'}`}>
-        {locked
-          ? `สัญญาประกันภัยต่อเป็นรายปี ปีนี้ใช้ "${keptLabel}" · เปลี่ยนได้ในห้องตัดสินใจไตรมาส 1 ของปีหน้า`
-          : `ค่าที่เลือกใช้ต่อทุกไตรมาสจนกว่าจะเปลี่ยน · ตอนนี้บริษัทใช้ "${keptLabel}"`}
-      </div>
-      <div className={`grid ${cols} gap-3 px-5 ${compact ? 'pt-3 pb-3' : 'p-5 pt-3'}`}>
+      <div className={`grid ${cols} gap-3 px-5 ${compact ? 'pt-3 pb-2' : 'px-5 py-4'}`}>
         {card.options.map((o) => {
           const on = o.id === chosen
           const Icon = OPTION_ICONS[o.icon]
@@ -240,7 +242,7 @@ export function CardStage() {
               data-option={o.id}
               onClick={() => choose(id, o.id)}
               disabled={locked && !on}
-              className={`group relative flex flex-col text-left rounded-[20px] border-2 disabled:opacity-50 transition-all duration-300 ease-(--ease-game) ${compact ? 'h-[100px] p-3' : 'h-[360px] p-3.5'} ${
+              className={`group relative flex flex-col text-left rounded-[20px] border-2 disabled:opacity-50 transition-all duration-300 ease-(--ease-game) ${compact ? 'h-[92px] p-3' : 'p-3.5'} ${
                 on
                   ? 'bg-white border-brand-500 shadow-[0_14px_28px_-12px_rgba(29,95,224,0.6)] -translate-y-1'
                   : 'bg-white/70 border-transparent hover:bg-white hover:-translate-y-1 hover:shadow-lg'
@@ -251,15 +253,15 @@ export function CardStage() {
                   <Check size={17} strokeWidth={3} />
                 </span>
               )}
-              <span className={`flex ${compact ? 'items-center gap-2.5' : 'flex-col'}`}>
+              <span className="flex items-center gap-2.5">
                 <span
-                  className={`shrink-0 grid place-items-center rounded-2xl transition-colors ${compact ? (tight ? 'size-8 rounded-xl' : 'size-10') : 'size-14 mb-3'} ${on ? 'bg-gradient-to-b from-brand-400 to-brand-600 text-white' : 'bg-brand-50 text-brand-600'}`}
+                  className={`shrink-0 grid place-items-center rounded-2xl transition-colors ${compact ? (tight ? 'size-8 rounded-xl' : 'size-10') : 'size-11'} ${on ? 'bg-gradient-to-b from-brand-400 to-brand-600 text-white' : 'bg-brand-50 text-brand-600'}`}
                 >
-                  <Icon size={tight ? 17 : compact ? 21 : 28} strokeWidth={2.4} />
+                  <Icon size={tight ? 17 : 21} strokeWidth={2.4} />
                 </span>
                 <span className={`font-display font-semibold leading-tight text-navy-900 ${compact ? `whitespace-nowrap ${tight ? 'text-[14.5px]' : 'text-[16px]'}` : 'text-[18px]'}`}><Glossed text={o.label} skip={inTitle} /></span>
               </span>
-              {!compact && <span className="text-[13px] leading-snug text-navy-700/80 mt-1.5 flex-1"><Glossed text={o.blurb} skip={inTitle} /></span>}
+              {!compact && <span className="text-[13px] leading-snug text-navy-700/80 mt-1.5 min-h-[36px]"><Glossed text={o.blurb} skip={inTitle} /></span>}
               {!compact && (
                 <span className="mt-2 pt-2.5 border-t border-brand-100">
                   <ImpactRow impact={fc[o.id]?.arrows ?? o.impact} />
@@ -287,5 +289,6 @@ export function CardStage() {
       {id === 'pricing' && <PriceForecastStrip cols={cols} />}
       {tactics && chosenOption && <TacticRow card={id} stanceLabel={chosenOption.label} tactics={tactics} skip={inTitle} locked={locked} fc={fc} />}
     </section>
+    </>
   )
 }
