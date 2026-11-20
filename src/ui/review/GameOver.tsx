@@ -129,7 +129,7 @@ function Debrief({ g, ls, tps, wn }: { g: GameState; ls: Lesson[]; tps: TurningP
                 <th className="py-1">อันดับ</th>
                 <th>บริษัท</th>
                 <th className="text-right">คะแนน</th>
-                <th className="text-right">เงินทุน (ล้านบาท)</th>
+                <th className="text-right">เงินทุนปลายเกม (ล้านบาท)</th>
                 <th className="text-right">ส่วนแบ่ง</th>
                 <th className="text-right">CR เฉลี่ย</th>
                 <th className="text-right">ความพอใจ</th>
@@ -252,6 +252,31 @@ function DebriefPnl({ g }: { g: GameState }) {
         <span className="ml-auto text-[12px] text-navy-700/60">{period < 0 ? `รวม ${log.length} ไตรมาส` : `ปีที่ ${period + 1}`} · ล้านบาท</span>
       </div>
       <PnlTable key={period} pnl={pnl} prev={prev} prevLabel={`ปีที่ ${period}`} />
+      <CapitalBridge g={g} from={period < 0 ? 0 : period * 4} quarters={period < 0 ? log.length : years[period].length} netUw={pnl.netUwResult} investment={pnl.investmentIncome} />
+    </div>
+  )
+}
+
+/**
+ * How the P&L above turns into capital: premium is sales, capital only moves by the net U/W
+ * result, investment income and fines. Shown under the debrief P&L so the two never look like
+ * they disagree (34,947 written premium vs 2,000 capital are different things).
+ */
+function CapitalBridge({ g, from, quarters, netUw, investment }: { g: GameState; from: number; quarters: number; netUw: number; investment: number }) {
+  const kh = g.kpiHistory
+  const start = kh[from]?.capitalMB ?? g.config.startingCapitalMB
+  const end = kh[Math.min(kh.length - 1, from + quarters)]?.capitalMB ?? start
+  const other = end - start - netUw - investment
+  const n = (v: number) => `${v < 0 ? '−' : v > 0 && v !== start ? '+' : ''}${Math.abs(Math.round(v)).toLocaleString('th-TH')}`
+  return (
+    <div data-capital-bridge className="mt-2 rounded-xl bg-white/80 px-4 py-2 text-[13px] text-navy-800 flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span className="font-medium text-navy-900">เงินทุนเปลี่ยนอย่างไร</span>
+      <span>เริ่ม {Math.round(start).toLocaleString('th-TH')}</span>
+      <span className={netUw < 0 ? 'text-alert' : 'text-good'}>ผลรับประกันสุทธิ {n(netUw)}</span>
+      <span className="text-good">รายได้ลงทุน {n(investment)}</span>
+      {Math.abs(other) >= 1 && <span className="text-alert">ค่าปรับและอื่นๆ {n(other)}</span>}
+      <span className="font-semibold">= ปลายช่วง {Math.round(end).toLocaleString('th-TH')} ล้านบาท</span>
+      <span className="text-[11.5px] text-navy-700/60 basis-full">Written Premium คือยอดขายสะสมของช่วงนี้ ไม่ใช่เงินทุน เงินทุนขยับเฉพาะจากผลรับประกันหลังประกันภัยต่อ รายได้ลงทุน และค่าปรับ</span>
     </div>
   )
 }
