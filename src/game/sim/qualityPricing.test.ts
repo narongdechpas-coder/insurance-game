@@ -42,4 +42,28 @@ describe('quality pricing', () => {
     const gain = (sat: number) => cut(start(sat)).kpis.marketShare / hold(start(sat)).kpis.marketShare - 1
     expect(Math.abs(gain(4.8) - gain(2.8))).toBeLessThan(0.15 * gain(2.8))
   })
+
+  it('renewing customers meet the price change of the year at the renewal season, scaled by quality at the end of Q4', () => {
+    const year = (sat: number, rise: boolean) => {
+      let s = start(sat)
+      s = rise ? raise(s) : hold(s)
+      for (let i = 0; i < 3; i++) s = hold({ ...s, events: [], sim: { ...s.sim, player: { ...s.sim.player, satisfaction: sat } } })
+      return s.sim.v2.renewal!
+    }
+    const flat = year(3.8, false)
+    expect(flat.priceChange).toBeCloseTo(0, 6)
+    expect(flat.priceEffect).toBeCloseTo(0, 6)
+    const mid = year(3.8, true)
+    expect(mid.priceChange).toBeGreaterThan(0.05)
+    expect(mid.priceEffect).toBeCloseTo(-0.5 * mid.priceChange * priceSensitivityFor(mid.satisfaction), 6)
+    const happy = year(4.8, true)
+    expect(-happy.priceEffect).toBeLessThan(-mid.priceEffect)
+  })
+
+  it('after the renewal season the new price becomes the reference', () => {
+    let s = raise(start(3.8))
+    for (let i = 0; i < 3; i++) s = hold(s)
+    s = hold({ ...s, events: s.events.filter((e) => e.id === 'renewal-season') })
+    expect(s.sim.v2.lastRenewalPrice).toBeCloseTo(s.sim.player.price, 6)
+  })
 })

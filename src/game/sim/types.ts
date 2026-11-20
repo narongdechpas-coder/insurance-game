@@ -49,6 +49,8 @@ export interface Firm {
   lastLoads?: Capacity
   /** phase 3a, rivals only: extra pull from their partner systems */
   sysPull?: number
+  /** rivals only: price at their last renewal season */
+  lastRenewalPrice?: number
 }
 
 export interface SimState {

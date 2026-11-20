@@ -62,6 +62,9 @@ export interface RenewalOutlook {
   avgOverload: number
   service: number
   contactOverloaded: boolean
+  /** price customers face at renewal vs what they paid last year (fraction), and its effect on the rate */
+  priceChange: number
+  priceEffect: number
 }
 
 export interface V2State {
@@ -72,6 +75,8 @@ export interface V2State {
   year: { excess: number; quarters: number }
   /** set at the end of each Q4, applied in the next quarter's renewal season */
   renewal: RenewalOutlook | null
+  /** our book price at the last renewal season (1 = start): this year's rises reach renewing customers */
+  lastRenewalPrice?: number
   /** price index each segment's customers see (1 = start) and its rate adequacy, newest last */
   segPrice: SegMix
   segRate: Record<SegmentId, number[]>
@@ -208,15 +213,21 @@ export const RENEWAL_BASELINE = RENEWAL0
  * Satisfaction moves every channel ±6 pts per star around 3.8; an overloaded year costs renewals.
  * Game assumptions, not market data.
  */
-export function renewalOutlook(v: V2State, mix: Mix, satisfaction: number, contactOverloaded: boolean): RenewalOutlook {
+export function renewalOutlook(v: V2State, mix: Mix, satisfaction: number, contactOverloaded: boolean, priceChange = 0, qualityMult = 1): RenewalOutlook {
   const avgOverload = v.year.quarters ? v.year.excess / v.year.quarters : 0
   const base = renewalRates(v)
+  // renewing customers meet this year's price change now; a rise hurts less when they are happy
+  // (quality multiplier at the end of Q4), a cut helps the same for everyone (game assumption)
+  const priceEffect = -RENEWAL_PRICE_K * priceChange * (priceChange > 0 ? qualityMult : 1)
   const byChannel = Object.fromEntries(
-    CHANNEL_IDS.map((c) => [c, Math.max(0.55, Math.min(0.95, base[c] + 0.06 * (satisfaction - 3.8) - 1.0 * avgOverload))]),
+    CHANNEL_IDS.map((c) => [c, Math.max(0.55, Math.min(0.95, base[c] + 0.06 * (satisfaction - 3.8) - 1.0 * avgOverload + priceEffect))]),
   ) as Record<ChannelId, number>
   const rate = CHANNEL_IDS.reduce((a, c) => a + mix[c] * byChannel[c], 0)
-  return { rate, byChannel, baseline: RENEWAL0, satisfaction, avgOverload, service: v.company.service, contactOverloaded }
+  return { rate, byChannel, baseline: RENEWAL0, satisfaction, avgOverload, service: v.company.service, contactOverloaded, priceChange, priceEffect }
 }
+
+/** Renewal points lost per 100% price rise at average satisfaction (10% → about 5 points). */
+export const RENEWAL_PRICE_K = 0.5
 
 /** Share multiplier from a renewal season: each point of renewal above/below the baseline. */
 export const renewalShareFactor = (rate: number) => 1 + 0.6 * (rate - RENEWAL0)

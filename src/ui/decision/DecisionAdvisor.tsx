@@ -8,6 +8,8 @@ import { responseOf, SCENARIO_BY_EVENT } from '../../game/decisions/scenarios'
 import { useEffect, useMemo, useRef } from 'react'
 import { play } from '../../audio/sfx'
 import { capitalHealth } from '../../game/capital'
+import { priceSensitivityFor } from '../../game/sim/init'
+import { RENEWAL_PRICE_K, SEG_PRICE_STEPS, SEGMENT_IDS } from '../../game/sim/v2'
 import type { DecisionId } from '../../game/decisions/types'
 import { capacityWarning } from '../../game/forecast'
 import { useGameStore } from '../../store/useGameStore'
@@ -34,7 +36,24 @@ export function DecisionAdvisor() {
   const sat = game.kpis.satisfaction
   const raising = Object.values(segSteps).some((x) => x > 2)
   const quality = sat < 3.6 && raising ? [{ id: 'raise-low-quality', tone: 'warning' as const, text: `ลูกค้าพอใจแค่ ${sat.toFixed(1)} ดาว ถ้าขึ้นราคาตอนนี้ลูกค้าจะย้ายมากกว่าปกติ ควรยกระดับบริการก่อนค่อยขึ้นราคาค่ะ`, cards: ['pricing'] as DecisionId[] }] : []
-  const notes = [...(cap ? [{ id: 'capacity', tone: 'warning' as const, text: cap, cards: ['pricing', 'distribution', 'repair'] as DecisionId[] }] : []), ...quality, ...reviewPlan(plan, game, responses)]
+  // Q4: renewing customers will meet this year's price change; warn with the expected effect
+  const renewalNote = (() => {
+    if (game.quarter.index % 4 !== 3 || game.quarter.index + 1 >= game.config.quarters) return []
+    const mix = game.lastReport?.v2.portfolio
+    const draft = mix ? SEGMENT_IDS.reduce((a, k) => a + mix[k] * SEG_PRICE_STEPS[segSteps[k]], 0) : 0
+    const change = (game.sim.player.price * (1 + draft)) / (game.sim.v2.lastRenewalPrice ?? 1) - 1
+    if (change < 0.01) return []
+    const pts = RENEWAL_PRICE_K * change * priceSensitivityFor(sat) * 100
+    return [
+      {
+        id: 'renewal-price',
+        tone: (pts >= 2 ? 'warning' : 'tip') as 'warning' | 'tip',
+        text: `ปีนี้ราคาขึ้นรวม ${(change * 100).toFixed(1)}% ลูกค้าเดิมจะเจอราคานี้ตอนต่ออายุหลังจบไตรมาสนี้ ด้วยความพอใจ ${sat.toFixed(1)} ดาว คาดว่าอัตราต่ออายุลดราว ${pts.toFixed(1)} จุด ${sat < 4 ? 'ยกระดับบริการก่อนสิ้นปีจะช่วยได้ค่ะ' : 'ลูกค้าพอใจสูง รับได้ค่อนข้างดีค่ะ'}`,
+        cards: ['pricing'] as DecisionId[],
+      },
+    ]
+  })()
+  const notes = [...(cap ? [{ id: 'capacity', tone: 'warning' as const, text: cap, cards: ['pricing', 'distribution', 'repair'] as DecisionId[] }] : []), ...quality, ...renewalNote, ...reviewPlan(plan, game, responses)]
   // what the player is looking at decides which note leads
   const focus: string[] =
     step === 'strategy' ? [activeCard === 'staff' ? 'repair' : activeCard] : step === 'scenario' && activeEvent ? (responseOf(responses, activeEvent)?.related ?? []) : []
