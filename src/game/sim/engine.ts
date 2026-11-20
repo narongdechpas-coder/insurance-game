@@ -5,9 +5,9 @@ import { responseOf, SCENARIO_BY_EVENT, type Responses, type SimHook } from '../
 import type { DecisionId, Duration, Impact, ImpactAxis, QuarterPlan, Speed } from '../decisions/types'
 import { EVENT_BY_ID } from '../data/events'
 import type { CompanyKpis, GameState } from '../types'
-import { attractiveness, qualityLog } from './init'
+import { attractiveness, priceSensitivityFor, qualityLog } from './init'
 import { acquisitionRate, buildPnl, CHANNELS, commissionRate, distributionChannel, START_MIX } from './channels'
-import { bookFactors, bookPrice, CHANNEL_IDS, driftByPrice, portfolioMix, RENEWAL_BASELINE, renewalOutlook, renewalShareFactor, rivalRenewal, segmentAdverseLR, segmentLossRatios, segmentMoves, segmentPriceTerm, segmentRateLR, SEGMENT_IDS, channelAttraction, channelLRFactors, channelRates, nextChannelMix, playerInertia, renewalRates, serviceStars, shiftSegments, updateCompany } from './v2'
+import { bookFactors, bookPrice, CHANNEL_IDS, driftByPrice, portfolioMix, RENEWAL_BASELINE, RENEWAL_PRICE_K, renewalOutlook, renewalShareFactor, rivalRenewal, segmentAdverseLR, segmentLossRatios, segmentMoves, segmentPriceTerm, segmentRateLR, SEGMENT_IDS, channelAttraction, channelLRFactors, channelRates, nextChannelMix, playerInertia, renewalRates, serviceStars, shiftSegments, updateCompany } from './v2'
 import { DIFFICULTY, DURATION_WEIGHTS, P } from './params'
 import { rng } from './rng'
 import { buildingCount, nextVersion, runSystems, systemAlias, systemEffects, type SystemId } from './systems'
@@ -189,6 +189,10 @@ function renewalDetail(o: NonNullable<SimState['v2']['renewal']>) {
   return (
     `กรมธรรม์ที่ขายไปเมื่อปีก่อนครบรอบต่ออายุพร้อมกัน คาดว่าจะต่ออายุ ${p(o.rate)} (ค่ากลางตลาด ${p(o.baseline)}) ` +
     `จากความพอใจ ${o.satisfaction.toFixed(1)} ดาว · งานล้นเฉลี่ยทั้งปี ${Math.round(o.avgOverload * 100)}% · Service Quality ${Math.round(o.service)} ` +
+    (Math.abs(o.priceChange ?? 0) >= 0.005
+      ? `· ราคาต่ออายุ ${o.priceChange > 0 ? '+' : '−'}${Math.abs(o.priceChange * 100).toFixed(1)}% จากปีก่อน → ต่ออายุ ${o.priceEffect >= 0 ? '+' : '−'}${Math.abs(o.priceEffect * 100).toFixed(1)} จุด ` +
+        (o.priceChange > 0 ? `(ลูกค้าพอใจ ${o.satisfaction.toFixed(1)} ดาว ${o.satisfaction >= 4 ? 'จึงรับการขึ้นราคาได้ดี' : o.satisfaction < 3.6 ? 'จึงรับการขึ้นราคาได้น้อย' : ''}) ` : '')
+      : '') +
     `· แยกช่องทาง: Dealer ${p(o.byChannel.dealer)} · Agent ${p(o.byChannel.agent)} · Direct ${p(o.byChannel.direct)}`
   )
 }
@@ -495,11 +499,18 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
     if (responses['renewal-season'] === 'retentionCalls' && o.contactOverloaded) bonus /= 2
     const rate = Math.min(0.95, o.rate + bonus)
     const before = pl.share
-    all.forEach((f) => (f.share *= f === pl ? renewalShareFactor(rate) : renewalShareFactor(rivalRenewal(f.satisfaction))))
+    // rivals' renewing customers meet their price change too, scaled by the rival's satisfaction
+    const rivalRate = (f: Firm) => {
+      const ch = f.price / (f.lastRenewalPrice ?? 1) - 1
+      return rivalRenewal(f.satisfaction) - RENEWAL_PRICE_K * ch * (ch > 0 ? priceSensitivityFor(f.satisfaction) : 1)
+    }
+    all.forEach((f) => (f.share *= f === pl ? renewalShareFactor(rate) : renewalShareFactor(rivalRate(f))))
+    for (const f of sim.firms) f.lastRenewalPrice = f.price
     const t2 = all.reduce((a, f) => a + f.share, 0)
     all.forEach((f) => (f.share /= t2))
     renewalResult = { rate, byChannel: Object.fromEntries(Object.entries(o.byChannel).map(([c, v]) => [c, Math.min(0.95, v + bonus)])), dShare: pl.share - before }
     sim.v2.renewal = null
+    sim.v2.lastRenewalPrice = pl.price
   }
   const shareFromPrice = (1 - plInertia) * (target[0] - targetNoPrice[0])
 
@@ -659,7 +670,8 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
   sim.v2.year.quarters += 1
   const renewalNext = q % 4 === 3 && q + 1 < state.config.quarters
   if (renewalNext) {
-    sim.v2.renewal = renewalOutlook(sim.v2, sim.mix, pl.satisfaction, loads.contact > 1)
+    const priceChange = pl.price / (sim.v2.lastRenewalPrice ?? 1) - 1
+    sim.v2.renewal = renewalOutlook(sim.v2, sim.mix, pl.satisfaction, loads.contact > 1, priceChange, priceSensitivityFor(pl.satisfaction))
     sim.v2.year = { excess: 0, quarters: 0 }
   }
 
