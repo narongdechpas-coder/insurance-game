@@ -218,11 +218,24 @@ export function CardStage() {
       tone={locked ? 'warn' : 'dark'}
       lines={
         <>
-          {locked ? 'สัญญาประกันภัยต่อเป็นรายปี เปลี่ยนได้ในห้องตัดสินใจไตรมาส 1 ของปีหน้า' : 'ค่าที่เลือกจะใช้ต่อทุกไตรมาสจนกว่าจะเปลี่ยน'}
-          {id === 'reinsurance' && <SlidingScaleNote />}
+          {id === 'reinsurance' ? (
+            <>
+              {locked && 'เปลี่ยนสัญญาได้ไตรมาส 1 ปีหน้า · '}
+              <SlidingScaleNote />
+            </>
+          ) : locked ? (
+            'สัญญาประกันภัยต่อเป็นรายปี เปลี่ยนได้ในห้องตัดสินใจไตรมาส 1 ของปีหน้า'
+          ) : (
+            'ค่าที่เลือกจะใช้ต่อทุกไตรมาสจนกว่าจะเปลี่ยน'
+          )}
         </>
       }
-      strong={<span data-kept-note>{locked ? `ปีนี้ใช้ "${keptLabel}" · รายปี` : `ตอนนี้บริษัทใช้ "${keptLabel}" · ใช้ต่อทุกไตรมาส`}</span>}
+      strong={
+        <>
+          <span data-kept-note>{locked ? `ปีนี้ใช้ "${keptLabel}" · รายปี` : `ตอนนี้บริษัทใช้ "${keptLabel}" · ใช้ต่อทุกไตรมาส`}</span>
+          {id === 'reinsurance' && <YearToDateNote />}
+        </>
+      }
     />
     <section key={id} className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[calc(100%-172px-150px)] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise">
       <StageHeader
@@ -299,15 +312,21 @@ export function CardStage() {
   )
 }
 
-/** Quota share commission slides with the loss ratio: shown on the reinsurance card, with last quarter's figure. */
+/** Quota share commission slides with the treaty year's loss ratio: explained on the reinsurance card. */
 function SlidingScaleNote() {
-  const r = useGameStore((s) => s.game.lastReport)
   const sc = P.slidingScale
   const p = (x: number) => Math.round(x * 100)
   return (
     <span data-sliding-scale>
-      {' '}· ค่าคอมคืนจาก Quota share เป็น sliding scale: Loss Ratio ดีขึ้น 1 จุด ค่าคอมเพิ่ม {sc.slide} จุด ({p(sc.provisional)}% ที่ LR {p(sc.atLR)}%, ช่วง {p(sc.min)}–{p(sc.max)}%)
-      {r?.cedingCommission !== undefined && ` · ไตรมาสที่แล้วได้ ${p(r.cedingCommission)}% (LR ${p(r.lossRatio)}%)`}
+      ค่าคอม Quota share จ่ายเบื้องต้น {p(sc.provisional)}% แล้วปรับตอนปิดปีตาม LR ทั้งปี (LR ดีขึ้น 1 จุด คอม +{sc.slide} จุด · {p(sc.provisional)}% ที่ LR {p(sc.atLR)}% · {p(sc.min)}–{p(sc.max)}%)
     </span>
   )
+}
+
+/** The treaty year so far: loss ratio and the commission it would give if the year closed now. */
+function YearToDateNote() {
+  const r = useGameStore((s) => s.game.lastReport)
+  const ytd = r?.slidingScale && !r.slidingScale.settled ? r.slidingScale : null
+  if (!ytd) return null
+  return <span data-sliding-ytd>{` · ปีนี้ถึงตอนนี้ LR ${Math.round(ytd.yearLR * 100)}% → คาดได้ค่าคอม ${Math.round(ytd.commission * 100)}%`}</span>
 }

@@ -831,5 +831,110 @@
   "ax": 0.364,
   "ay": 1.0,
   "ext": "webp"
+ },
+ "banners/flood": {
+  "w": 2000,
+  "h": 668,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "banners/ev": {
+  "w": 2000,
+  "h": 667,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "banners/motor-show": {
+  "w": 2000,
+  "h": 667,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "banners/economy": {
+  "w": 2000,
+  "h": 667,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "banners/motor-expo": {
+  "w": 2000,
+  "h": 667,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "banners/year-end-promo": {
+  "w": 2000,
+  "h": 667,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "banners/renewal": {
+  "w": 2000,
+  "h": 667,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "banners/referral": {
+  "w": 2000,
+  "h": 667,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "banners/claims": {
+  "w": 2000,
+  "h": 667,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "banners/adverse": {
+  "w": 2000,
+  "h": 667,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "banners/service": {
+  "w": 2000,
+  "h": 667,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "banners/repair": {
+  "w": 2000,
+  "h": 667,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "banners/complaint": {
+  "w": 2000,
+  "h": 667,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "banners/competitor": {
+  "w": 2000,
+  "h": 667,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "banners/regulation": {
+  "w": 2000,
+  "h": 667,
+  "ax": 0.5,
+  "ay": 1.0,
+  "ext": "webp"
  }
 }

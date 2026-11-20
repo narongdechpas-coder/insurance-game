@@ -1,8 +1,7 @@
 import { Check, Clock } from 'lucide-react'
 import { useEffect, useMemo, useRef } from 'react'
-import { HeaderChip, ManagerBubble, StageHeader } from './StageHeader'
-import { portraitKey } from '../../assets/portraits'
-import { CARD_BY_ID } from '../../game/decisions/cards'
+import { HeaderChip, ManagerBubble } from './StageHeader'
+import { EventBanner } from './EventBanner'
 import { SCENARIO_BY_EVENT, scenariosFor } from '../../game/decisions/scenarios'
 import { useGameStore } from '../../store/useGameStore'
 import { EVENT_ART } from '../../world/eventArt'
@@ -35,10 +34,6 @@ export function ScenarioStage() {
   if (!sc || !ev) return null
   const chosen = responses[sc.eventId]
   const art = EVENT_ART[ev.icon]
-  // the department the event lands on presents it: worried for a threat, pleased for an opportunity
-  const relatedCard = sc.responses.flatMap((r) => r.related ?? [])[0]
-  const loc = relatedCard ? CARD_BY_ID[relatedCard as keyof typeof CARD_BY_ID].location : 'hq'
-  const head = portraitKey(loc as never, ev.kind === 'threat' ? 'shocked' : ev.kind === 'opportunity' ? 'happy' : 'normal')
 
   const pick = (id: string) => {
     const first = !chosen
@@ -55,21 +50,21 @@ export function ScenarioStage() {
 
   return (
     <>
-    <ManagerBubble key={`bubble-${sc.eventId}`} id={sc.eventId} lines={<span title={ev.detail}>{ev.detail}</span>} strong={sc.question} />
+    <ManagerBubble key={`bubble-${sc.eventId}`} id={sc.eventId} tail={false} lines={<span title={ev.detail}>{ev.detail}</span>} strong={sc.question} />
     <section key={sc.eventId} data-stage="scenario" className="absolute left-[calc(352px+max(0px,100%-1600px)*0.15)] right-[calc(432px+max(0px,100%-1600px)*0.15)] top-[172px] max-h-[calc(100%-172px-150px)] glass rounded-[28px] overflow-x-hidden overflow-y-auto pointer-events-auto anim-rise">
-      <StageHeader
+      <EventBanner
+        icon={ev.icon}
+        kind={ev.kind}
         art={art ?? null}
         kicker={`รับมือเหตุการณ์ · ${KIND[ev.kind].label}`}
         title={ev.title}
         subtitle="เลือก 1 ทาง · ตัวเลขเทียบกับไม่ทำอะไร"
-        narrowArt
         chips={
           <>
             <span className={`text-[11.5px] text-white rounded-full px-2.5 py-0.5 ${KIND[ev.kind].cls}`}>{KIND[ev.kind].label}</span>
             <HeaderChip>ใช้งบก้อนเดียวกับกลยุทธ์</HeaderChip>
           </>
         }
-        head={head}
       />
       <div className="grid grid-cols-3 gap-3 px-5 py-4">
         {sc.responses.map((r) => {

@@ -39,12 +39,12 @@ export const P = {
 
   // reinsurance (per-quarter treaty, simplified)
   quotaShare: { keep: 0.2, more: 0.35, less: 0.1 },
-  // Quota share ceding commission on a sliding scale: 35% at a 55% loss ratio, one point more commission
-  // for each point the ceded loss ratio is better (one point less when worse), within 28%–42%.
-  // At the provisional point it sits near our own expense ratio on the ceded share (game ≈ 34–37%).
-  // Simplified: settled every quarter on that quarter's loss ratio (real treaties settle on the year).
-  // Assumption for the game, not a market quote.
-  slidingScale: { provisional: 0.35, atLR: 0.55, slide: 1, min: 0.28, max: 0.42 },
+  // Quota share ceding commission on an annual sliding scale, like a real treaty: a provisional 35% is
+  // paid every quarter; at year end (Q4) the commission is recalculated on the whole year's ceded loss
+  // ratio (cat included) and the difference is settled. 35% at a 60% loss ratio (about a neutral book's
+  // yearly LR with floods in the game), one point more commission per point of better LR (one less
+  // when worse), within 28%–42%. Assumption for the game, not a market quote.
+  slidingScale: { provisional: 0.35, atLR: 0.6, slide: 1, min: 0.28, max: 0.42 },
   xl: { retention: 300, limit: 2000, cost: 0.01, buyRetention: 150, buyCost: 0.016, highRetention: 500, highCost: 0.006 },
 
   // catastrophe (flood)
