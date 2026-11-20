@@ -154,6 +154,8 @@ export interface QuarterReport {
   uwResult: number
   investmentIncome: number
   reinsuranceCost: number // cost of protection this quarter (negative = recovered more than paid)
+  /** Quota share ceding commission this quarter (sliding scale on the loss ratio); missing in old saves */
+  cedingCommission?: number
   catLossGross: number
   catLossNet: number
   flood: FloodOutcome

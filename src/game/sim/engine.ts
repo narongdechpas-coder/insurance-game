@@ -82,14 +82,24 @@ interface Underwriting {
   catNet: number
   netResult: number
   grossResult: number
+  /** ceding commission earned this quarter (sliding scale on the loss ratio) */
+  cedingCommission: number
+}
+
+/** Quota share ceding commission for a loss ratio: better losses, more commission (sliding scale). */
+export function cedingCommissionFor(lossRatio: number): number {
+  const s = P.slidingScale
+  return clamp(s.provisional + (s.atLR - lossRatio) * s.slide, s.min, s.max)
 }
 
 function underwrite(gwp: number, attritionalLR: number, expenseRatio: number, catGross: number, qs: number, xl: { retention: number; cost: number }): Underwriting {
   const retainedCat = catGross * (1 - qs)
   const catNet = Math.min(retainedCat, xl.retention) + Math.max(0, retainedCat - xl.retention - P.xl.limit)
   const grossResult = gwp * (1 - attritionalLR - expenseRatio) - catGross
-  const netResult = gwp * (1 - qs) * (1 - attritionalLR) - catNet - gwp * expenseRatio + P.cedingCommission * qs * gwp - xl.cost * gwp
-  return { gwp, lossRatio: attritionalLR + catGross / gwp, expenseRatio, catGross, catNet, netResult, grossResult }
+  const lossRatio = attritionalLR + catGross / gwp
+  const cc = cedingCommissionFor(lossRatio)
+  const netResult = gwp * (1 - qs) * (1 - attritionalLR) - catNet - gwp * expenseRatio + cc * qs * gwp - xl.cost * gwp
+  return { gwp, lossRatio, expenseRatio, catGross, catNet, netResult, grossResult, cedingCommission: cc }
 }
 
 /** Competitor AI: rule-based moves by personality, decided from last quarter's numbers. */
@@ -891,6 +901,7 @@ export function simulateQuarter(state: GameState, planIn: QuarterPlan, responses
     uwResult: uw.netResult,
     investmentIncome: investment,
     reinsuranceCost: reCost,
+    cedingCommission: uw.cedingCommission,
     catLossGross: uw.catGross,
     catLossNet: uw.catNet,
     flood: floodHit ? 'hit' : floodActive ? 'missed' : 'none',

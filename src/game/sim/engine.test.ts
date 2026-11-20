@@ -190,3 +190,16 @@ ${rows.join('\n')}
     console.log(md)
   })
 })
+
+describe('Quota share sliding-scale commission', () => {
+  it('pays more commission when the loss ratio is better, within the band', async () => {
+    const { cedingCommissionFor } = await import('./engine')
+    const { P } = await import('./params')
+    const s = P.slidingScale
+    expect(cedingCommissionFor(s.atLR)).toBeCloseTo(s.provisional)
+    expect(cedingCommissionFor(s.atLR - 0.03)).toBeCloseTo(s.provisional + 0.03 * s.slide)
+    expect(cedingCommissionFor(s.atLR + 0.03)).toBeCloseTo(s.provisional - 0.03 * s.slide)
+    expect(cedingCommissionFor(0.2)).toBe(s.max)
+    expect(cedingCommissionFor(1.2)).toBe(s.min)
+  })
+})

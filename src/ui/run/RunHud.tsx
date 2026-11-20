@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useGameStore } from '../../store/useGameStore'
 import { mb, pct } from '../review/format'
 import { Stage } from '../Stage'
+import { RainFx } from './RainFx'
 import { play } from '../../audio/sfx'
 import { buildTimeline, MONTH_SECONDS, MONTHS, monthAt, RUN_SECONDS } from './timeline'
 
@@ -52,7 +53,7 @@ export function RunHud() {
       {raining && (
         <>
           <div className="fixed inset-0 pointer-events-none" style={{ backgroundColor: 'rgba(30,50,90,0.2)' }} />
-          <div data-fx="rain" className="pointer-events-none rain" />
+          <RainFx />
         </>
       )}
       <Stage>
