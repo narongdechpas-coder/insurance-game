@@ -2,6 +2,9 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  # Build only commits whose message contains [deploy] (saves Netlify quota).
+  # Exit 0 = skip this build, exit 1 = build. Day-to-day previews go to GitHub Pages instead.
+  ignore = "git log -1 --pretty=%B | grep -qF '[deploy]' && exit 1 || exit 0"
 
 [build.environment]
   NODE_VERSION = "22"

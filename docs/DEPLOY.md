@@ -1,8 +1,27 @@
-# เผยแพร่เกม (Netlify)
+# เผยแพร่เกม
 
-ลิงก์เกม: **https://insurance-bkk.netlify.app/**
+มี 2 ลิงก์:
 
-เว็บนี้เชื่อมกับ repo อยู่แล้ว ทุกครั้งที่ merge เข้า `main` Netlify จะ build และ deploy ให้อัตโนมัติ (ดูสถานะใน Netlify dashboard → Deploys) · **ทุกคนที่มีลิงก์เปิดเกมได้**
+| | ลิงก์ | อัปเดตเมื่อไร |
+|---|---|---|
+| **พรีวิว** (GitHub Pages) | https://narongdechpas-coder.github.io/insurance-game/ | อัตโนมัติทุกครั้งที่ merge เข้า `main` (`.github/workflows/pages.yml`) |
+| **เว็บจริง** (Netlify) | **https://insurance-bkk.netlify.app/** | เฉพาะ commit ที่มีคำว่า `[deploy]` ในข้อความ |
+
+ใช้ลิงก์พรีวิวดูงานระหว่างพัฒนาได้จากทุกเครื่อง (ไม่ต้องรัน localhost) และ deploy ขึ้น Netlify เฉพาะตอนพร้อม เพื่อไม่ให้โควตา Netlify หมด · ทุกคนที่มีลิงก์เปิดได้ทั้งสองลิงก์
+
+## วิธี deploy ขึ้น Netlify
+
+ใส่ `[deploy]` ในข้อความของ commit ที่เข้า `main` (กับ squash merge คือหัวข้อ PR/commit) เช่น `Release: intro deck [deploy]`
+- กติกาอยู่ที่ `ignore` ใน `netlify.toml`: commit ที่ไม่มี `[deploy]` Netlify จะข้ามการ build (ผลเดียวกันกับ Deploy Preview ของ PR)
+
+## พรีวิวบน GitHub Pages
+
+- build ด้วย `npm run build -- --base=/insurance-game/` แล้วคัดลอก `index.html` เป็น `404.html` เพื่อให้เปิดลิงก์ตรง เช่น `/insurance-game/intro` ได้ (Pages ไม่มี redirect)
+- ต้องเปิดครั้งเดียวที่ Settings → Pages → Source: **GitHub Actions** (เปิดแล้ว)
+- ดูสถานะได้ที่แท็บ Actions ของ repo · สั่งรันใหม่ได้จาก Actions → Preview on GitHub Pages → Run workflow
+- แอปที่ติดตั้งจากลิงก์พรีวิวกับจาก Netlify เป็นคนละแอปกัน แนะนำให้ใช้ลิงก์พรีวิวผ่านเบราว์เซอร์อย่างเดียว
+
+## ตั้งค่า Netlify
 
 การตั้งค่าอยู่ใน `netlify.toml` ไม่ต้องตั้งในหน้าเว็บ Netlify:
 - build: `npm run build` → โฟลเดอร์ `dist` · Node 22
@@ -21,5 +40,5 @@
 
 ## ถ้าวันหนึ่งต้องย้าย
 
-- **GitHub Pages:** เว็บจะอยู่ใต้ `/insurance-game/` ต้อง build ด้วย `npm run build -- --base=/insurance-game/` (ทดสอบแล้วว่าเกมและโหมดออฟไลน์ทำงานใต้ path นี้ได้)
+- **GitHub Pages:** ใช้เป็นพรีวิวอยู่แล้ว (ดูด้านบน) ถ้าจะใช้เป็นเว็บจริงก็ใช้ลิงก์พรีวิวได้เลย
 - **Cloudflare Pages:** Build command `npm run build` · Output `dist` · อ่านไฟล์ `public/_headers` เหมือน Netlify
