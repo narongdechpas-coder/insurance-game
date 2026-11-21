@@ -1,4 +1,4 @@
-import { Building2, CalendarRange, Coins, Gauge, Play, RotateCcw, Swords, UserRound, X } from 'lucide-react'
+import { Building2, CalendarRange, Coins, Gauge, Play, Presentation, RotateCcw, Swords, UserRound, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { preloadAssets } from '../assets/preload'
 import { brandUrl } from '../assets/registry'
@@ -200,7 +200,17 @@ export function Cover() {
             )
           )}
         </div>
-        <InstallButton className="absolute top-6 right-7" />
+        {/* top right: install (when offered), then the facilitator's game presentation */}
+        <div className="absolute top-6 right-7 flex flex-col items-end gap-2.5 pointer-events-auto">
+          <InstallButton />
+          <a
+            href={`${import.meta.env.BASE_URL}intro`}
+            data-action="intro-deck"
+            className="h-11 px-5 rounded-full glass-dark text-white flex items-center gap-2 font-display font-semibold text-[16px] hover:brightness-125 transition-all"
+          >
+            <Presentation size={18} /> Game Presentation
+          </a>
+        </div>
         {modal && <ModeModal onClose={() => setModal(false)} replacing={!!save} />}
       </Stage>
     </>
