@@ -1,7 +1,7 @@
 import { Lightbulb, Users } from 'lucide-react'
 import { spriteUrl } from '../assets/registry'
 import { useGameStore } from '../store/useGameStore'
-import { EVENT_ART } from '../world/eventArt'
+import { EVENT_ICON } from '../world/eventArt'
 
 const KIND = {
   opportunity: { label: 'โอกาส', cls: 'bg-chance' },
@@ -25,7 +25,7 @@ export function EventStrip() {
       </div>
       <div className="grid grid-cols-3 gap-3">
         {events.map((ev) => {
-          const art = EVENT_ART[ev.icon]
+          const art = EVENT_ICON[ev.icon]
           const related = selected !== null && ev.locations.includes(selected)
           const on = highlighted === ev.id || related
           const dim = selected !== null && !related

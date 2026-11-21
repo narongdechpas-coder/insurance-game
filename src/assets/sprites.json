@@ -978,5 +978,110 @@
   "ax": 0.472,
   "ay": 0.998,
   "ext": "webp"
+ },
+ "icons/event-adverse": {
+  "w": 433,
+  "h": 512,
+  "ax": 0.424,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "icons/event-claims": {
+  "w": 425,
+  "h": 512,
+  "ax": 0.506,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "icons/event-competitor": {
+  "w": 512,
+  "h": 445,
+  "ax": 0.287,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "icons/event-complaint": {
+  "w": 474,
+  "h": 512,
+  "ax": 0.88,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "icons/event-economy": {
+  "w": 512,
+  "h": 471,
+  "ax": 0.792,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "icons/event-ev": {
+  "w": 480,
+  "h": 512,
+  "ax": 0.308,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "icons/event-flood": {
+  "w": 432,
+  "h": 512,
+  "ax": 0.46,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "icons/event-motor-expo": {
+  "w": 512,
+  "h": 495,
+  "ax": 0.552,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "icons/event-motor-show": {
+  "w": 507,
+  "h": 512,
+  "ax": 0.499,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "icons/event-referral": {
+  "w": 512,
+  "h": 466,
+  "ax": 0.874,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "icons/event-regulation": {
+  "w": 425,
+  "h": 512,
+  "ax": 0.883,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "icons/event-renewal": {
+  "w": 512,
+  "h": 502,
+  "ax": 0.614,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "icons/event-repair": {
+  "w": 485,
+  "h": 512,
+  "ax": 0.608,
+  "ay": 0.998,
+  "ext": "webp"
+ },
+ "icons/event-service": {
+  "w": 512,
+  "h": 501,
+  "ax": 0.491,
+  "ay": 1.0,
+  "ext": "webp"
+ },
+ "icons/event-year-end-promo": {
+  "w": 479,
+  "h": 512,
+  "ax": 0.425,
+  "ay": 1.0,
+  "ext": "webp"
  }
 }

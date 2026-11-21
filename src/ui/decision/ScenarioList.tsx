@@ -2,7 +2,7 @@ import { Check, Users } from 'lucide-react'
 import { spriteUrl } from '../../assets/registry'
 import { responseOf, scenariosFor } from '../../game/decisions/scenarios'
 import { useGameStore } from '../../store/useGameStore'
-import { EVENT_ART } from '../../world/eventArt'
+import { EVENT_ICON } from '../../world/eventArt'
 import { KIND } from './visuals'
 
 /** Step 1 sidebar: this quarter's events, with what the CEO answered. */
@@ -19,7 +19,7 @@ export function ScenarioList() {
         const ev = events.find((e) => e.id === sc.eventId)!
         const r = responseOf(responses, sc.eventId)
         const on = sc.eventId === active
-        const art = EVENT_ART[ev.icon]
+        const art = EVENT_ICON[ev.icon]
         return (
           <button
             key={sc.eventId}
