@@ -51,11 +51,12 @@ export function IntroDeck() {
   const s = SLIDES[i]
   return (
     <div data-intro className="fixed inset-0 bg-[#06102a] text-navy-900 select-none overflow-hidden">
-      <div className="absolute left-0 right-0 top-0 grid place-items-center" style={{ bottom: notes ? 190 : 0 }}>
+      <div className="absolute left-0 right-0 top-0 overflow-hidden" style={{ bottom: notes ? 190 : 0 }}>
+        {/* centred by position, then scaled about its own centre: stays centred and whole at any window size or zoom */}
         <div
           data-slide={i + 1}
-          className="relative w-[1600px] h-[900px] shrink-0 overflow-hidden rounded-[6px] shadow-[0_30px_80px_rgba(0,0,0,0.5)]"
-          style={{ transform: `scale(${scale})` }}
+          className="absolute left-1/2 top-1/2 w-[1600px] h-[900px] overflow-hidden rounded-[6px] shadow-[0_30px_80px_rgba(0,0,0,0.5)]"
+          style={{ transform: `translate(-50%, -50%) scale(${scale})` }}
           onClick={(e) => (e.clientX > window.innerWidth / 3 ? go(1) : go(-1))}
         >
           <div key={i} className="absolute inset-0 anim-fade-slide">{s.body}</div>
