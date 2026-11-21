@@ -14,7 +14,7 @@ import { TEAMS } from '../../game/sim/ops'
 import { systemSpendPreview } from '../../game/sim/systems'
 import { responseOf, scenariosFor } from '../../game/decisions/scenarios'
 import { useGameStore } from '../../store/useGameStore'
-import { EVENT_ART } from '../../world/eventArt'
+import { EVENT_ICON } from '../../world/eventArt'
 import { BUILDINGS } from '../../world/layout'
 
 
@@ -89,7 +89,7 @@ export function ConfirmView() {
         {scen.map((sc) => {
           const ev = game.events.find((e) => e.id === sc.eventId)!
           const r = responseOf(responses, sc.eventId)
-          const art = EVENT_ART[ev.icon]
+          const art = EVENT_ICON[ev.icon]
           return (
             <button
               key={sc.eventId}
